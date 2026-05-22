@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <script src="/nav.js"></script>
+  <script src="/api.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Турниры — Game Genesis</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Exo+2:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --gold: #f0c040;
+      --gold-dim: rgba(240,192,64,0.12);
+      --gold-glow: rgba(240,192,64,0.07);
+      --bg: #080c12;
+      --bg-card: #0d1420;
+      --bg-card2: #111928;
+      --border: #1a2436;
+      --border-hi: #253550;
+      --text: #dde4ef;
+      --text-dim: #5c7090;
+      --text-muted: #2e3f58;
+      --success: #4ade80;
+      --red: #f87171;
+      --blue: #60a5fa;
+      --purple: #a78bfa;
+    }
+    html { scroll-behavior: smooth; }
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: #1e2d42; border-radius: 3px; }
+    body { background: var(--bg); color: var(--text); font-family: 'Exo 2', sans-serif; overflow-x: hidden; }
+
+    .grid-bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; background-image: linear-gradient(rgba(240,192,64,.022) 1px,transparent 1px),linear-gradient(90deg,rgba(240,192,64,.022) 1px,transparent 1px); background-size: 50px 50px; }
+
+    /* HEADER */
+    header { position: fixed; top: 0; left: 0; right: 0; z-index: 200; height: 64px; display: flex; align-items: center; padding: 0 32px; background: rgba(8,12,18,.92); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); gap: 0; }
+    .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; margin-right: 40px; }
+    .logo-hex { width: 36px; height: 36px; background: var(--gold); clip-path: polygon(50% 0%,93% 25%,93% 75%,50% 100%,7% 75%,7% 25%); display: flex; align-items: center; justify-content: center; }
+    .logo-hex svg { width: 18px; height: 18px; }
+    .logo-name { font-family: 'Rajdhani',sans-serif; font-size: 18px; font-weight: 700; color: var(--gold); letter-spacing: 2px; }
+    nav { display: flex; align-items: center; gap: 2px; flex: 1; }
+    .nav-a { font-size: 13px; font-weight: 500; color: var(--text-dim); text-decoration: none; padding: 6px 14px; border-radius: 6px; transition: .2s; }
+    .nav-a:hover { color: var(--text); background: rgba(255,255,255,.04); }
+    .nav-a.active { color: var(--gold); background: var(--gold-glow); }
+    .header-right { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+    .btn-hdr { font-family: 'Exo 2',sans-serif; font-size: 13px; padding: 7px 16px; border-radius: 7px; border: 1px solid var(--border-hi); background: transparent; color: var(--text-dim); cursor: pointer; transition: .2s; }
+    .btn-hdr:hover { border-color: var(--gold); color: var(--gold); }
+    .btn-hdr-gold { font-family: 'Rajdhani',sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 1px; padding: 8px 18px; border-radius: 7px; border: none; background: var(--gold); color: #080c12; cursor: pointer; transition: .2s; }
+    .btn-hdr-gold:hover { background: #ffd055; box-shadow: 0 0 14px rgba(240,192,64,.3); }
+
+    /* SIDEBAR */
+    .sidebar { position: fixed; left: 0; top: 64px; bottom: 0; width: 60px; z-index: 100; display: flex; flex-direction: column; align-items: center; padding: 20px 0; gap: 4px; background: rgba(8,12,18,.9); border-right: 1px solid var(--border); backdrop-filter: blur(10px); }
+    .sb { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); cursor: pointer; transition: .2s; position: relative; }
+    .sb:hover { color: var(--text); background: rgba(255,255,255,.05); }
+    .sb.active { color: var(--gold); background: var(--gold-glow); }
+    .sb svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    .sb .tip { position: absolute; left: 52px; top: 50%; transform: translateY(-50%); background: #1a2436; color: var(--text); font-size: 12px; padding: 4px 10px; border-radius: 5px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 300; }
+    .sb:hover .tip { opacity: 1; }
+    .sb-sep { width: 28px; height: 1px; background: var(--border); margin: 4px 0; }
+
+    /* PAGE */
+    .page {   position: relative; z-index: 1; }
+
+    /* HERO */
+    .hero {
+      padding: 48px 48px 36px;
+      position: relative; overflow: hidden;
+    }
+    .hero-glow { position: absolute; top: -80px; right: 10%; width: 500px; height: 300px; background: radial-gradient(ellipse, rgba(240,192,64,.05), transparent 70%); pointer-events: none; }
+    .hero-label { font-size: 11px; font-weight: 700; color: var(--gold); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px; display: flex; align-items: center; gap: 7px; }
+    .hero-label::before { content:''; width: 20px; height: 1px; background: var(--gold); }
+    .hero-title { font-family: 'Rajdhani',sans-serif; font-size: clamp(32px,4vw,52px); font-weight: 700; color: #fff; line-height: 1.05; margin-bottom: 10px; }
+    .hero-title em { color: var(--gold); font-style: normal; }
+    .hero-sub { font-size: 14px; color: var(--text-dim); max-width: 500px; line-height: 1.7; }
+
+    /* HERO COUNTERS */
+    .hero-counters { display: flex; gap: 28px; margin-top: 28px; }
+    .hcount { }
+    .hcount-val { font-family: 'Rajdhani',sans-serif; font-size: 26px; font-weight: 700; color: var(--gold); }
+    .hcount-key { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: .5px; margin-top: 1px; }
+    .hcount-sep { width: 1px; background: var(--border); align-self: stretch; }
+
+    /* FILTER BAR */
+    .filter-bar {
+      position: sticky; top: 64px; z-index: 50;
+      background: rgba(8,12,18,.95); backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 48px;
+    }
+
+    /* TAB ROW — Все / Студенческие / Мои */
+    .tab-row { display: flex; gap: 2px; border-bottom: 1px solid var(--border); }
+    .tab-main { font-family: 'Exo 2',sans-serif; font-size: 13px; font-weight: 500; color: var(--text-dim); padding: 13px 18px; cursor: pointer; border: none; background: none; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: .2s; display: flex; align-items: center; gap: 7px; white-space: nowrap; }
+    .tab-main svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .tab-main .cnt { background: var(--bg-card2); border: 1px solid var(--border); border-radius: 20px; font-size: 11px; padding: 1px 8px; color: var(--text-muted); transition: .2s; }
+    .tab-main:hover { color: var(--text); }
+    .tab-main.active { color: var(--gold); border-bottom-color: var(--gold); }
+    .tab-main.active .cnt { background: var(--gold-dim); border-color: rgba(240,192,64,.3); color: var(--gold); }
+
+    /* GAME FILTER PILLS */
+    .game-row { display: flex; align-items: center; gap: 8px; padding: 12px 0; overflow-x: auto; scrollbar-width: none; }
+    .game-row::-webkit-scrollbar { display: none; }
+    .game-pill {
+      display: flex; align-items: center; gap: 7px;
+      padding: 7px 16px; border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text-dim); font-size: 13px; font-weight: 500;
+      cursor: pointer; transition: .2s; white-space: nowrap; flex-shrink: 0;
+    }
+    .game-pill:hover { border-color: var(--border-hi); color: var(--text); }
+    .game-pill.active { border-color: var(--gold); background: var(--gold-dim); color: var(--gold); }
+    .game-pill .game-emoji { font-size: 16px; }
+    .game-pill .game-count { font-size: 10px; background: rgba(255,255,255,.06); border-radius: 10px; padding: 1px 7px; margin-left: 2px; }
+    .game-pill.active .game-count { background: rgba(240,192,64,.15); color: var(--gold); }
+
+    /* STATUS + SORT ROW */
+    .control-row { display: flex; align-items: center; gap: 10px; padding: 10px 0 14px; flex-wrap: wrap; }
+    .status-btns { display: flex; gap: 6px; }
+    .status-btn { font-size: 11px; font-weight: 600; padding: 5px 14px; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--text-muted); cursor: pointer; transition: .2s; letter-spacing: .3px; display: flex; align-items: center; gap: 5px; }
+    .status-btn:hover { border-color: var(--border-hi); color: var(--text-dim); }
+    .status-btn.active-open { border-color: rgba(74,222,128,.3); background: rgba(74,222,128,.08); color: var(--success); }
+    .status-btn.active-live { border-color: rgba(248,113,113,.3); background: rgba(248,113,113,.08); color: var(--red); }
+    .status-btn.active-soon { border-color: rgba(240,192,64,.3); background: var(--gold-dim); color: var(--gold); }
+    .status-btn.active-done { border-color: rgba(92,112,144,.3); background: rgba(92,112,144,.08); color: var(--text-dim); }
+    .status-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+    .status-btn.active-live .status-dot { animation: blink 1s infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.2} }
+
+    .sort-wrap { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+    .sort-label { font-size: 12px; color: var(--text-muted); }
+    .sort-select { background: var(--bg-card); border: 1px solid var(--border); border-radius: 7px; padding: 6px 12px; font-size: 12px; color: var(--text-dim); font-family: 'Exo 2',sans-serif; outline: none; cursor: pointer; transition: .2s; }
+    .sort-select:hover { border-color: var(--border-hi); }
+    .sort-select option { background: #0d1420; }
+
+    .search-wrap { position: relative; }
+    .search-input { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 7px 14px 7px 36px; font-size: 13px; color: var(--text); font-family: 'Exo 2',sans-serif; outline: none; transition: .2s; width: 220px; }
+    .search-input:focus { border-color: var(--gold); width: 260px; }
+    .search-input::placeholder { color: var(--text-muted); }
+    .search-icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none; }
+    .search-icon svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; display: block; }
+
+    /* CONTENT */
+    .content { padding: 28px 48px 80px; }
+
+    /* FEATURED STRIP */
+    .featured-strip { margin-bottom: 32px; }
+    .strip-label { font-size: 11px; font-weight: 700; color: var(--gold); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+    .strip-label::after { content:''; flex: 1; height: 1px; background: linear-gradient(to right, rgba(240,192,64,.2), transparent); }
+
+    .featured-card {
+      background: var(--bg-card);
+      border: 1px solid rgba(240,192,64,.25);
+      border-radius: 16px; overflow: hidden;
+      display: grid; grid-template-columns: 380px 1fr;
+      transition: .2s; cursor: pointer; position: relative;
+    }
+    .featured-card::before { content:''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--gold), transparent); }
+    .featured-card:hover { border-color: rgba(240,192,64,.5); transform: translateY(-2px); }
+    .fc-img { position: relative; overflow: hidden; }
+    .fc-img-bg { width: 100%; height: 100%; background: url('/images/hero-bg.jpg') center/cover no-repeat; min-height: 220px; opacity: .7; }
+    .fc-img-overlay { position: absolute; inset: 0; background: linear-gradient(to right, transparent 50%, rgba(13,20,32,1) 100%), linear-gradient(to bottom, transparent 40%, rgba(13,20,32,.7) 100%); }
+    .fc-badge { position: absolute; top: 14px; left: 14px; background: var(--gold); color: #080c12; font-family: 'Rajdhani',sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; padding: 4px 12px; border-radius: 5px; text-transform: uppercase; }
+    .fc-body { padding: 28px 28px 24px; display: flex; flex-direction: column; justify-content: space-between; }
+    .fc-meta { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+    .fc-tag { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 5px; }
+    .fc-tag-game { background: rgba(96,165,250,.1); color: var(--blue); border: 1px solid rgba(96,165,250,.2); }
+    .fc-tag-live { background: rgba(248,113,113,.1); color: var(--red); border: 1px solid rgba(248,113,113,.2); display: flex; align-items: center; gap: 4px; }
+    .fc-tag-free { background: rgba(74,222,128,.1); color: var(--success); border: 1px solid rgba(74,222,128,.2); }
+    .fc-tag-edu { background: rgba(167,139,250,.1); color: var(--purple); border: 1px solid rgba(167,139,250,.2); }
+    .fc-title { font-family: 'Rajdhani',sans-serif; font-size: 26px; font-weight: 700; color: #fff; line-height: 1.1; margin-bottom: 10px; }
+    .fc-desc { font-size: 13px; color: var(--text-dim); line-height: 1.7; margin-bottom: 18px; }
+    .fc-stats { display: flex; gap: 20px; margin-bottom: 20px; }
+    .fc-stat-val { font-family: 'Rajdhani',sans-serif; font-size: 20px; font-weight: 700; color: var(--gold); }
+    .fc-stat-key { font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: .5px; }
+    .fc-btns { display: flex; gap: 10px; }
+    .btn-gold { font-family: 'Rajdhani',sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 1px; padding: 10px 22px; border-radius: 8px; background: var(--gold); color: #080c12; border: none; cursor: pointer; transition: .2s; display: flex; align-items: center; gap: 7px; }
+    .btn-gold svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+    .btn-gold:hover { background: #ffd055; box-shadow: 0 0 18px rgba(240,192,64,.3); }
+    .btn-ghost { font-family: 'Rajdhani',sans-serif; font-size: 14px; font-weight: 600; letter-spacing: .8px; padding: 10px 20px; border-radius: 8px; background: transparent; border: 1px solid rgba(255,255,255,.1); color: var(--text); cursor: pointer; transition: .2s; }
+    .btn-ghost:hover { border-color: rgba(255,255,255,.22); background: rgba(255,255,255,.04); }
+
+    /* GRID */
+    .grid-label { font-size: 11px; font-weight: 700; color: var(--text-dim); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; }
+    .grid-label span { display: flex; align-items: center; gap: 8px; }
+    .grid-label span::after { content:''; width: 40px; height: 1px; background: var(--border); }
+    .result-count { font-size: 12px; color: var(--text-muted); font-weight: 400; letter-spacing: 0; text-transform: none; }
+
+    .t-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+
+    /* TOURNAMENT CARD */
+    .t-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 12px; overflow: hidden;
+      cursor: pointer; transition: border-color .2s, transform .2s;
+      display: flex; flex-direction: column;
+      text-decoration: none; color: inherit;
+    }
+    .t-card:hover { border-color: var(--border-hi); transform: translateY(-2px); }
+    .t-card.card-live { border-color: rgba(248,113,113,.2); }
+    .t-card.card-live:hover { border-color: rgba(248,113,113,.5); }
+    .t-card.card-edu { border-color: rgba(167,139,250,.15); }
+    .t-card.card-edu:hover { border-color: rgba(167,139,250,.4); }
+
+    .t-thumb { height: 130px; position: relative; overflow: hidden; flex-shrink: 0; }
+    .t-thumb-bg { width: 100%; height: 100%; transition: transform .4s; }
+    .t-card:hover .t-thumb-bg { transform: scale(1.04); }
+    .t-thumb-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 30%, rgba(13,20,32,1) 100%); }
+
+    .t-status-badge { position: absolute; top: 10px; right: 10px; font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 5px; display: flex; align-items: center; gap: 4px; letter-spacing: .5px; text-transform: uppercase; }
+    .sb-live { background: rgba(248,113,113,.15); color: var(--red); border: 1px solid rgba(248,113,113,.3); }
+    .sb-open { background: rgba(74,222,128,.1); color: var(--success); border: 1px solid rgba(74,222,128,.2); }
+    .sb-soon { background: var(--gold-dim); color: var(--gold); border: 1px solid rgba(240,192,64,.3); }
+    .sb-done { background: rgba(92,112,144,.1); color: var(--text-dim); border: 1px solid rgba(92,112,144,.2); }
+    .sb-dot { width: 4px; height: 4px; border-radius: 50%; background: currentColor; }
+    .sb-live .sb-dot { animation: blink 1s infinite; }
+
+    .t-game-tag { position: absolute; top: 10px; left: 10px; font-size: 10px; font-weight: 700; background: rgba(8,12,18,.8); border: 1px solid var(--border-hi); border-radius: 5px; padding: 3px 9px; color: var(--text); letter-spacing: .3px; }
+    .t-edu-tag { position: absolute; bottom: 10px; left: 10px; font-size: 10px; font-weight: 700; background: rgba(167,139,250,.12); border: 1px solid rgba(167,139,250,.2); border-radius: 4px; padding: 2px 8px; color: var(--purple); }
+
+    .t-body { padding: 14px 16px 16px; flex: 1; display: flex; flex-direction: column; }
+    .t-name { font-family: 'Rajdhani',sans-serif; font-size: 16px; font-weight: 700; color: #fff; line-height: 1.25; margin-bottom: 8px; }
+    .t-metas { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+    .t-meta { font-size: 11px; color: var(--text-dim); display: flex; align-items: center; gap: 4px; }
+    .t-meta svg { width: 11px; height: 11px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+
+    .t-bar-wrap { margin-bottom: 12px; }
+    .t-bar-top { display: flex; justify-content: space-between; font-size: 10px; color: var(--text-muted); margin-bottom: 4px; }
+    .t-bar { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
+    .t-bar-fill { height: 100%; border-radius: 2px; transition: width .8s ease; }
+    .t-bar-fill.open { background: var(--success); }
+    .t-bar-fill.live { background: var(--red); }
+    .t-bar-fill.soon { background: var(--gold); }
+
+    .t-footer { display: flex; align-items: flex-end; justify-content: space-between; margin-top: auto; }
+    .t-prize-wrap { }
+    .t-prize { font-family: 'Rajdhani',sans-serif; font-size: 18px; font-weight: 700; color: var(--gold); line-height: 1; }
+    .t-prize-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; margin-top: 2px; }
+    .t-fee { font-size: 11px; color: var(--text-dim); }
+    .t-fee.free { color: var(--success); }
+    .t-action { font-family: 'Rajdhani',sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 1px; padding: 7px 16px; border-radius: 7px; border: none; cursor: pointer; transition: .2s; text-transform: uppercase; }
+    .ta-reg { background: var(--gold); color: #080c12; }
+    .ta-reg:hover { background: #ffd055; }
+    .ta-watch { background: transparent; border: 1px solid rgba(248,113,113,.3); color: var(--red); }
+    .ta-watch:hover { background: rgba(248,113,113,.08); }
+    .ta-info { background: transparent; border: 1px solid var(--border-hi); color: var(--text-dim); }
+    .ta-info:hover { border-color: var(--gold); color: var(--gold); }
+
+    /* EMPTY STATE */
+    .empty-state { text-align: center; padding: 80px 20px; }
+    .empty-icon { font-size: 52px; margin-bottom: 16px; filter: grayscale(1) opacity(.4); }
+    .empty-title { font-family: 'Rajdhani',sans-serif; font-size: 22px; font-weight: 700; color: var(--text-dim); margin-bottom: 8px; }
+    .empty-sub { font-size: 13px; color: var(--text-muted); }
+
+    /* PAGINATION */
+    .pagination { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 48px; }
+    .pg-btn { width: 36px; height: 36px; border-radius: 8px; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-dim); font-size: 13px; font-weight: 500; cursor: pointer; transition: .2s; display: flex; align-items: center; justify-content: center; }
+    .pg-btn:hover { border-color: var(--gold); color: var(--gold); }
+    .pg-btn.active { background: var(--gold); border-color: var(--gold); color: #080c12; font-weight: 700; }
+    .pg-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+    /* FADE */
+    .fade-up { opacity: 0; transform: translateY(14px); transition: opacity .4s ease, transform .4s ease; }
+    .fade-up.visible { opacity: 1; transform: translateY(0); }
+
+    /* FOOTER */
+    footer { border-top: 1px solid var(--border); padding: 22px 48px; display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: var(--text-muted); flex-wrap: wrap; gap: 10px; }
+    footer a { color: var(--text-dim); text-decoration: none; transition: color .2s; }
+    footer a:hover { color: var(--gold); }
+
+    @media(max-width: 900px) { .featured-card { grid-template-columns: 1fr; } .fc-img-bg { min-height: 160px; } }
+    @media(max-width: 768px) { .page { margin-left: 0; } .sidebar { display: none; } .hero, .filter-bar, .content { padding-left: 20px; padding-right: 20px; } .t-grid { grid-template-columns: 1fr; } .hero-counters { gap: 16px; } footer { padding: 20px; } }
+  </style>
+</head>
+<body>
+<div class="grid-bg"></div>
+
+<!-- HEADER -->
+
+
+<!-- SIDEBAR -->
+
+
+<div class="page">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-glow"></div>
+    <div class="hero-label">Game Genesis</div>
+    <h1 class="hero-title">Все турниры<br><em>Чеченской Республики</em></h1>
+    <p class="hero-sub">Находи соревнования по своей игре, регистрируйся и побеждай. Студенческие лиги, открытые чемпионаты и онлайн турниры.</p>
+    <div class="hero-counters">
+      <div class="hcount"><div class="hcount-val" id="cnt-total">12</div><div class="hcount-key">Турниров</div></div>
+      <div class="hcount-sep"></div>
+      <div class="hcount"><div class="hcount-val" id="cnt-open">5</div><div class="hcount-key">Открытых</div></div>
+      <div class="hcount-sep"></div>
+      <div class="hcount"><div class="hcount-val" id="cnt-players">340</div><div class="hcount-key">Игроков</div></div>
+      <div class="hcount-sep"></div>
+      <div class="hcount"><div class="hcount-val">135 000 ₽</div><div class="hcount-key">Призовых</div></div>
+    </div>
+  </div>
+
+  <!-- FILTER BAR -->
+  <div class="filter-bar">
+
+    <!-- Вкладки: Все / Студенческие / Live / Мои -->
+    <div class="tab-row">
+      <button class="tab-main active" data-tab="all" onclick="setTab(this)">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Все турниры <span class="cnt" id="tab-all-cnt">12</span>
+      </button>
+      <button class="tab-main" data-tab="student" onclick="setTab(this)">
+        <svg viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+        Студенческие <span class="cnt" id="tab-edu-cnt">4</span>
+      </button>
+      <button class="tab-main" data-tab="live" onclick="setTab(this)">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+        Идут сейчас <span class="cnt" id="tab-live-cnt">2</span>
+      </button>
+      <button class="tab-main" data-tab="mine" onclick="setTab(this)">
+        <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Мои <span class="cnt" id="tab-mine-cnt">2</span>
+      </button>
+    </div>
+
+    <!-- Фильтр по играм -->
+    <div class="game-row" id="game-row">
+      <div class="game-pill active" data-game="all" onclick="setGame(this)">
+        <span>🎮</span> Все игры <span class="game-count">12</span>
+      </div>
+      <div class="game-pill" data-game="CS2" onclick="setGame(this)">
+        <span class="game-emoji">🔫</span> CS2 <span class="game-count">5</span>
+      </div>
+      <div class="game-pill" data-game="Dota 2" onclick="setGame(this)">
+        <span class="game-emoji">⚔️</span> Dota 2 <span class="game-count">3</span>
+      </div>
+      <div class="game-pill" data-game="Valorant" onclick="setGame(this)">
+        <span class="game-emoji">🎯</span> Valorant <span class="game-count">2</span>
+      </div>
+      <div class="game-pill" data-game="FIFA" onclick="setGame(this)">
+        <span class="game-emoji">⚽</span> FIFA 25 <span class="game-count">1</span>
+      </div>
+      <div class="game-pill" data-game="Mobile Legends" onclick="setGame(this)">
+        <span class="game-emoji">📱</span> Mobile Legends <span class="game-count">1</span>
+      </div>
+    </div>
+
+    <!-- Статус + Сортировка + Поиск -->
+    <div class="control-row">
+      <div class="status-btns">
+        <button class="status-btn active-open active-filter" data-status="open" onclick="toggleStatus(this)">
+          <span class="status-dot"></span> Открытые
+        </button>
+        <button class="status-btn active-live" data-status="live" onclick="toggleStatus(this)" style="color:var(--text-muted);border-color:var(--border);background:transparent;">
+          <span class="status-dot" style="background:var(--text-muted)"></span> Live
+        </button>
+        <button class="status-btn active-soon" data-status="soon" onclick="toggleStatus(this)" style="color:var(--text-muted);border-color:var(--border);background:transparent;">
+          <span class="status-dot" style="background:var(--text-muted)"></span> Скоро
+        </button>
+        <button class="status-btn active-done" data-status="done" onclick="toggleStatus(this)" style="color:var(--text-muted);border-color:var(--border);background:transparent;">
+          <span class="status-dot" style="background:var(--text-muted)"></span> Завершены
+        </button>
+      </div>
+
+      <div class="sort-wrap">
+        <div class="search-wrap">
+          <span class="search-icon"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+          <input class="search-input" type="text" placeholder="Поиск турнира..." id="search-input" oninput="filterCards()">
+        </div>
+        <span class="sort-label">Сортировка:</span>
+        <select class="sort-select" id="sort-select" onchange="filterCards()">
+          <option value="date">По дате</option>
+          <option value="prize">По призовым</option>
+          <option value="players">По участникам</option>
+          <option value="name">По названию</option>
+        </select>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- FEATURED -->
+    <div class="featured-strip fade-up" id="featured-section">
+      <div class="strip-label">⭐ Главный турнир</div>
+      <div class="featured-card" onclick="location.href='tournament.html'">
+        <div class="fc-img">
+          <div class="fc-img-bg"></div>
+          <div class="fc-img-overlay"></div>
+          <div class="fc-badge">Featured</div>
+        </div>
+        <div class="fc-body">
+          <div>
+            <div class="fc-meta">
+              <span class="fc-tag fc-tag-game">CS2</span>
+              <span class="fc-tag fc-tag-live"><span style="width:5px;height:5px;border-radius:50%;background:currentColor;animation:blink 1s infinite;"></span>Live</span>
+              <span class="fc-tag fc-tag-free">Бесплатно</span>
+              <span class="fc-tag fc-tag-edu">Студенческий</span>
+            </div>
+            <div class="fc-title">Открытый Чемпионат Чеченской Республики 2025</div>
+            <div class="fc-desc">Крупнейший киберспортивный турнир региона. Команды из ЧГУ, ЧГПУ и других университетов республики.</div>
+            <div class="fc-stats">
+              <div><div class="fc-stat-val">50 000 ₽</div><div class="fc-stat-key">Призовой фонд</div></div>
+              <div><div class="fc-stat-val">64 / 128</div><div class="fc-stat-key">Участников</div></div>
+              <div><div class="fc-stat-val">15 июня</div><div class="fc-stat-key">Дата старта</div></div>
+            </div>
+          </div>
+          <div class="fc-btns">
+            <button class="btn-gold" onclick="event.stopPropagation();location.href='tournament-register.html'">
+              <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+              Подать заявку
+            </button>
+            <button class="btn-ghost" onclick="event.stopPropagation();location.href='tournament.html'">Подробнее</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GRID -->
+    <div>
+      <div class="grid-label">
+        <span>Все турниры</span>
+        <span class="result-count" id="result-count">Показано: 8</span>
+      </div>
+      <div class="t-grid" id="t-grid">
+
+        <!-- Карточки генерируются JS ниже, но вот 2 статичных примера для страховки -->
+
+      </div>
+
+      <div class="empty-state" id="empty-state" style="display:none;">
+        <div class="empty-icon">🎮</div>
+        <div class="empty-title">Турниры не найдены</div>
+        <div class="empty-sub">Попробуйте изменить фильтры или поисковый запрос</div>
+      </div>
+    </div>
+
+    <!-- PAGINATION -->
+    <div class="pagination" id="pagination">
+      <button class="pg-btn"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
+      <button class="pg-btn active">1</button>
+      <button class="pg-btn">2</button>
+      <button class="pg-btn"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></button>
+    </div>
+
+  </div>
+
+  <footer>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div class="logo-hex" style="width:24px;height:24px;"><svg viewBox="0 0 18 18" fill="none" style="width:12px;height:12px;"><polygon points="9,1 16,4.5 16,13.5 9,17 2,13.5 2,4.5" stroke="#080c12" stroke-width="1.5"/><circle cx="9" cy="9" r="2.5" fill="#080c12"/></svg></div>
+      <span style="font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;color:var(--gold);letter-spacing:1.5px;">GAME GENESIS</span>
+      <span>© 2024–2025</span>
+    </div>
+    <div style="display:flex;gap:20px;font-size:12px;"><a href="index.html">Главная</a><a href="create-tournament.html">Создать турнир</a><a href="auth.html">Войти</a></div>
+  </footer>
+
+</div>
+
+<script>
+// ── ДАННЫЕ ТУРНИРОВ ──
+const TOURNAMENTS = [
+  { id:1, name:'Университетская Лига Dota 2 — Весна 2025', game:'Dota 2', status:'live', edu:true, slots:32, filled:32, fee:0, prize:20000, date:'Идёт сейчас', format:'Round Robin', region:'Грозный', mine:true, desc:'Межвузовская лига среди команд ЧГУ и ЧГПУ' },
+  { id:2, name:'Valorant City Cup — Грозный', game:'Valorant', status:'open', edu:false, slots:64, filled:12, fee:750, prize:10000, date:'22 июня', format:'Single Elim', region:'Грозный', mine:true, desc:'Городской турнир по Valorant, открытая регистрация' },
+  { id:3, name:'FIFA 25 — Клубный Чемпионат ЧР', game:'FIFA', status:'open', edu:false, slots:64, filled:28, fee:300, prize:5000, date:'1 июля', format:'Single Elim', region:'Грозный', mine:false, desc:'Ежемесячный турнир по FIFA среди клубов' },
+  { id:4, name:'CS2 Студенческая Лига — ЧГУ', game:'CS2', status:'open', edu:true, slots:16, filled:10, fee:0, prize:8000, date:'18 июня', format:'Single Elim', region:'ЧГУ', mine:false, desc:'Внутриуниверситетский турнир для студентов ЧГУ' },
+  { id:5, name:'Mobile Legends Campus Cup', game:'Mobile Legends', status:'soon', edu:true, slots:32, filled:0, fee:0, prize:3000, date:'5 июля', format:'Double Elim', region:'Гудермес', mine:false, desc:'Студенческий турнир по мобильному геймингу' },
+  { id:6, name:'CS2 Pro Series — ЧР Season 2', game:'CS2', status:'open', edu:false, slots:32, filled:18, fee:1000, prize:30000, date:'10 июля', format:'Double Elim', region:'Грозный', mine:false, desc:'Профессиональная серия турниров по CS2' },
+  { id:7, name:'Dota 2 Online Cup #3', game:'Dota 2', status:'soon', edu:false, slots:16, filled:4, fee:500, prize:7000, date:'28 июня', format:'Single Elim', region:'Онлайн', mine:false, desc:'Онлайн турнир открытый для всех регионов' },
+  { id:8, name:'CS2 Межшкольный Кубок', game:'CS2', status:'done', edu:true, slots:16, filled:16, fee:0, prize:5000, date:'Завершён', format:'Single Elim', region:'Грозный', mine:false, desc:'Турнир среди школьных команд Грозного' },
+  { id:9, name:'Valorant Weekend League', game:'Valorant', status:'done', edu:false, slots:32, filled:32, fee:500, prize:12000, date:'Завершён', format:'Round Robin', region:'Онлайн', mine:false, desc:'Недельный онлайн турнир по Valorant' },
+  { id:10, name:'CS2 Ramadan Cup 2025', game:'CS2', status:'done', edu:false, slots:64, filled:64, fee:500, prize:25000, date:'Завершён', format:'Single Elim', region:'Грозный', mine:false, desc:'Специальный турнир в период Рамадана' },
+  { id:11, name:'Dota 2 Студенческая Лига — ЧГПУ', game:'Dota 2', status:'open', edu:true, slots:16, filled:6, fee:0, prize:4000, date:'25 июня', format:'Round Robin', region:'ЧГПУ', mine:false, desc:'Студенческий турнир по Dota 2 в ЧГПУ' },
+];
+
+const statusMap = { live:'Live', open:'Открыт', soon:'Скоро', done:'Завершён' };
+const statusClass = { live:'sb-live', open:'sb-open', soon:'sb-soon', done:'sb-done' };
+const gameEmoji = { 'CS2':'🔫', 'Dota 2':'⚔️', 'Valorant':'🎯', 'FIFA':'⚽', 'Mobile Legends':'📱' };
+const gameBg = { 'CS2':'linear-gradient(135deg,#0f1e35,#0a1520)', 'Dota 2':'linear-gradient(135deg,#150a20,#0f1830)', 'Valorant':'linear-gradient(135deg,#200a0a,#1a0f20)', 'FIFA':'linear-gradient(135deg,#0a1e10,#0f1a0a)', 'Mobile Legends':'linear-gradient(135deg,#0a1528,#1a1008)' };
+
+// ── СОСТОЯНИЕ ФИЛЬТРОВ ──
+let activeTab = 'all';
+let activeGame = 'all';
+let activeStatuses = new Set(['open']);
+let searchQ = '';
+let sortBy = 'date';
+
+// ── РЕНДЕР КАРТОЧКИ ──
+function renderCard(t) {
+  const pct = Math.round(t.filled / t.slots * 100);
+  const barClass = t.status === 'live' ? 'live' : t.status === 'open' ? 'open' : 'soon';
+  const actionBtn = t.status === 'live'
+    ? `<button class="t-action ta-watch" onclick="event.preventDefault();location.href='tournament.html'">▶ Смотреть</button>`
+    : t.status === 'open'
+    ? `<button class="t-action ta-reg" onclick="event.preventDefault();location.href='tournament-register.html'">Подать заявку</button>`
+    : t.status === 'soon'
+    ? `<button class="t-action ta-reg">Уведомить меня</button>`
+    : `<button class="t-action ta-info" onclick="event.preventDefault();location.href='tournament.html'">Результаты</button>`;
+
+  const eduBadge = t.edu ? `<div class="t-edu-tag">🎓 Студенческий</div>` : '';
+  const cardClass = t.status === 'live' ? 'card-live' : t.edu ? 'card-edu' : '';
+
+  return `
+    <a href="tournament.html" class="t-card ${cardClass}" data-id="${t.id}" data-game="${t.game}" data-status="${t.status}" data-edu="${t.edu}" data-mine="${t.mine}" data-prize="${t.prize}" data-filled="${t.filled}" data-name="${t.name.toLowerCase()}">
+      <div class="t-thumb">
+        <div class="t-thumb-bg" style="background:${gameBg[t.game]||'linear-gradient(135deg,#0f1e35,#1a0a2e)'};"></div>
+        <div class="t-thumb-overlay"></div>
+        <div class="t-game-tag">${gameEmoji[t.game]||'🎮'} ${t.game}</div>
+        <div class="t-status-badge ${statusClass[t.status]}"><span class="sb-dot"></span>${statusMap[t.status]}</div>
+        ${eduBadge}
+      </div>
+      <div class="t-body">
+        <div class="t-name">${t.name}</div>
+        <div class="t-metas">
+          <span class="t-meta"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>${t.date}</span>
+          <span class="t-meta"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>${t.filled}/${t.slots}</span>
+          <span class="t-meta"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>${t.region}</span>
+        </div>
+        ${t.status !== 'done' ? `
+        <div class="t-bar-wrap">
+          <div class="t-bar-top"><span>Регистрация</span><span>${t.filled}/${t.slots}</span></div>
+          <div class="t-bar"><div class="t-bar-fill ${barClass}" style="width:${pct}%"></div></div>
+        </div>` : ''}
+        <div class="t-footer">
+          <div class="t-prize-wrap">
+            <div class="t-prize">${t.prize.toLocaleString('ru-RU')} ₽</div>
+            <div class="t-prize-label">Призовой фонд</div>
+            <div class="t-fee ${t.fee === 0 ? 'free' : ''}">${t.fee === 0 ? '✓ Бесплатно' : 'Взнос: ' + t.fee + ' ₽'}</div>
+          </div>
+          ${actionBtn}
+        </div>
+      </div>
+    </a>`;
+}
+
+// ── ФИЛЬТРАЦИЯ ──
+function filterCards() {
+  searchQ = document.getElementById('search-input').value.toLowerCase();
+  sortBy = document.getElementById('sort-select').value;
+
+  let list = TOURNAMENTS.filter(t => {
+    if (activeTab === 'student' && !t.edu) return false;
+    if (activeTab === 'live' && t.status !== 'live') return false;
+    if (activeTab === 'mine' && !t.mine) return false;
+    if (activeGame !== 'all' && t.game !== activeGame) return false;
+    if (activeStatuses.size > 0 && !activeStatuses.has(t.status)) return false;
+    if (searchQ && !t.name.toLowerCase().includes(searchQ)) return false;
+    return true;
+  });
+
+  // Сортировка
+  list.sort((a,b) => {
+    if (sortBy === 'prize') return b.prize - a.prize;
+    if (sortBy === 'players') return b.filled - a.filled;
+    if (sortBy === 'name') return a.name.localeCompare(b.name, 'ru');
+    return 0;
+  });
+
+  const grid = document.getElementById('t-grid');
+  const empty = document.getElementById('empty-state');
+  const cnt = document.getElementById('result-count');
+
+  if (list.length === 0) {
+    grid.innerHTML = '';
+    empty.style.display = 'block';
+    cnt.textContent = 'Ничего не найдено';
+  } else {
+    grid.innerHTML = list.map(renderCard).join('');
+    empty.style.display = 'none';
+    cnt.textContent = `Показано: ${list.length}`;
+  }
+}
+
+// ── ВКЛАДКИ ──
+function setTab(el) {
+  document.querySelectorAll('.tab-main').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  activeTab = el.dataset.tab;
+
+  // Скрываем featured для вкладок не "все"
+  document.getElementById('featured-section').style.display = activeTab === 'all' ? 'block' : 'none';
+  filterCards();
+}
+
+// ── ФИЛЬТР ИГР ──
+function setGame(el) {
+  document.querySelectorAll('.game-pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  activeGame = el.dataset.game;
+  filterCards();
+}
+
+// ── СТАТУС ФИЛЬТРЫ (toggle) ──
+function toggleStatus(btn) {
+  const s = btn.dataset.status;
+  const classMap = { open:'active-open', live:'active-live', soon:'active-soon', done:'active-done' };
+
+  if (activeStatuses.has(s)) {
+    if (activeStatuses.size === 1) return; // хоть один должен быть активен
+    activeStatuses.delete(s);
+    btn.classList.remove(classMap[s]);
+    btn.style.color = 'var(--text-muted)';
+    btn.style.borderColor = 'var(--border)';
+    btn.style.background = 'transparent';
+    btn.querySelector('.status-dot').style.background = 'var(--text-muted)';
+  } else {
+    activeStatuses.add(s);
+    btn.classList.add(classMap[s]);
+    btn.style.color = '';
+    btn.style.borderColor = '';
+    btn.style.background = '';
+    btn.querySelector('.status-dot').style.background = '';
+  }
+  filterCards();
+}
+
+// ── FADE ──
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.05 });
+document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+
+// ── INIT ──
+// По умолчанию показываем все статусы кроме done
+activeStatuses = new Set(['open','live','soon']);
+
+// Инициализируем кнопки статусов
+document.querySelectorAll('.status-btn').forEach(btn => {
+  const s = btn.dataset.status;
+  if (activeStatuses.has(s)) {
+    const classMap = { open:'active-open', live:'active-live', soon:'active-soon', done:'active-done' };
+    btn.classList.add(classMap[s]);
+    btn.style.color = '';
+    btn.style.borderColor = '';
+    btn.style.background = '';
+  }
+});
+
+filterCards();
+</script>
+</body>
+</html>

@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <script src="/nav.js"></script>
+  <script src="/api.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Создать турнир — Game Genesis</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Exo+2:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --gold: #f0c040;
+      --gold-dim: rgba(240,192,64,0.12);
+      --gold-glow: rgba(240,192,64,0.07);
+      --bg: #080c12;
+      --bg-card: #0d1420;
+      --bg-card2: #111928;
+      --bg-input: #0a1018;
+      --border: #1a2436;
+      --border-hi: #253550;
+      --text: #dde4ef;
+      --text-dim: #5c7090;
+      --text-muted: #2e3f58;
+      --success: #4ade80;
+      --red: #f87171;
+      --blue: #60a5fa;
+    }
+    html { scroll-behavior: smooth; }
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: #1e2d42; border-radius: 3px; }
+    body { background: var(--bg); color: var(--text); font-family: 'Exo 2', sans-serif; overflow-x: hidden; min-height: 100vh; }
+
+    .grid-bg {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background-image: linear-gradient(rgba(240,192,64,0.022) 1px,transparent 1px), linear-gradient(90deg,rgba(240,192,64,0.022) 1px,transparent 1px);
+      background-size: 50px 50px;
+    }
+
+    /* HEADER */
+    header {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+      height: 64px; display: flex; align-items: center; padding: 0 32px;
+      background: rgba(8,12,18,0.92); backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+    }
+    .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; margin-right: 40px; }
+    .logo-hex { width: 36px; height: 36px; background: var(--gold); clip-path: polygon(50% 0%,93% 25%,93% 75%,50% 100%,7% 75%,7% 25%); display: flex; align-items: center; justify-content: center; }
+    .logo-hex svg { width: 18px; height: 18px; }
+    .logo-name { font-family: 'Rajdhani',sans-serif; font-size: 18px; font-weight: 700; color: var(--gold); letter-spacing: 2px; }
+    nav { display: flex; align-items: center; gap: 2px; flex: 1; }
+    .nav-a { font-size: 13px; font-weight: 500; color: var(--text-dim); text-decoration: none; padding: 6px 14px; border-radius: 6px; transition: .2s; }
+    .nav-a:hover { color: var(--text); background: rgba(255,255,255,.04); }
+    .nav-a.active { color: var(--gold); background: var(--gold-glow); }
+    .btn-back { font-family: 'Exo 2',sans-serif; font-size: 13px; font-weight: 500; padding: 7px 18px; border-radius: 7px; border: 1px solid var(--border-hi); background: transparent; color: var(--text-dim); cursor: pointer; transition: .2s; display: flex; align-items: center; gap: 6px; }
+    .btn-back svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .btn-back:hover { border-color: var(--gold); color: var(--gold); }
+
+    /* SIDEBAR */
+    .sidebar { position: fixed; left: 0; top: 64px; bottom: 0; width: 60px; z-index: 100; display: flex; flex-direction: column; align-items: center; padding: 20px 0; gap: 4px; background: rgba(8,12,18,.9); border-right: 1px solid var(--border); backdrop-filter: blur(10px); }
+    .sb-item { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); cursor: pointer; transition: .2s; position: relative; }
+    .sb-item:hover { color: var(--text); background: rgba(255,255,255,.05); }
+    .sb-item.active { color: var(--gold); background: var(--gold-glow); }
+    .sb-item svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    .sb-item .tip { position: absolute; left: 52px; top: 50%; transform: translateY(-50%); background: #1a2436; color: var(--text); font-size: 12px; padding: 4px 10px; border-radius: 5px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity .2s; }
+    .sb-item:hover .tip { opacity: 1; }
+    .sb-sep { width: 28px; height: 1px; background: var(--border); margin: 6px 0; }
+
+    /* PAGE */
+    .page {   min-height: 100vh; position: relative; z-index: 1; }
+
+    /* WIZARD LAYOUT */
+    .wizard-wrap {
+      display: grid;
+      grid-template-columns: 280px 1fr 320px;
+      gap: 0;
+      min-height: calc(100vh - 64px);
+    }
+
+    /* LEFT STEPS PANEL */
+    .steps-panel {
+      border-right: 1px solid var(--border);
+      padding: 40px 28px;
+      position: sticky; top: 64px; height: calc(100vh - 64px);
+      overflow-y: auto;
+    }
+    .steps-title { font-family: 'Rajdhani',sans-serif; font-size: 13px; font-weight: 700; color: var(--text-dim); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 24px; }
+
+    .step-item {
+      display: flex; align-items: flex-start; gap: 14px;
+      padding: 12px 0; cursor: pointer; transition: .2s;
+      border-bottom: 1px solid rgba(26,36,54,.5);
+    }
+    .step-item:last-child { border-bottom: none; }
+    .step-item:hover .step-label { color: var(--text); }
+
+    .step-dot {
+      width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Rajdhani',sans-serif; font-size: 13px; font-weight: 700;
+      background: var(--bg-card2); border: 1px solid var(--border);
+      color: var(--text-dim); transition: .3s; margin-top: 1px;
+    }
+    .step-item.active .step-dot { background: var(--gold); border-color: var(--gold); color: #080c12; }
+    .step-item.done .step-dot { background: rgba(74,222,128,.12); border-color: rgba(74,222,128,.3); color: var(--success); }
+    .step-item.done .step-dot::after { content: '✓'; font-size: 14px; }
+    .step-item.done .step-num { display: none; }
+
+    .step-text { flex: 1; }
+    .step-label {
+      font-size: 14px; font-weight: 500; color: var(--text-dim);
+      transition: color .2s; line-height: 1.3;
+    }
+    .step-item.active .step-label { color: #fff; font-weight: 600; }
+    .step-item.done .step-label { color: var(--success); }
+    .step-desc { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+    .step-connector { width: 1px; height: 14px; background: var(--border); margin-left: 13px; }
+
+    /* CENTER FORM */
+    .form-area { padding: 40px 48px 80px; }
+
+    .form-section { display: none; }
+    .form-section.active { display: block; }
+
+    .fs-header { margin-bottom: 32px; }
+    .fs-step-tag { font-size: 11px; font-weight: 700; color: var(--gold); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
+    .fs-title { font-family: 'Rajdhani',sans-serif; font-size: 32px; font-weight: 700; color: #fff; line-height: 1.05; margin-bottom: 8px; }
+    .fs-desc { font-size: 14px; color: var(--text-dim); line-height: 1.6; }
+
+    /* Fields */
+    .field { margin-bottom: 22px; }
+    .field label { display: block; font-size: 11px; font-weight: 600; color: var(--text-dim); letter-spacing: .8px; text-transform: uppercase; margin-bottom: 8px; }
+    .req { color: var(--gold); margin-left: 2px; }
+    .hint { font-size: 11px; color: var(--text-muted); margin-top: 5px; }
+    .ferr { font-size: 11px; color: var(--red); margin-top: 4px; display: none; }
+    .ferr.show { display: block; }
+
+    input[type=text], input[type=number], input[type=date], input[type=time], input[type=url], textarea, select {
+      width: 100%; background: var(--bg-input); border: 1px solid var(--border);
+      border-radius: 8px; padding: 11px 14px; font-size: 14px; color: var(--text);
+      font-family: 'Exo 2',sans-serif; outline: none; transition: border-color .2s, background .2s;
+      -webkit-appearance: none;
+    }
+    input::placeholder, textarea::placeholder { color: var(--text-muted); font-size: 13px; }
+    input:focus, select:focus, textarea:focus { border-color: var(--gold); background: #0c1520; }
+    input.err, select.err { border-color: var(--red); }
+    textarea { resize: vertical; min-height: 90px; }
+    select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235c7090' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 38px; }
+    select option { background: #0d1420; }
+
+    .input-prefix { position: relative; }
+    .input-prefix span { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--gold); font-family: 'Rajdhani',sans-serif; font-weight: 700; font-size: 16px; pointer-events: none; }
+    .input-prefix input { padding-left: 30px; }
+
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .field-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+    /* Type cards */
+    .type-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 4px; }
+    .type-card {
+      background: var(--bg-card); border: 2px solid var(--border);
+      border-radius: 12px; padding: 18px 14px; text-align: center;
+      cursor: pointer; transition: .2s; user-select: none;
+    }
+    .type-card:hover { border-color: var(--border-hi); }
+    .type-card.selected { border-color: var(--gold); background: var(--gold-dim); }
+    .type-icon { font-size: 28px; margin-bottom: 8px; }
+    .type-name { font-family: 'Rajdhani',sans-serif; font-size: 15px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+    .type-desc { font-size: 11px; color: var(--text-dim); line-height: 1.4; }
+    .type-card.selected .type-desc { color: rgba(240,192,64,.7); }
+
+    /* Payment type toggle */
+    .pay-toggle { display: flex; gap: 10px; }
+    .pay-opt {
+      flex: 1; background: var(--bg-card); border: 2px solid var(--border);
+      border-radius: 10px; padding: 16px; cursor: pointer; transition: .2s; text-align: center;
+    }
+    .pay-opt:hover { border-color: var(--border-hi); }
+    .pay-opt.selected { border-color: var(--gold); background: var(--gold-dim); }
+    .pay-opt-icon { font-size: 24px; margin-bottom: 6px; }
+    .pay-opt-title { font-family: 'Rajdhani',sans-serif; font-size: 16px; font-weight: 700; color: #fff; }
+    .pay-opt-sub { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+    .pay-opt.selected .pay-opt-sub { color: rgba(240,192,64,.6); }
+
+    /* Paid section */
+    #paid-section { display: none; }
+    #paid-section.show { display: block; }
+
+    /* Slider */
+    .slider-wrap { margin: 10px 0 6px; }
+    input[type=range] {
+      width: 100%; background: transparent; border: none; padding: 0;
+      -webkit-appearance: none; cursor: pointer;
+    }
+    input[type=range]::-webkit-slider-track { height: 4px; background: var(--border); border-radius: 2px; }
+    input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--gold); border: 2px solid #080c12; margin-top: -7px; box-shadow: 0 0 10px rgba(240,192,64,.4); }
+    input[type=range]:focus { outline: none; border: none; }
+    .slider-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+    /* Nav buttons */
+    .form-nav { display: flex; align-items: center; justify-content: space-between; margin-top: 36px; padding-top: 28px; border-top: 1px solid var(--border); }
+    .btn-prev { font-family: 'Exo 2',sans-serif; font-size: 13px; font-weight: 500; padding: 10px 22px; border-radius: 8px; border: 1px solid var(--border-hi); background: transparent; color: var(--text-dim); cursor: pointer; transition: .2s; display: flex; align-items: center; gap: 7px; }
+    .btn-prev svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .btn-prev:hover { border-color: var(--gold); color: var(--gold); }
+    .btn-next { font-family: 'Rajdhani',sans-serif; font-size: 16px; font-weight: 700; letter-spacing: 1.5px; padding: 11px 32px; border-radius: 8px; border: none; background: var(--gold); color: #080c12; cursor: pointer; transition: .2s; display: flex; align-items: center; gap: 8px; }
+    .btn-next svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+    .btn-next:hover { background: #ffd055; box-shadow: 0 0 20px rgba(240,192,64,.3); }
+    .btn-next:disabled { background: var(--border-hi); color: var(--text-muted); box-shadow: none; cursor: not-allowed; }
+
+    /* PROGRESS BAR */
+    .progress-bar-wrap { margin-bottom: 28px; }
+    .progress-bar { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
+    .progress-fill { height: 100%; background: var(--gold); border-radius: 2px; transition: width .4s ease; }
+    .progress-text { font-size: 11px; color: var(--text-dim); margin-top: 6px; }
+
+    /* RIGHT PREVIEW PANEL */
+    .preview-panel {
+      border-left: 1px solid var(--border);
+      padding: 40px 24px;
+      position: sticky; top: 64px; height: calc(100vh - 64px);
+      overflow-y: auto;
+    }
+    .preview-title { font-family: 'Rajdhani',sans-serif; font-size: 13px; font-weight: 700; color: var(--text-dim); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 20px; }
+
+    /* Preview card */
+    .preview-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 12px; overflow: hidden; margin-bottom: 16px;
+    }
+    .preview-card-top { height: 90px; background: linear-gradient(135deg, #0f1e35, #1a0a2e); position: relative; display: flex; align-items: flex-end; padding: 10px 14px; }
+    .preview-card-top::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 40%, rgba(13,20,32,.9)); }
+    .preview-game-badge { position: relative; z-index: 1; font-size: 10px; font-weight: 700; color: var(--text); background: rgba(8,12,18,.7); border: 1px solid var(--border-hi); border-radius: 4px; padding: 2px 8px; }
+    .preview-body { padding: 14px; }
+    .preview-t-name { font-family: 'Rajdhani',sans-serif; font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 10px; min-height: 20px; }
+    .preview-row { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(26,36,54,.5); font-size: 12px; }
+    .preview-row:last-child { border-bottom: none; }
+    .pr-key { color: var(--text-dim); }
+    .pr-val { color: var(--text); font-weight: 500; }
+    .pr-val.gold { color: var(--gold); font-family: 'Rajdhani',sans-serif; font-size: 14px; font-weight: 700; }
+    .pr-val.green { color: var(--success); }
+    .pr-placeholder { color: var(--text-muted); font-style: italic; }
+
+    /* CALCULATOR */
+    .calc-box {
+      background: rgba(240,192,64,.06); border: 1px solid rgba(240,192,64,.2);
+      border-radius: 12px; padding: 18px; display: none;
+    }
+    .calc-box.show { display: block; }
+    .calc-title { font-family: 'Rajdhani',sans-serif; font-size: 14px; font-weight: 700; color: var(--gold); margin-bottom: 14px; display: flex; align-items: center; gap: 6px; }
+    .calc-title svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .calc-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid rgba(240,192,64,.1); font-size: 12px; }
+    .calc-row:last-child { border-bottom: none; }
+    .cr-key { color: rgba(221,228,239,.5); }
+    .cr-val { font-family: 'Rajdhani',sans-serif; font-size: 15px; font-weight: 700; color: var(--gold); }
+    .cr-val.dim { color: var(--text-dim); font-size: 13px; }
+    .cr-val.green { color: var(--success); }
+    .cr-val.red { color: var(--red); }
+    .calc-divider { border: none; border-top: 1px solid rgba(240,192,64,.15); margin: 4px 0; }
+
+    /* SUCCESS */
+    #success-screen { display: none; }
+    .success-wrap { max-width: 520px; margin: 80px auto; text-align: center; padding: 0 24px; }
+    .success-circle { width: 90px; height: 90px; border-radius: 50%; background: rgba(74,222,128,.1); border: 1px solid rgba(74,222,128,.25); display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; }
+    .success-circle svg { width: 40px; height: 40px; stroke: var(--success); fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+    .success-title { font-family: 'Rajdhani',sans-serif; font-size: 36px; font-weight: 700; color: #fff; margin-bottom: 10px; }
+    .success-sub { font-size: 14px; color: var(--text-dim); line-height: 1.7; margin-bottom: 28px; }
+    .success-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; text-align: left; margin-bottom: 28px; }
+    .sc-label { font-size: 11px; color: var(--gold); font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px; }
+    .sc-row { display: flex; justify-content: space-between; font-size: 13px; padding: 5px 0; border-bottom: 1px solid rgba(26,36,54,.6); }
+    .sc-row:last-child { border-bottom: none; }
+    .sc-row span:first-child { color: var(--text-dim); }
+    .sc-row span:last-child { color: var(--text); font-weight: 500; }
+    .success-btns { display: flex; gap: 12px; justify-content: center; }
+
+    /* FOOTER */
+    footer { border-top: 1px solid var(--border); padding: 22px 48px; display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: var(--text-muted); flex-wrap: wrap; gap: 10px; }
+    footer a { color: var(--text-dim); text-decoration: none; transition: color .2s; }
+    footer a:hover { color: var(--gold); }
+
+    @media(max-width:1100px) { .wizard-wrap { grid-template-columns: 220px 1fr; } .preview-panel { display: none; } }
+    @media(max-width:768px) { .page { margin-left: 0; } .sidebar { display: none; } .wizard-wrap { grid-template-columns: 1fr; } .steps-panel { display: none; } .form-area { padding: 28px 20px 60px; } .type-cards { grid-template-columns: 1fr; } .field-row, .field-row-3 { grid-template-columns: 1fr; } footer { padding: 20px; } }
+  </style>
+</head>
+<body>
+<div class="grid-bg"></div>
+
+<!-- HEADER -->
+
+
+<!-- SIDEBAR -->
+
+
+<div class="page">
+  <div class="wizard-wrap" id="wizard-wrap">
+
+    <!-- LEFT STEPS -->
+    <div class="steps-panel">
+      <div class="steps-title">Шаги создания</div>
+
+      <div class="step-item active" id="si-1" onclick="goToStep(1)">
+        <div class="step-dot"><span class="step-num">1</span></div>
+        <div class="step-text">
+          <div class="step-label">Название и игра</div>
+          <div class="step-desc">Основная информация</div>
+        </div>
+      </div>
+      <div class="step-connector"></div>
+      <div class="step-item" id="si-2" onclick="goToStep(2)">
+        <div class="step-dot"><span class="step-num">2</span></div>
+        <div class="step-text">
+          <div class="step-label">Формат и тип</div>
+          <div class="step-desc">Структура сетки</div>
+        </div>
+      </div>
+      <div class="step-connector"></div>
+      <div class="step-item" id="si-3" onclick="goToStep(3)">
+        <div class="step-dot"><span class="step-num">3</span></div>
+        <div class="step-text">
+          <div class="step-label">Участники и даты</div>
+          <div class="step-desc">Лимиты и расписание</div>
+        </div>
+      </div>
+      <div class="step-connector"></div>
+      <div class="step-item" id="si-4" onclick="goToStep(4)">
+        <div class="step-dot"><span class="step-num">4</span></div>
+        <div class="step-text">
+          <div class="step-label">Взнос и призы</div>
+          <div class="step-desc">Финансовые условия</div>
+        </div>
+      </div>
+      <div class="step-connector"></div>
+      <div class="step-item" id="si-5" onclick="goToStep(5)">
+        <div class="step-dot"><span class="step-num">5</span></div>
+        <div class="step-text">
+          <div class="step-label">Публикация</div>
+          <div class="step-desc">Проверка и запуск</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CENTER FORM -->
+    <div class="form-area">
+
+      <!-- STEP 1 -->
+      <div class="form-section active" id="fs-1">
+        <div class="fs-header">
+          <div class="fs-step-tag">Шаг 1 из 5</div>
+          <h1 class="fs-title">Название<br>и дисциплина</h1>
+          <p class="fs-desc">Дайте турниру запоминающееся имя и выберите игру.</p>
+        </div>
+
+        <div class="progress-bar-wrap">
+          <div class="progress-bar"><div class="progress-fill" style="width:20%"></div></div>
+          <div class="progress-text">Шаг 1 из 5</div>
+        </div>
+
+        <div class="field">
+          <label for="t-name">Название турнира <span class="req">*</span></label>
+          <input type="text" id="t-name" placeholder="Открытый Чемпионат Чеченской Республики" oninput="updatePreview()">
+          <div class="ferr" id="err-name">Введите название турнира</div>
+        </div>
+
+        <div class="field">
+          <label for="t-desc">Описание</label>
+          <textarea id="t-desc" placeholder="Расскажите участникам о турнире, правилах и особенностях..." oninput="updatePreview()"></textarea>
+        </div>
+
+        <div class="field">
+          <label for="t-game">Игра <span class="req">*</span></label>
+          <select id="t-game" onchange="updatePreview()">
+            <option value="">— Выберите дисциплину —</option>
+            <option value="CS2">CS2</option>
+            <option value="Dota 2">Dota 2</option>
+            <option value="Valorant">Valorant</option>
+            <option value="FIFA 25">FIFA 25 / EA FC</option>
+            <option value="Mobile Legends">Mobile Legends</option>
+            <option value="PUBG Mobile">PUBG Mobile</option>
+            <option value="Другое">Другое</option>
+          </select>
+          <div class="ferr" id="err-game">Выберите игру</div>
+        </div>
+
+        <div class="field">
+          <label>Регион проведения</label>
+          <select id="t-region" onchange="updatePreview()">
+            <option value="Чеченская Республика">Чеченская Республика</option>
+            <option value="Грозный">Грозный</option>
+            <option value="Онлайн">Онлайн</option>
+            <option value="Другой">Другой регион</option>
+          </select>
+        </div>
+
+        <div class="form-nav">
+          <div></div>
+          <button class="btn-next" onclick="nextStep(1)">
+            Далее
+            <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP 2 -->
+      <div class="form-section" id="fs-2">
+        <div class="fs-header">
+          <div class="fs-step-tag">Шаг 2 из 5</div>
+          <h1 class="fs-title">Формат<br>и тип турнира</h1>
+          <p class="fs-desc">Выберите структуру соревнований.</p>
+        </div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar"><div class="progress-fill" style="width:40%"></div></div>
+          <div class="progress-text">Шаг 2 из 5</div>
+        </div>
+
+        <div class="field">
+          <label>Тип сетки <span class="req">*</span></label>
+          <div class="type-cards">
+            <div class="type-card selected" id="tc-se" onclick="selectType('se')">
+              <div class="type-icon">⚡</div>
+              <div class="type-name">Single Elimination</div>
+              <div class="type-desc">Одно поражение — выбывание. Быстро и напряжённо.</div>
+            </div>
+            <div class="type-card" id="tc-de" onclick="selectType('de')">
+              <div class="type-icon">🔁</div>
+              <div class="type-name">Double Elimination</div>
+              <div class="type-desc">Два шанса. Нижняя сетка для проигравших.</div>
+            </div>
+            <div class="type-card" id="tc-rr" onclick="selectType('rr')">
+              <div class="type-icon">🔄</div>
+              <div class="type-name">Round Robin</div>
+              <div class="type-desc">Все играют со всеми. Честный результат.</div>
+            </div>
+          </div>
+          <div class="ferr" id="err-type">Выберите тип турнира</div>
+        </div>
+
+        <div class="field">
+          <label for="t-team-size">Формат команды <span class="req">*</span></label>
+          <select id="t-team-size" onchange="updatePreview()">
+            <option value="1x1">1 на 1 (соло)</option>
+            <option value="2x2">2 на 2</option>
+            <option value="5x5" selected>5 на 5</option>
+            <option value="Другое">Другое</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="t-rules">Ссылка на правила</label>
+          <input type="url" id="t-rules" placeholder="https://...">
+          <div class="hint">Необязательно. Можно добавить позже.</div>
+        </div>
+
+        <div class="form-nav">
+          <button class="btn-prev" onclick="prevStep(2)"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg> Назад</button>
+          <button class="btn-next" onclick="nextStep(2)">Далее <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></button>
+        </div>
+      </div>
+
+      <!-- STEP 3 -->
+      <div class="form-section" id="fs-3">
+        <div class="fs-header">
+          <div class="fs-step-tag">Шаг 3 из 5</div>
+          <h1 class="fs-title">Участники<br>и расписание</h1>
+          <p class="fs-desc">Установите лимиты и даты проведения.</p>
+        </div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar"><div class="progress-fill" style="width:60%"></div></div>
+          <div class="progress-text">Шаг 3 из 5</div>
+        </div>
+
+        <div class="field">
+          <label for="t-slots">Максимум участников <span class="req">*</span></label>
+          <select id="t-slots" onchange="updatePreview(); calcPrize()">
+            <option value="8">8</option>
+            <option value="16" selected>16</option>
+            <option value="32">32</option>
+            <option value="64">64</option>
+            <option value="128">128</option>
+            <option value="256">256</option>
+          </select>
+          <div class="hint">Рекомендуется степень двойки для ровных сеток.</div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="t-reg-start">Регистрация открывается <span class="req">*</span></label>
+            <input type="date" id="t-reg-start" onchange="updatePreview()">
+            <div class="ferr" id="err-reg">Укажите дату</div>
+          </div>
+          <div class="field">
+            <label for="t-reg-end">Регистрация закрывается <span class="req">*</span></label>
+            <input type="date" id="t-reg-end" onchange="updatePreview()">
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="t-start">Дата начала турнира <span class="req">*</span></label>
+            <input type="date" id="t-start" onchange="updatePreview()">
+            <div class="ferr" id="err-start">Укажите дату</div>
+          </div>
+          <div class="field">
+            <label for="t-start-time">Время начала</label>
+            <input type="time" id="t-start-time" value="18:00" onchange="updatePreview()">
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="t-min-age">Минимальный возраст</label>
+          <select id="t-min-age">
+            <option value="Без ограничений">Без ограничений</option>
+            <option value="14+" selected>14+</option>
+            <option value="16+">16+</option>
+            <option value="18+">18+</option>
+          </select>
+        </div>
+
+        <div class="form-nav">
+          <button class="btn-prev" onclick="prevStep(3)"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg> Назад</button>
+          <button class="btn-next" onclick="nextStep(3)">Далее <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></button>
+        </div>
+      </div>
+
+      <!-- STEP 4 -->
+      <div class="form-section" id="fs-4">
+        <div class="fs-header">
+          <div class="fs-step-tag">Шаг 4 из 5</div>
+          <h1 class="fs-title">Взнос<br>и призовой фонд</h1>
+          <p class="fs-desc">Выберите модель оплаты и настройте распределение призов.</p>
+        </div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar"><div class="progress-fill" style="width:80%"></div></div>
+          <div class="progress-text">Шаг 4 из 5</div>
+        </div>
+
+        <div class="field">
+          <label>Тип турнира по оплате <span class="req">*</span></label>
+          <div class="pay-toggle">
+            <div class="pay-opt selected" id="po-free" onclick="selectPay('free')">
+              <div class="pay-opt-icon">🆓</div>
+              <div class="pay-opt-title">Бесплатный</div>
+              <div class="pay-opt-sub">Без взноса от участников</div>
+            </div>
+            <div class="pay-opt" id="po-paid" onclick="selectPay('paid')">
+              <div class="pay-opt-icon">💰</div>
+              <div class="pay-opt-title">Платный</div>
+              <div class="pay-opt-sub">Участники платят взнос</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PAID SECTION -->
+        <div id="paid-section">
+          <div class="field">
+            <label for="t-entry-fee">Взнос с участника (₽) <span class="req">*</span></label>
+            <div class="input-prefix">
+              <span>₽</span>
+              <input type="number" id="t-entry-fee" placeholder="500" min="100" max="50000" oninput="calcPrize(); updatePreview()">
+            </div>
+            <div class="hint">Рекомендуемый взнос: 300–1000 ₽</div>
+            <div class="ferr" id="err-fee">Укажите взнос</div>
+          </div>
+
+          <div class="field">
+            <label>
+              Доля призового фонда: <span id="prize-pct-label" style="color:var(--gold);font-weight:700;">50%</span>
+              <span style="color:var(--text-muted);font-weight:400;margin-left:4px;">(мин. 50%)</span>
+            </label>
+            <div class="slider-wrap">
+              <input type="range" id="prize-slider" min="50" max="80" value="50" step="1" oninput="onSliderChange()">
+            </div>
+            <div class="slider-labels"><span>50% (минимум)</span><span>80% (максимум)</span></div>
+            <div class="hint">20% идёт платформе Game Genesis. Остальное организатор распределяет самостоятельно.</div>
+          </div>
+        </div>
+
+        <!-- FREE prize pool -->
+        <div id="free-section">
+          <div class="field">
+            <label for="t-free-prize">Призовой фонд от организатора (₽)</label>
+            <div class="input-prefix">
+              <span>₽</span>
+              <input type="number" id="t-free-prize" placeholder="10000" min="0" oninput="calcPrize(); updatePreview()">
+            </div>
+            <div class="hint">Необязательно. Можете провести турнир без денежных призов.</div>
+          </div>
+        </div>
+
+        <div class="form-nav">
+          <button class="btn-prev" onclick="prevStep(4)"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg> Назад</button>
+          <button class="btn-next" onclick="nextStep(4)">Далее <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></button>
+        </div>
+      </div>
+
+      <!-- STEP 5 -->
+      <div class="form-section" id="fs-5">
+        <div class="fs-header">
+          <div class="fs-step-tag">Шаг 5 из 5</div>
+          <h1 class="fs-title">Проверка<br>и публикация</h1>
+          <p class="fs-desc">Убедитесь что всё верно, затем опубликуйте турнир.</p>
+        </div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+          <div class="progress-text">Последний шаг!</div>
+        </div>
+
+        <div id="review-block" style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:22px;">
+          <div style="font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;color:#fff;margin-bottom:16px;">Сводка турнира</div>
+          <div class="sc-row"><span>Название</span><span id="rv-name" style="color:var(--text);font-weight:500;">—</span></div>
+          <div class="sc-row"><span>Игра</span><span id="rv-game">—</span></div>
+          <div class="sc-row"><span>Формат</span><span id="rv-format">—</span></div>
+          <div class="sc-row"><span>Команда</span><span id="rv-team">—</span></div>
+          <div class="sc-row"><span>Участников</span><span id="rv-slots">—</span></div>
+          <div class="sc-row"><span>Дата начала</span><span id="rv-date">—</span></div>
+          <div class="sc-row"><span>Взнос</span><span id="rv-fee">—</span></div>
+          <div class="sc-row"><span>Призовой фонд</span><span id="rv-prize" style="color:var(--gold);font-family:'Rajdhani',sans-serif;font-weight:700;font-size:15px;">—</span></div>
+        </div>
+
+        <div style="background:rgba(240,192,64,.06);border:1px solid rgba(240,192,64,.18);border-radius:10px;padding:16px;margin-bottom:22px;font-size:13px;color:var(--text-dim);line-height:1.7;">
+          <b style="color:var(--gold);">Стоимость размещения: 3 000 ₽</b><br>
+          После публикации турнир станет виден на главной странице платформы. Организатор получит уведомление о каждой новой заявке.
+        </div>
+
+        <div class="field">
+          <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:13px;font-weight:400;color:var(--text-dim);">
+            <input type="checkbox" id="agree-rules" style="width:18px;height:18px;min-width:18px;accent-color:var(--gold);padding:0;border-radius:4px;margin-top:1px;">
+            Я согласен с <a href="#" style="color:var(--gold);">правилами платформы</a> и подтверждаю что предоставленная информация корректна.
+          </label>
+        </div>
+
+        <div class="form-nav">
+          <button class="btn-prev" onclick="prevStep(5)"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg> Назад</button>
+          <button class="btn-next" onclick="publish()" id="publish-btn">
+            🚀 Опубликовать турнир
+          </button>
+        </div>
+      </div>
+
+    </div><!-- /form-area -->
+
+    <!-- RIGHT PREVIEW -->
+    <div class="preview-panel">
+      <div class="preview-title">Предпросмотр</div>
+
+      <div class="preview-card">
+        <div class="preview-card-top">
+          <div class="preview-game-badge" id="prev-game-badge">Игра не выбрана</div>
+        </div>
+        <div class="preview-body">
+          <div class="preview-t-name" id="prev-name"><span class="pr-placeholder">Название турнира...</span></div>
+          <div class="preview-row"><span class="pr-key">Формат</span><span class="pr-val" id="prev-format">—</span></div>
+          <div class="preview-row"><span class="pr-key">Участников</span><span class="pr-val" id="prev-slots">—</span></div>
+          <div class="preview-row"><span class="pr-key">Дата</span><span class="pr-val" id="prev-date">—</span></div>
+          <div class="preview-row"><span class="pr-key">Взнос</span><span class="pr-val green" id="prev-fee">Бесплатно</span></div>
+          <div class="preview-row"><span class="pr-key">Призовой фонд</span><span class="pr-val gold" id="prev-prize">—</span></div>
+        </div>
+      </div>
+
+      <!-- CALCULATOR (shown when paid) -->
+      <div class="calc-box" id="calc-box">
+        <div class="calc-title">
+          <svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="16" y1="12" x2="8" y2="12"/><line x1="8" y1="18" x2="12" y2="18"/></svg>
+          Калькулятор призового фонда
+        </div>
+        <div class="calc-row"><span class="cr-key">Участников max</span><span class="cr-val dim" id="calc-slots">—</span></div>
+        <div class="calc-row"><span class="cr-key">Взнос с участника</span><span class="cr-val dim" id="calc-fee">—</span></div>
+        <div class="calc-row"><span class="cr-key">Валовой сбор</span><span class="cr-val dim" id="calc-gross">—</span></div>
+        <hr class="calc-divider">
+        <div class="calc-row"><span class="cr-key">Доля призового (<span id="calc-pct">50</span>%)</span><span class="cr-val green" id="calc-prize">—</span></div>
+        <div class="calc-row"><span class="cr-key">Комиссия платформы (20%)</span><span class="cr-val red" id="calc-platform">—</span></div>
+        <div class="calc-row"><span class="cr-key">Организатору (остаток)</span><span class="cr-val" id="calc-organizer" style="color:var(--blue);">—</span></div>
+        <hr class="calc-divider">
+        <div class="calc-row" style="padding-top:6px;"><span class="cr-key" style="color:var(--gold);">🏆 Призовой фонд</span><span class="cr-val" id="calc-prize-total" style="font-size:18px;">—</span></div>
+      </div>
+
+      <div style="margin-top:16px;font-size:11px;color:var(--text-muted);line-height:1.7;">
+        Расчёт приблизительный и основан на полном заполнении турнира. Итоговые суммы зависят от числа зарегистрировавшихся участников.
+      </div>
+    </div>
+
+  </div><!-- /wizard-wrap -->
+
+  <!-- SUCCESS SCREEN -->
+  <div id="success-screen">
+    <div class="success-wrap">
+      <div class="success-circle">
+        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <h2 class="success-title">Турнир опубликован!</h2>
+      <p class="success-sub">Ваш турнир теперь виден всем пользователям платформы. Заявки от участников начнут поступать в личный кабинет организатора.</p>
+      <div class="success-card">
+        <div class="sc-label">Данные турнира</div>
+        <div class="sc-row"><span>Название</span><span id="s-name">—</span></div>
+        <div class="sc-row"><span>Игра</span><span id="s-game">—</span></div>
+        <div class="sc-row"><span>Участников</span><span id="s-slots">—</span></div>
+        <div class="sc-row"><span>Дата</span><span id="s-date">—</span></div>
+        <div class="sc-row"><span>Призовой фонд</span><span id="s-prize" style="color:var(--gold)">—</span></div>
+      </div>
+      <div class="success-btns">
+        <button class="btn-next" onclick="location.href='tournament.html'">Открыть страницу турнира</button>
+        <button class="btn-prev" onclick="location.href='index.html'"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg> На главную</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div class="logo-hex" style="width:24px;height:24px;"><svg viewBox="0 0 18 18" fill="none" style="width:12px;height:12px;"><polygon points="9,1 16,4.5 16,13.5 9,17 2,13.5 2,4.5" stroke="#080c12" stroke-width="1.5"/><circle cx="9" cy="9" r="2.5" fill="#080c12"/></svg></div>
+      <span style="font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;color:var(--gold);letter-spacing:1.5px;">GAME GENESIS</span>
+      <span>© 2024–2025</span>
+    </div>
+    <div style="display:flex;gap:20px;"><a href="#">Правила</a><a href="#">Поддержка</a><a href="#">Cookie Policy</a></div>
+  </footer>
+</div>
+
+<script>
+  let currentStep = 1;
+  const totalSteps = 5;
+  let selectedType = 'se';
+  let payType = 'free';
+
+  // ── NAVIGATION ──
+  function nextStep(from) {
+    if (!validateStep(from)) return;
+    goToStep(from + 1);
+  }
+  function prevStep(from) { goToStep(from - 1); }
+
+  function goToStep(n) {
+    if (n < 1 || n > totalSteps) return;
+    // mark done
+    for (let i = 1; i < n; i++) {
+      document.getElementById('si-' + i).className = 'step-item done';
+    }
+    // mark active
+    document.getElementById('si-' + n).className = 'step-item active';
+    // mark future
+    for (let i = n + 1; i <= totalSteps; i++) {
+      const el = document.getElementById('si-' + i);
+      if (el) el.className = 'step-item';
+    }
+    // show section
+    document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
+    document.getElementById('fs-' + n).classList.add('active');
+    currentStep = n;
+
+    // fill review on step 5
+    if (n === 5) fillReview();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ── VALIDATION ──
+  function validateStep(step) {
+    let ok = true;
+    if (step === 1) {
+      const name = document.getElementById('t-name').value.trim();
+      const game = document.getElementById('t-game').value;
+      showErr('err-name', !name); if (!name) ok = false;
+      showErr('err-game', !game); if (!game) ok = false;
+    }
+    if (step === 3) {
+      const rs = document.getElementById('t-reg-start').value;
+      const ts = document.getElementById('t-start').value;
+      showErr('err-reg', !rs); if (!rs) ok = false;
+      showErr('err-start', !ts); if (!ts) ok = false;
+    }
+    if (step === 4 && payType === 'paid') {
+      const fee = document.getElementById('t-entry-fee').value;
+      showErr('err-fee', !fee || fee < 100); if (!fee || fee < 100) ok = false;
+    }
+    return ok;
+  }
+
+  function showErr(id, show) {
+    const el = document.getElementById(id);
+    if (el) { el.classList.toggle('show', show); }
+  }
+
+  // ── TYPE SELECT ──
+  function selectType(t) {
+    selectedType = t;
+    ['se','de','rr'].forEach(x => document.getElementById('tc-' + x).classList.toggle('selected', x === t));
+    updatePreview();
+  }
+  const typeNames = { se: 'Single Elimination', de: 'Double Elimination', rr: 'Round Robin' };
+
+  // ── PAY SELECT ──
+  function selectPay(p) {
+    payType = p;
+    document.getElementById('po-free').classList.toggle('selected', p === 'free');
+    document.getElementById('po-paid').classList.toggle('selected', p === 'paid');
+    document.getElementById('paid-section').classList.toggle('show', p === 'paid');
+    document.getElementById('free-section').style.display = p === 'free' ? 'block' : 'none';
+    document.getElementById('calc-box').classList.toggle('show', p === 'paid');
+    calcPrize();
+    updatePreview();
+  }
+
+  // ── SLIDER ──
+  function onSliderChange() {
+    const val = document.getElementById('prize-slider').value;
+    document.getElementById('prize-pct-label').textContent = val + '%';
+    document.getElementById('calc-pct').textContent = val;
+    calcPrize();
+    updatePreview();
+  }
+
+  // ── CALCULATOR ──
+  function calcPrize() {
+    if (payType !== 'paid') {
+      // free prize pool
+      const fp = parseInt(document.getElementById('t-free-prize').value) || 0;
+      document.getElementById('prev-prize').textContent = fp > 0 ? fp.toLocaleString('ru-RU') + ' ₽' : '—';
+      return;
+    }
+    const slots = parseInt(document.getElementById('t-slots').value) || 0;
+    const fee = parseInt(document.getElementById('t-entry-fee').value) || 0;
+    const pct = parseInt(document.getElementById('prize-slider').value) || 50;
+
+    const gross = slots * fee;
+    const platform = Math.round(gross * 0.20);
+    const prize = Math.round(gross * (pct / 100));
+    const organizer = gross - platform - prize;
+
+    set('calc-slots', slots || '—');
+    set('calc-fee', fee ? fee.toLocaleString('ru-RU') + ' ₽' : '—');
+    set('calc-gross', gross ? gross.toLocaleString('ru-RU') + ' ₽' : '—');
+    set('calc-prize', prize ? prize.toLocaleString('ru-RU') + ' ₽' : '—');
+    set('calc-platform', platform ? '−' + platform.toLocaleString('ru-RU') + ' ₽' : '—');
+    set('calc-organizer', organizer >= 0 ? organizer.toLocaleString('ru-RU') + ' ₽' : '—');
+    set('calc-prize-total', prize ? prize.toLocaleString('ru-RU') + ' ₽' : '—');
+
+    document.getElementById('prev-prize').textContent = prize ? prize.toLocaleString('ru-RU') + ' ₽' : '—';
+  }
+
+  function set(id, val) { const el = document.getElementById(id); if (el) el.textContent = val; }
+
+  // ── PREVIEW UPDATE ──
+  function updatePreview() {
+    const name = document.getElementById('t-name').value.trim();
+    const game = document.getElementById('t-game').value;
+    const slots = document.getElementById('t-slots').value;
+    const start = document.getElementById('t-start').value;
+    const time = document.getElementById('t-start-time').value;
+
+    document.getElementById('prev-name').innerHTML = name || '<span class="pr-placeholder">Название турнира...</span>';
+    document.getElementById('prev-game-badge').textContent = game || 'Игра не выбрана';
+    document.getElementById('prev-format').textContent = typeNames[selectedType];
+    document.getElementById('prev-slots').textContent = slots ? '0 / ' + slots : '—';
+    document.getElementById('prev-date').textContent = start ? formatDate(start) + (time ? ' · ' + time : '') : '—';
+
+    if (payType === 'free') {
+      document.getElementById('prev-fee').textContent = 'Бесплатно';
+      document.getElementById('prev-fee').style.color = 'var(--success)';
+    } else {
+      const fee = document.getElementById('t-entry-fee').value;
+      document.getElementById('prev-fee').textContent = fee ? fee + ' ₽' : '—';
+      document.getElementById('prev-fee').style.color = 'var(--gold)';
+    }
+  }
+
+  function formatDate(d) {
+    if (!d) return '—';
+    const [y, m, day] = d.split('-');
+    const months = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+    return day + ' ' + months[parseInt(m) - 1] + ' ' + y;
+  }
+
+  // ── REVIEW FILL ──
+  function fillReview() {
+    const name = document.getElementById('t-name').value.trim();
+    const game = document.getElementById('t-game').value;
+    const slots = document.getElementById('t-slots').value;
+    const start = document.getElementById('t-start').value;
+    const team = document.getElementById('t-team-size').value;
+
+    set('rv-name', name || '—');
+    set('rv-game', game || '—');
+    set('rv-format', typeNames[selectedType] || '—');
+    set('rv-team', team || '—');
+    set('rv-slots', slots || '—');
+    set('rv-date', start ? formatDate(start) : '—');
+
+    if (payType === 'free') {
+      const fp = parseInt(document.getElementById('t-free-prize').value) || 0;
+      set('rv-fee', 'Бесплатно');
+      set('rv-prize', fp > 0 ? fp.toLocaleString('ru-RU') + ' ₽' : 'Без призов');
+    } else {
+      const fee = document.getElementById('t-entry-fee').value;
+      const slots2 = parseInt(slots) || 0;
+      const pct = parseInt(document.getElementById('prize-slider').value) || 50;
+      const gross = slots2 * (parseInt(fee) || 0);
+      const prize = Math.round(gross * pct / 100);
+      set('rv-fee', fee ? fee + ' ₽ / участник' : '—');
+      set('rv-prize', prize ? prize.toLocaleString('ru-RU') + ' ₽' : '—');
+    }
+  }
+
+  // ── PUBLISH ──
+  function publish() {
+    if (!document.getElementById('agree-rules').checked) {
+      alert('Пожалуйста, примите правила платформы'); return;
+    }
+    const name = document.getElementById('t-name').value.trim();
+    const game = document.getElementById('t-game').value;
+    const slots = document.getElementById('t-slots').value;
+    const start = document.getElementById('t-start').value;
+
+    const btn = document.getElementById('publish-btn');
+    btn.disabled = true;
+    btn.textContent = '⏳ Публикуем...';
+
+    setTimeout(() => {
+      document.getElementById('wizard-wrap').style.display = 'none';
+      const ss = document.getElementById('success-screen');
+      ss.style.display = 'block';
+
+      set('s-name', name);
+      set('s-game', game);
+      set('s-slots', '0 / ' + slots);
+      set('s-date', start ? formatDate(start) : '—');
+
+      const prize = document.getElementById('prev-prize').textContent;
+      set('s-prize', prize);
+    }, 1400);
+  }
+
+  // Init free-section visibility
+  document.getElementById('free-section').style.display = 'block';
+
+  // Set default dates
+  const today = new Date();
+  const fmt = d => d.toISOString().split('T')[0];
+  const in7 = new Date(today); in7.setDate(today.getDate() + 7);
+  const in14 = new Date(today); in14.setDate(today.getDate() + 14);
+  const in21 = new Date(today); in21.setDate(today.getDate() + 21);
+  document.getElementById('t-reg-start').value = fmt(today);
+  document.getElementById('t-reg-end').value = fmt(in14);
+  document.getElementById('t-start').value = fmt(in21);
+  updatePreview();
+</script>
+</body>
+</html>

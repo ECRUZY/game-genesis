@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <script src="/nav.js"></script>
+  <script src="/api.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Войти / Регистрация — Game Genesis</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Exo+2:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --gold: #f0c040;
+      --gold-dim: rgba(240,192,64,0.12);
+      --gold-glow: rgba(240,192,64,0.07);
+      --bg: #080c12;
+      --bg-card: #0d1420;
+      --bg-input: #0a1018;
+      --border: #1a2436;
+      --border-hi: #253550;
+      --text: #dde4ef;
+      --text-dim: #5c7090;
+      --text-muted: #2e3f58;
+      --success: #4ade80;
+      --red: #f87171;
+      --blue: #60a5fa;
+    }
+    html { height: 100%; }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: 'Exo 2', sans-serif;
+      min-height: 100vh; display: flex; overflow-x: hidden;
+    }
+
+    /* ── GRID BG ── */
+    .grid-bg {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background-image:
+        linear-gradient(rgba(240,192,64,0.022) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(240,192,64,0.022) 1px, transparent 1px);
+      background-size: 50px 50px;
+    }
+
+    /* ── LEFT PANEL ── */
+    .left-panel {
+      width: 480px; min-width: 480px;
+      position: relative; overflow: hidden;
+      display: flex; flex-direction: column;
+    }
+    .left-bg {
+      position: absolute; inset: 0;
+      background: url('/images/hero-bg.jpg') center/cover no-repeat;
+      z-index: 0;
+    }
+    .left-overlay {
+      position: absolute; inset: 0; z-index: 1;
+      background:
+        linear-gradient(to right, rgba(8,12,18,.1) 0%, rgba(8,12,18,.7) 100%),
+        linear-gradient(to bottom, rgba(8,12,18,.6) 0%, rgba(8,12,18,.3) 40%, rgba(8,12,18,.9) 100%);
+    }
+    .left-scanlines {
+      position: absolute; inset: 0; z-index: 2; pointer-events: none;
+      background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,.05) 3px, rgba(0,0,0,.05) 4px);
+    }
+    .left-content {
+      position: relative; z-index: 3;
+      display: flex; flex-direction: column; height: 100%;
+      padding: 36px 40px;
+    }
+    .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; margin-bottom: auto; }
+    .logo-hex {
+      width: 38px; height: 38px; background: var(--gold);
+      clip-path: polygon(50% 0%,93% 25%,93% 75%,50% 100%,7% 75%,7% 25%);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .logo-hex svg { width: 20px; height: 20px; }
+    .logo-name { font-family: 'Rajdhani', sans-serif; font-size: 20px; font-weight: 700; color: var(--gold); letter-spacing: 2px; }
+
+    .left-hero { margin-top: auto; padding-bottom: 20px; }
+    .left-tag {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(240,192,64,.1); border: 1px solid rgba(240,192,64,.25);
+      border-radius: 20px; padding: 5px 14px;
+      font-size: 11px; font-weight: 600; color: var(--gold);
+      letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 16px;
+    }
+    .live-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--gold); animation: blink 1.4s infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.2} }
+
+    .left-title {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 38px; font-weight: 700; color: #fff;
+      line-height: 1.1; margin-bottom: 14px; letter-spacing: .5px;
+    }
+    .left-title em { color: var(--gold); font-style: normal; }
+
+    .left-stats { display: flex; gap: 24px; margin-top: 20px; }
+    .lstat { }
+    .lstat-val { font-family: 'Rajdhani', sans-serif; font-size: 24px; font-weight: 700; color: var(--gold); }
+    .lstat-key { font-size: 11px; color: rgba(255,255,255,.4); text-transform: uppercase; letter-spacing: .5px; }
+    .lstat-sep { width: 1px; background: rgba(255,255,255,.1); align-self: stretch; }
+
+    /* ── RIGHT PANEL ── */
+    .right-panel {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 48px 40px; position: relative; z-index: 1;
+      overflow-y: auto;
+    }
+
+    .auth-box { width: 100%; max-width: 440px; }
+
+    /* Tab switcher */
+    .auth-tabs {
+      display: flex; background: var(--bg-card);
+      border: 1px solid var(--border); border-radius: 10px;
+      padding: 4px; margin-bottom: 32px; gap: 4px;
+    }
+    .auth-tab {
+      flex: 1; padding: 10px; border-radius: 7px;
+      font-family: 'Rajdhani', sans-serif; font-size: 15px; font-weight: 700;
+      letter-spacing: 1px; text-transform: uppercase;
+      border: none; background: transparent; color: var(--text-dim);
+      cursor: pointer; transition: .2s;
+    }
+    .auth-tab.active { background: var(--gold); color: #080c12; }
+    .auth-tab:hover:not(.active) { color: var(--text); background: rgba(255,255,255,.04); }
+
+    /* Panels */
+    .auth-panel { display: none; }
+    .auth-panel.active { display: block; }
+
+    .auth-title { font-family: 'Rajdhani', sans-serif; font-size: 28px; font-weight: 700; color: #fff; margin-bottom: 6px; }
+    .auth-sub { font-size: 13px; color: var(--text-dim); margin-bottom: 28px; line-height: 1.6; }
+
+    /* Fields */
+    .field { margin-bottom: 16px; position: relative; }
+    .field label { display: block; font-size: 11px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 7px; }
+    .req { color: var(--gold); margin-left: 2px; }
+
+    .input-wrap { position: relative; }
+    .input-icon {
+      position: absolute; left: 13px; top: 50%; transform: translateY(-50%);
+      pointer-events: none; color: var(--text-muted);
+    }
+    .input-icon svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; display: block; }
+
+    .eye-btn {
+      position: absolute; right: 13px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; color: var(--text-muted); cursor: pointer;
+      padding: 2px; transition: color .2s;
+    }
+    .eye-btn:hover { color: var(--text-dim); }
+    .eye-btn svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; display: block; }
+
+    input {
+      width: 100%; background: var(--bg-input); border: 1px solid var(--border);
+      border-radius: 8px; padding: 11px 14px 11px 40px;
+      font-size: 14px; color: var(--text); font-family: 'Exo 2', sans-serif;
+      outline: none; transition: border-color .2s, background .2s;
+    }
+    input.no-icon { padding-left: 14px; }
+    input::placeholder { color: var(--text-muted); font-size: 13px; }
+    input:focus { border-color: var(--gold); background: #0c1520; }
+    input.err { border-color: var(--red); }
+    input.ok { border-color: var(--success); }
+
+    /* Password has eye btn */
+    input.has-eye { padding-right: 42px; }
+
+    .field-hint { font-size: 11px; color: var(--text-muted); margin-top: 5px; }
+    .ferr { font-size: 11px; color: var(--red); margin-top: 4px; display: none; }
+    .ferr.show { display: block; }
+
+    /* Strength bar */
+    .strength-wrap { margin-top: 8px; }
+    .strength-bar { display: flex; gap: 4px; }
+    .strength-seg {
+      height: 3px; flex: 1; border-radius: 2px;
+      background: var(--border); transition: background .3s;
+    }
+    .strength-text { font-size: 11px; margin-top: 4px; color: var(--text-muted); }
+
+    /* Field row */
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    /* Username check */
+    .username-status {
+      position: absolute; right: 13px; top: 50%; transform: translateY(-50%);
+      font-size: 12px; font-weight: 600; pointer-events: none; display: none;
+    }
+    .username-status.ok { color: var(--success); display: block; }
+    .username-status.err { color: var(--red); display: block; }
+    .username-status.loading { color: var(--text-dim); display: block; }
+
+    /* Verify code */
+    .code-inputs {
+      display: flex; gap: 10px; justify-content: center; margin: 8px 0;
+    }
+    .code-digit {
+      width: 48px; height: 56px; border-radius: 10px;
+      background: var(--bg-input); border: 1px solid var(--border);
+      font-family: 'Rajdhani', sans-serif; font-size: 26px; font-weight: 700;
+      color: var(--gold); text-align: center; outline: none;
+      transition: border-color .2s; padding: 0;
+    }
+    .code-digit:focus { border-color: var(--gold); background: #0c1520; }
+    .code-digit.filled { border-color: rgba(240,192,64,.4); }
+
+    .resend-row { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 12px; color: var(--text-dim); margin-top: 10px; }
+    .resend-btn { background: none; border: none; color: var(--gold); font-size: 12px; font-family: 'Exo 2', sans-serif; cursor: pointer; padding: 0; }
+    .resend-btn:disabled { color: var(--text-muted); cursor: default; }
+
+    /* Agree */
+    .agree-row {
+      display: flex; align-items: flex-start; gap: 10px;
+      margin-bottom: 20px; cursor: pointer;
+    }
+    .agree-row input[type=checkbox] {
+      width: 18px; height: 18px; min-width: 18px; border-radius: 4px;
+      background: var(--bg-input); border: 1px solid var(--border-hi);
+      cursor: pointer; accent-color: var(--gold); padding: 0; margin-top: 1px;
+    }
+    .agree-text { font-size: 12px; color: var(--text-dim); line-height: 1.6; }
+    .agree-text a { color: var(--gold); text-decoration: none; }
+
+    /* Buttons */
+    .btn-submit {
+      width: 100%; background: var(--gold); border: none; border-radius: 8px;
+      padding: 13px; font-family: 'Rajdhani', sans-serif;
+      font-size: 17px; font-weight: 700; letter-spacing: 1.5px; color: #080c12;
+      cursor: pointer; transition: .2s; display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn-submit:hover { background: #ffd055; box-shadow: 0 0 22px rgba(240,192,64,.3); }
+    .btn-submit:disabled { background: var(--border-hi); color: var(--text-muted); box-shadow: none; cursor: not-allowed; }
+    .btn-submit svg { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+
+    .btn-outline {
+      width: 100%; background: transparent; border: 1px solid var(--border-hi);
+      border-radius: 8px; padding: 12px; font-family: 'Rajdhani', sans-serif;
+      font-size: 15px; font-weight: 700; letter-spacing: 1px; color: var(--text-dim);
+      cursor: pointer; transition: .2s; margin-top: 10px;
+    }
+    .btn-outline:hover { border-color: var(--gold); color: var(--gold); }
+
+    /* Divider */
+    .or-divider { display: flex; align-items: center; gap: 12px; margin: 20px 0; }
+    .or-line { flex: 1; height: 1px; background: var(--border); }
+    .or-text { font-size: 12px; color: var(--text-muted); }
+
+    /* Social btns */
+    .social-btns { display: flex; gap: 10px; }
+    .social-btn {
+      flex: 1; background: var(--bg-card); border: 1px solid var(--border-hi);
+      border-radius: 8px; padding: 11px; cursor: pointer; transition: .2s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      font-size: 13px; font-weight: 500; color: var(--text-dim); font-family: 'Exo 2', sans-serif;
+    }
+    .social-btn:hover { border-color: var(--gold); color: var(--text); }
+    .social-btn svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+    /* Switch link */
+    .switch-link { text-align: center; margin-top: 20px; font-size: 13px; color: var(--text-dim); }
+    .switch-link a { color: var(--gold); text-decoration: none; font-weight: 500; cursor: pointer; }
+    .switch-link a:hover { text-decoration: underline; }
+
+    /* Step indicator (reg) */
+    .reg-steps { display: flex; align-items: center; gap: 8px; margin-bottom: 28px; }
+    .rs-item { display: flex; align-items: center; gap: 6px; }
+    .rs-dot {
+      width: 24px; height: 24px; border-radius: 50%;
+      background: var(--bg-card2, #111928); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Rajdhani',sans-serif; font-size: 11px; font-weight: 700;
+      color: var(--text-muted); transition: .3s;
+    }
+    .rs-dot.active { background: var(--gold); border-color: var(--gold); color: #080c12; }
+    .rs-dot.done { background: rgba(74,222,128,.1); border-color: rgba(74,222,128,.3); color: var(--success); font-size: 13px; }
+    .rs-label { font-size: 11px; color: var(--text-muted); transition: color .3s; }
+    .rs-item.active .rs-label { color: var(--text-dim); }
+    .rs-connector { flex: 1; height: 1px; background: var(--border); min-width: 20px; }
+
+    /* spinner */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner { width: 17px; height: 17px; border: 2px solid rgba(8,12,18,.3); border-top-color: #080c12; border-radius: 50%; animation: spin .7s linear infinite; flex-shrink: 0; }
+
+    /* Success */
+    .auth-success { text-align: center; padding: 20px 0; display: none; }
+    .as-circle { width: 80px; height: 80px; border-radius: 50%; background: rgba(74,222,128,.1); border: 1px solid rgba(74,222,128,.25); display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; }
+    .as-circle svg { width: 36px; height: 36px; stroke: var(--success); fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+    .as-title { font-family: 'Rajdhani',sans-serif; font-size: 28px; font-weight: 700; color: #fff; margin-bottom: 8px; }
+    .as-sub { font-size: 13px; color: var(--text-dim); line-height: 1.7; margin-bottom: 24px; }
+
+    /* forgot */
+    .forgot-link { text-align: right; margin-top: -10px; margin-bottom: 16px; }
+    .forgot-link a { font-size: 12px; color: var(--text-dim); text-decoration: none; cursor: pointer; transition: color .2s; }
+    .forgot-link a:hover { color: var(--gold); }
+
+    @media(max-width: 900px) {
+      .left-panel { display: none; }
+      .right-panel { padding: 32px 24px; }
+    }
+    @media(max-width: 480px) {
+      .right-panel { padding: 24px 16px; }
+      .field-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="grid-bg"></div>
+
+<!-- LEFT PANEL -->
+<div class="left-panel">
+  <div class="left-bg"></div>
+  <div class="left-overlay"></div>
+  <div class="left-scanlines"></div>
+  <div class="left-content">
+    <a href="index.html" class="logo">
+      <div class="logo-hex"><svg viewBox="0 0 18 18" fill="none"><polygon points="9,1 16,4.5 16,13.5 9,17 2,13.5 2,4.5" stroke="#080c12" stroke-width="1.5"/><circle cx="9" cy="9" r="2.5" fill="#080c12"/></svg></div>
+      <span class="logo-name">GAME GENESIS</span>
+    </a>
+
+    <div class="left-hero">
+      <div class="left-tag"><span class="live-dot"></span>Платформа работает</div>
+      <h2 class="left-title">Твой путь<br>в <em>киберспорт</em><br>начинается здесь</h2>
+      <p style="font-size:13px;color:rgba(221,228,239,.5);line-height:1.7;max-width:320px;margin-top:10px;">Регистрируйся, участвуй в турнирах, получай рейтинг и соревнуйся с лучшими игроками Чеченской Республики.</p>
+      <div class="left-stats">
+        <div class="lstat"><div class="lstat-val">3</div><div class="lstat-key">Турнира</div></div>
+        <div class="lstat-sep"></div>
+        <div class="lstat"><div class="lstat-val">128+</div><div class="lstat-key">Игроков</div></div>
+        <div class="lstat-sep"></div>
+        <div class="lstat"><div class="lstat-val">50K ₽</div><div class="lstat-key">Призовых</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RIGHT PANEL -->
+<div class="right-panel">
+  <div class="auth-box">
+
+    <!-- TAB SWITCHER -->
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login-btn" onclick="switchTab('login')">Войти</button>
+      <button class="auth-tab" id="tab-reg-btn" onclick="switchTab('register')">Регистрация</button>
+    </div>
+
+    <!-- ─────────── LOGIN PANEL ─────────── -->
+    <div class="auth-panel active" id="panel-login">
+      <h2 class="auth-title">С возвращением!</h2>
+      <p class="auth-sub">Войди в свой аккаунт чтобы участвовать в турнирах и следить за рейтингом.</p>
+
+      <div class="field">
+        <label for="l-login">Email или логин <span class="req">*</span></label>
+        <div class="input-wrap">
+          <span class="input-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+          <input type="text" id="l-login" placeholder="nickname или email@mail.ru">
+        </div>
+        <div class="ferr" id="err-l-login">Введите логин или email</div>
+      </div>
+
+      <div class="field">
+        <label for="l-pass">Пароль <span class="req">*</span></label>
+        <div class="input-wrap">
+          <span class="input-icon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+          <input type="password" id="l-pass" class="has-eye" placeholder="Ваш пароль">
+          <button class="eye-btn" onclick="toggleEye('l-pass', this)" tabindex="-1">
+            <svg id="eye-l-pass" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        <div class="ferr" id="err-l-pass">Введите пароль</div>
+      </div>
+
+      <div class="forgot-link"><a onclick="showForgot()">Забыл пароль?</a></div>
+
+      <div id="login-err-box" style="display:none;background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.2);border-radius:8px;padding:10px 14px;font-size:13px;color:var(--red);margin-bottom:14px;">
+        Неверный логин или пароль. Попробуйте снова.
+      </div>
+
+      <button class="btn-submit" onclick="doLogin()">
+        <svg viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+        Войти
+      </button>
+
+      <div class="or-divider"><div class="or-line"></div><div class="or-text">или войти через</div><div class="or-line"></div></div>
+
+      <div class="social-btns">
+        <button class="social-btn">
+          <!-- Steam icon -->
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 2C6.48 2 2 6.48 2 12c0 4.99 3.66 9.12 8.44 9.88L12 21l1.56.88C18.34 21.12 22 16.99 22 12c0-5.52-4.48-10-10-10z" stroke="currentColor" stroke-width="1.5"/><path d="M7 11l2.5 2.5L7 16h4.5L14 13.5 11.5 11H7z" stroke="currentColor" stroke-width="1.5"/></svg>
+          Steam
+        </button>
+        <button class="social-btn">
+          <!-- VK icon -->
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4.5 7.5h2.25s.75 5.25 1.5 7.5c0 0 .75-3.75 1.5-7.5H12s-.75 7.5-3 10.5c0 0-1.5 0-2.25-1.5L4.5 7.5zm7.5 0h2.25s1.5 4.5 2.25 7.5c0 0 .75-3.75 1.5-7.5H20s-1.5 10.5-5.25 10.5c0 0-1.5 0-2.25-2.25l-1.5-2.25-.75 4.5H8.25L12 7.5z"/></svg>
+          VK
+        </button>
+      </div>
+
+      <div class="switch-link">Нет аккаунта? <a onclick="switchTab('register')">Зарегистрироваться</a></div>
+    </div>
+
+    <!-- ─────────── REGISTER PANEL ─────────── -->
+    <div class="auth-panel" id="panel-register">
+
+      <!-- STEP 1: Основные данные -->
+      <div id="reg-step-1">
+        <div class="reg-steps">
+          <div class="rs-item active" id="rs-1"><div class="rs-dot active" id="rsd-1">1</div><span class="rs-label">Данные</span></div>
+          <div class="rs-connector"></div>
+          <div class="rs-item" id="rs-2"><div class="rs-dot" id="rsd-2">2</div><span class="rs-label">Безопасность</span></div>
+          <div class="rs-connector"></div>
+          <div class="rs-item" id="rs-3"><div class="rs-dot" id="rsd-3">3</div><span class="rs-label">Верификация</span></div>
+        </div>
+
+        <h2 class="auth-title">Создать аккаунт</h2>
+        <p class="auth-sub">Шаг 1 из 3 — Основная информация</p>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="r-fname">Имя <span class="req">*</span></label>
+            <div class="input-wrap">
+              <span class="input-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+              <input type="text" id="r-fname" placeholder="Ислам">
+            </div>
+            <div class="ferr" id="err-r-fname">Введите имя</div>
+          </div>
+          <div class="field">
+            <label for="r-lname">Фамилия <span class="req">*</span></label>
+            <div class="input-wrap">
+              <span class="input-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+              <input type="text" id="r-lname" placeholder="Мусаев">
+            </div>
+            <div class="ferr" id="err-r-lname">Введите фамилию</div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="r-username">Игровой логин <span class="req">*</span></label>
+          <div class="input-wrap">
+            <span class="input-icon"><svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2" ry="2"/><circle cx="8" cy="12" r="2"/><line x1="14" y1="10" x2="18" y2="10"/><line x1="14" y1="14" x2="16" y2="14"/></svg></span>
+            <input type="text" id="r-username" placeholder="XShadow99" oninput="checkUsername()" autocomplete="off">
+            <span class="username-status" id="uname-status"></span>
+          </div>
+          <div class="field-hint">Только латиница, цифры и _. Мин. 3 символа.</div>
+          <div class="ferr" id="err-r-username">Введите корректный логин</div>
+        </div>
+
+        <div class="field">
+          <label for="r-email">Email <span class="req">*</span></label>
+          <div class="input-wrap">
+            <span class="input-icon"><svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span>
+            <input type="email" id="r-email" placeholder="player@mail.ru">
+          </div>
+          <div class="ferr" id="err-r-email">Введите корректный email</div>
+        </div>
+
+        <div class="field">
+          <label for="r-phone">Телефон <span class="req">*</span></label>
+          <div class="input-wrap">
+            <span class="input-icon"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.39 2 2 0 0 1 3.57 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.62a16 16 0 0 0 6 6l.92-.92a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 21.5 16c.12.32.18.659.18 1v-.08z"/></svg></span>
+            <input type="tel" id="r-phone" placeholder="+7 (999) 000-00-00" oninput="formatPhone(this)">
+          </div>
+          <div class="ferr" id="err-r-phone">Введите корректный номер</div>
+        </div>
+
+        <button class="btn-submit" onclick="reg1Next()">
+          Далее
+          <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+        <div class="switch-link">Уже есть аккаунт? <a onclick="switchTab('login')">Войти</a></div>
+      </div>
+
+      <!-- STEP 2: Пароль -->
+      <div id="reg-step-2" style="display:none;">
+        <div class="reg-steps">
+          <div class="rs-item"><div class="rs-dot done" id="rsd-1b">✓</div><span class="rs-label" style="color:var(--success);">Данные</span></div>
+          <div class="rs-connector"></div>
+          <div class="rs-item active"><div class="rs-dot active">2</div><span class="rs-label">Безопасность</span></div>
+          <div class="rs-connector"></div>
+          <div class="rs-item"><div class="rs-dot">3</div><span class="rs-label">Верификация</span></div>
+        </div>
+
+        <h2 class="auth-title">Придумай пароль</h2>
+        <p class="auth-sub">Шаг 2 из 3 — Создайте надёжный пароль для аккаунта.</p>
+
+        <div class="field">
+          <label for="r-pass">Пароль <span class="req">*</span></label>
+          <div class="input-wrap">
+            <span class="input-icon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+            <input type="password" id="r-pass" class="has-eye" placeholder="Минимум 8 символов" oninput="checkStrength()">
+            <button class="eye-btn" onclick="toggleEye('r-pass', this)" tabindex="-1">
+              <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+          <div class="strength-wrap">
+            <div class="strength-bar">
+              <div class="strength-seg" id="s1"></div>
+              <div class="strength-seg" id="s2"></div>
+              <div class="strength-seg" id="s3"></div>
+              <div class="strength-seg" id="s4"></div>
+            </div>
+            <div class="strength-text" id="strength-text">Введите пароль</div>
+          </div>
+          <div class="ferr" id="err-r-pass">Пароль слишком короткий (мин. 8 символов)</div>
+        </div>
+
+        <div class="field">
+          <label for="r-pass2">Повторите пароль <span class="req">*</span></label>
+          <div class="input-wrap">
+            <span class="input-icon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+            <input type="password" id="r-pass2" class="has-eye" placeholder="Повторите пароль" oninput="checkMatch()">
+            <button class="eye-btn" onclick="toggleEye('r-pass2', this)" tabindex="-1">
+              <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+          <div class="ferr" id="err-r-pass2">Пароли не совпадают</div>
+        </div>
+
+        <div class="field">
+          <label for="r-game">Основная игра</label>
+          <div class="input-wrap">
+            <span class="input-icon"><svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2" ry="2"/><line x1="6" y1="12" x2="6" y2="12" stroke-width="3"/><line x1="10" y1="12" x2="10" y2="12" stroke-width="3"/><polyline points="14 9 14 12 17 12"/></svg></span>
+          </div>
+          <select id="r-game" style="padding-left:40px;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:11px 14px 11px 40px;font-size:14px;color:var(--text);font-family:'Exo 2',sans-serif;width:100%;outline:none;cursor:pointer;background-image:url('data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%235c7090\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpolyline points=\'6 9 12 15 18 9\'/%3E%3C/svg%3E');background-repeat:no-repeat;background-position:right 14px center;-webkit-appearance:none;">
+            <option value="">— Выберите игру (необязательно) —</option>
+            <option value="CS2">CS2</option>
+            <option value="Dota 2">Dota 2</option>
+            <option value="Valorant">Valorant</option>
+            <option value="FIFA 25">FIFA 25</option>
+            <option value="Mobile Legends">Mobile Legends</option>
+          </select>
+        </div>
+
+        <label class="agree-row">
+          <input type="checkbox" id="r-agree">
+          <span class="agree-text">Я принимаю <a href="#">правила платформы</a> и <a href="#">политику конфиденциальности</a> Game Genesis.</span>
+        </label>
+
+        <div style="display:flex;gap:10px;">
+          <button class="btn-outline" style="margin-top:0;" onclick="showRegStep(1)">← Назад</button>
+          <button class="btn-submit" onclick="reg2Next()">
+            Далее
+            <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP 3: Верификация email -->
+      <div id="reg-step-3" style="display:none;">
+        <div class="reg-steps">
+          <div class="rs-item"><div class="rs-dot done">✓</div><span class="rs-label" style="color:var(--success);">Данные</span></div>
+          <div class="rs-connector"></div>
+          <div class="rs-item"><div class="rs-dot done">✓</div><span class="rs-label" style="color:var(--success);">Безопасность</span></div>
+          <div class="rs-connector"></div>
+          <div class="rs-item active"><div class="rs-dot active">3</div><span class="rs-label">Верификация</span></div>
+        </div>
+
+        <h2 class="auth-title">Подтверди email</h2>
+        <p class="auth-sub">Шаг 3 из 3 — Мы отправили 6-значный код на <strong id="shown-email" style="color:#fff;"></strong></p>
+
+        <div class="code-inputs" id="code-inputs">
+          <input type="text" maxlength="1" class="code-digit" id="cd-0" oninput="codeInput(0)" onkeydown="codeKey(event,0)">
+          <input type="text" maxlength="1" class="code-digit" id="cd-1" oninput="codeInput(1)" onkeydown="codeKey(event,1)">
+          <input type="text" maxlength="1" class="code-digit" id="cd-2" oninput="codeInput(2)" onkeydown="codeKey(event,2)">
+          <input type="text" maxlength="1" class="code-digit" id="cd-3" oninput="codeInput(3)" onkeydown="codeKey(event,3)">
+          <input type="text" maxlength="1" class="code-digit" id="cd-4" oninput="codeInput(4)" onkeydown="codeKey(event,4)">
+          <input type="text" maxlength="1" class="code-digit" id="cd-5" oninput="codeInput(5)" onkeydown="codeKey(event,5)">
+        </div>
+
+        <div id="code-err" style="display:none;text-align:center;font-size:12px;color:var(--red);margin-bottom:10px;">Неверный код. Попробуйте снова.</div>
+        <div id="code-ok" style="display:none;text-align:center;font-size:12px;color:var(--success);margin-bottom:10px;">✓ Код верный!</div>
+
+        <div class="resend-row">
+          Не получили?
+          <button class="resend-btn" id="resend-btn" onclick="startResend()" disabled>
+            Отправить снова (<span id="resend-timer">60</span>с)
+          </button>
+        </div>
+
+        <div style="background:rgba(240,192,64,.06);border:1px solid rgba(240,192,64,.15);border-radius:8px;padding:12px 14px;margin:16px 0;font-size:12px;color:var(--text-dim);line-height:1.6;">
+          💡 <b style="color:var(--gold);">Демо-режим:</b> используй код <b style="color:#fff;">123456</b> для успешной верификации.
+        </div>
+
+        <button class="btn-submit" onclick="verifyCode()" id="verify-btn">
+          <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          Подтвердить
+        </button>
+
+        <div style="display:flex;gap:10px;margin-top:10px;">
+          <button class="btn-outline" style="margin-top:0;" onclick="showRegStep(2)">← Назад</button>
+        </div>
+      </div>
+
+      <!-- SUCCESS STATE -->
+      <div class="auth-success" id="reg-success" style="display:none;">
+        <div class="as-circle"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <h2 class="as-title">Добро пожаловать!</h2>
+        <p class="as-sub">Аккаунт <strong id="success-nick" style="color:var(--gold);"></strong> успешно создан! Теперь ты можешь участвовать в турнирах Game Genesis.</p>
+        <button class="btn-submit" onclick="location.href='profile.html'">
+          <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Мой профиль
+        </button>
+        <button class="btn-outline" onclick="location.href='tournament.html'">Найти турнир</button>
+      </div>
+
+    </div>
+    <!-- /register panel -->
+
+  </div>
+</div>
+
+<script>
+  // ── TAB SWITCH ──
+  function switchTab(tab) {
+    document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.auth-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('tab-' + tab + '-btn').classList.add('active');
+    document.getElementById('panel-' + tab).classList.add('active');
+  }
+
+  // ── REG STEPS ──
+  // All step divs: reg-step-1, reg-step-2, reg-step-3, reg-success
+  function showRegStep(n) {
+    const ids = ['reg-step-1', 'reg-step-2', 'reg-step-3', 'reg-success'];
+    ids.forEach((id, i) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.style.display = (i === n - 1) ? 'block' : 'none';
+    });
+  }
+
+  // ── VALIDATION HELPERS ──
+  function ferr(id, show, msg) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.toggle('show', show);
+    if (msg) el.textContent = msg;
+  }
+  function setInputState(id, state) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.remove('err','ok');
+    if (state) el.classList.add(state);
+  }
+
+  // ── STEP 1 ──
+  let usernameOk = false;
+
+  function reg1Next() {
+    const fname = document.getElementById('r-fname').value.trim();
+    const lname = document.getElementById('r-lname').value.trim();
+    const username = document.getElementById('r-username').value.trim();
+    const email = document.getElementById('r-email').value.trim();
+    const phone = document.getElementById('r-phone').value.trim();
+    let ok = true;
+
+    ferr('err-r-fname', !fname); if (!fname) { setInputState('r-fname','err'); ok = false; }
+    ferr('err-r-lname', !lname); if (!lname) { setInputState('r-lname','err'); ok = false; }
+
+    const unameOk = /^[a-zA-Z0-9_]{3,20}$/.test(username);
+    ferr('err-r-username', !unameOk); if (!unameOk) { setInputState('r-username','err'); ok = false; }
+
+    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    ferr('err-r-email', !emailOk); if (!emailOk) { setInputState('r-email','err'); ok = false; }
+
+    const phoneDigits = phone.replace(/\D/g,'');
+    const phoneOk = phoneDigits.length >= 11;
+    ferr('err-r-phone', !phoneOk); if (!phoneOk) { setInputState('r-phone','err'); ok = false; }
+
+    if (!ok) return;
+    showRegStep(2);
+  }
+
+  // ── USERNAME CHECK ──
+  let unameTimer;
+  function checkUsername() {
+    const val = document.getElementById('r-username').value.trim();
+    const status = document.getElementById('uname-status');
+    clearTimeout(unameTimer);
+    if (!val) { status.className = 'username-status'; return; }
+    if (!/^[a-zA-Z0-9_]{3,20}$/.test(val)) {
+      status.className = 'username-status err'; status.textContent = '✗ Недопустимо';
+      setInputState('r-username', 'err'); return;
+    }
+    status.className = 'username-status loading'; status.textContent = '...';
+    unameTimer = setTimeout(() => {
+      // Simulate check
+      const taken = ['admin','genesis','player1','test'].includes(val.toLowerCase());
+      if (taken) {
+        status.className = 'username-status err'; status.textContent = '✗ Занят';
+        setInputState('r-username', 'err');
+      } else {
+        status.className = 'username-status ok'; status.textContent = '✓ Свободен';
+        setInputState('r-username', 'ok');
+      }
+    }, 600);
+  }
+
+  // ── PHONE FORMAT ──
+  function formatPhone(input) {
+    let v = input.value.replace(/\D/g, '');
+    if (v.startsWith('8')) v = '7' + v.slice(1);
+    if (!v.startsWith('7')) v = '7' + v;
+    v = v.slice(0, 11);
+    let fmt = '+7';
+    if (v.length > 1) fmt += ' (' + v.slice(1, 4);
+    if (v.length >= 4) fmt += ') ' + v.slice(4, 7);
+    if (v.length >= 7) fmt += '-' + v.slice(7, 9);
+    if (v.length >= 9) fmt += '-' + v.slice(9, 11);
+    input.value = fmt;
+  }
+
+  // ── STEP 2 ──
+  function reg2Next() {
+    const pass = document.getElementById('r-pass').value;
+    const pass2 = document.getElementById('r-pass2').value;
+    let ok = true;
+
+    if (pass.length < 8) { ferr('err-r-pass', true); setInputState('r-pass','err'); ok = false; }
+    else { ferr('err-r-pass', false); setInputState('r-pass','ok'); }
+
+    if (pass !== pass2 || !pass2) { ferr('err-r-pass2', true); setInputState('r-pass2','err'); ok = false; }
+    else { ferr('err-r-pass2', false); setInputState('r-pass2','ok'); }
+
+    if (!document.getElementById('r-agree').checked) { alert('Примите правила платформы'); ok = false; }
+    if (!ok) return;
+
+    const email = document.getElementById('r-email').value;
+    document.getElementById('shown-email').textContent = email;
+    showRegStep(3);
+    startResend();
+    document.getElementById('cd-0').focus();
+  }
+
+  // ── PASSWORD STRENGTH ──
+  function checkStrength() {
+    const p = document.getElementById('r-pass').value;
+    let score = 0;
+    if (p.length >= 8) score++;
+    if (/[A-Z]/.test(p)) score++;
+    if (/[0-9]/.test(p)) score++;
+    if (/[^a-zA-Z0-9]/.test(p)) score++;
+
+    const colors = ['', '#f87171', '#fb923c', '#facc15', '#4ade80'];
+    const labels = ['', 'Слабый', 'Средний', 'Хороший', 'Надёжный'];
+    for (let i = 1; i <= 4; i++) {
+      document.getElementById('s' + i).style.background = i <= score ? colors[score] : 'var(--border)';
+    }
+    document.getElementById('strength-text').textContent = p ? labels[score] || 'Слабый' : 'Введите пароль';
+    document.getElementById('strength-text').style.color = p ? colors[score] : 'var(--text-muted)';
+  }
+
+  function checkMatch() {
+    const p = document.getElementById('r-pass').value;
+    const p2 = document.getElementById('r-pass2').value;
+    if (!p2) return;
+    if (p === p2) { ferr('err-r-pass2', false); setInputState('r-pass2','ok'); }
+    else { ferr('err-r-pass2', true); setInputState('r-pass2','err'); }
+  }
+
+  // ── VERIFY CODE ──
+  function codeInput(idx) {
+    const el = document.getElementById('cd-' + idx);
+    el.value = el.value.replace(/[^0-9]/g, '');
+    if (el.value) { el.classList.add('filled'); if (idx < 5) document.getElementById('cd-' + (idx+1)).focus(); }
+    else el.classList.remove('filled');
+    document.getElementById('code-err').style.display = 'none';
+  }
+  function codeKey(e, idx) {
+    if (e.key === 'Backspace' && !document.getElementById('cd-' + idx).value && idx > 0) {
+      document.getElementById('cd-' + (idx-1)).focus();
+    }
+  }
+  function getCode() {
+    let c = '';
+    for (let i = 0; i < 6; i++) c += (document.getElementById('cd-' + i).value || '');
+    return c;
+  }
+
+  function verifyCode() {
+    const code = getCode();
+    const btn = document.getElementById('verify-btn');
+    if (code.length < 6) { document.getElementById('code-err').textContent = 'Введите все 6 цифр'; document.getElementById('code-err').style.display = 'block'; return; }
+
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner"></div> Проверяем...';
+
+    setTimeout(() => {
+      if (code === '123456') {
+        document.getElementById('code-ok').style.display = 'block';
+        document.getElementById('code-err').style.display = 'none';
+        setTimeout(() => {
+          const nick = document.getElementById('r-username').value;
+          document.getElementById('success-nick').textContent = nick;
+          showRegStep(4);
+        }, 700);
+      } else {
+        document.getElementById('code-err').textContent = 'Неверный код. Попробуйте ещё раз.';
+        document.getElementById('code-err').style.display = 'block';
+        btn.disabled = false;
+        btn.innerHTML = '<svg viewBox="0 0 24 24" style="width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round"><polyline points="20 6 9 17 4 12"/></svg> Подтвердить';
+        // shake
+        const ci = document.getElementById('code-inputs');
+        ci.style.animation = 'none';
+        ci.style.transform = 'translateX(-6px)';
+        setTimeout(() => { ci.style.transform = 'translateX(6px)'; }, 80);
+        setTimeout(() => { ci.style.transform = 'translateX(-4px)'; }, 160);
+        setTimeout(() => { ci.style.transform = 'translateX(4px)'; }, 240);
+        setTimeout(() => { ci.style.transform = 'translateX(0)'; }, 320);
+        // clear
+        for (let i = 0; i < 6; i++) { document.getElementById('cd-' + i).value = ''; document.getElementById('cd-' + i).classList.remove('filled'); }
+        document.getElementById('cd-0').focus();
+      }
+    }, 1000);
+  }
+
+  // ── RESEND TIMER ──
+  let resendInterval;
+  function startResend() {
+    let t = 60;
+    const btn = document.getElementById('resend-btn');
+    const timer = document.getElementById('resend-timer');
+    btn.disabled = true;
+    clearInterval(resendInterval);
+    resendInterval = setInterval(() => {
+      t--;
+      timer.textContent = t;
+      if (t <= 0) { clearInterval(resendInterval); btn.disabled = false; btn.textContent = 'Отправить снова'; }
+    }, 1000);
+  }
+
+  // ── EYE TOGGLE ──
+  function toggleEye(inputId, btn) {
+    const inp = document.getElementById(inputId);
+    const isPass = inp.type === 'password';
+    inp.type = isPass ? 'text' : 'password';
+    btn.querySelector('svg').innerHTML = isPass
+      ? '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>'
+      : '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+  }
+
+  // ── LOGIN ──
+  function doLogin() {
+    const login = document.getElementById('l-login').value.trim();
+    const pass = document.getElementById('l-pass').value;
+    let ok = true;
+    ferr('err-l-login', !login); if (!login) ok = false;
+    ferr('err-l-pass', !pass); if (!pass) ok = false;
+    if (!ok) return;
+
+    const btn = document.querySelector('#panel-login .btn-submit');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner"></div> Входим...';
+
+    document.getElementById('login-err-box').style.display = 'none';
+
+    setTimeout(() => {
+      // demo: any credentials work except "wrong"
+      if (login.toLowerCase() === 'wrong') {
+        document.getElementById('login-err-box').style.display = 'block';
+        btn.disabled = false;
+        btn.innerHTML = '<svg viewBox="0 0 24 24" style="width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg> Войти';
+      } else {
+        location.href = 'profile.html';
+      }
+    }, 1200);
+  }
+
+  // ── FORGOT PASSWORD ──
+  function showForgot() {
+    const loginPanel = document.getElementById('panel-login');
+    loginPanel.innerHTML = `
+      <h2 class="auth-title">Сброс пароля</h2>
+      <p class="auth-sub">Введите email от аккаунта — отправим ссылку для сброса пароля.</p>
+      <div class="field">
+        <label for="forgot-email">Email <span class="req">*</span></label>
+        <div class="input-wrap">
+          <span class="input-icon"><svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span>
+          <input type="email" id="forgot-email" placeholder="your@email.ru">
+        </div>
+      </div>
+      <button class="btn-submit" onclick="sendReset()">
+        Отправить ссылку
+      </button>
+      <button class="btn-outline" onclick="location.reload()">← Назад к входу</button>
+    `;
+  }
+
+  function sendReset() {
+    const email = document.getElementById('forgot-email');
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) { alert('Введите корректный email'); return; }
+    const btn = document.querySelector('#panel-login .btn-submit');
+    btn.disabled = true; btn.textContent = '⏳ Отправляем...';
+    setTimeout(() => {
+      document.getElementById('panel-login').innerHTML = `
+        <div style="text-align:center;padding:20px 0;">
+          <div class="as-circle" style="margin:0 auto 20px;"><svg viewBox="0 0 24 24" style="width:36px;height:36px;stroke:var(--success);fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <h2 class="auth-title">Письмо отправлено!</h2>
+          <p class="auth-sub">Проверьте почту. Если письмо не пришло — проверьте папку «Спам».</p>
+          <button class="btn-outline" onclick="location.reload()">← Вернуться к входу</button>
+        </div>`;
+    }, 1500);
+  }
+</script>
+</body>
+</html>

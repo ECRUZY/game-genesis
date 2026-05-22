@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <script src="/nav.js"></script>
+  <script src="/api.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Game Genesis — Регистрация на турнир</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Exo+2:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --gold: #f0c040;
+      --gold-hover: #ffd055;
+      --bg-page: #080c12;
+      --bg-card: #0d1420;
+      --bg-input: #111827;
+      --bg-input-focus: #141e2e;
+      --border: #1e2d42;
+      --border-focus: #f0c040;
+      --text-primary: #e8edf5;
+      --text-secondary: #6b7c96;
+      --text-muted: #3d4f66;
+      --success: #4ade80;
+      --error: #f87171;
+      --accent-line: rgba(240,192,64,0.15);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg-page);
+      color: var(--text-primary);
+      font-family: 'Exo 2', sans-serif;
+      font-weight: 400;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Background grid effect ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(240,192,64,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(240,192,64,0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Top glow ── */
+    body::after {
+      content: '';
+      position: fixed;
+      top: -200px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 800px;
+      height: 400px;
+      background: radial-gradient(ellipse, rgba(240,192,64,0.06) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Page layout ── */
+    .page {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ── */
+    header {
+      padding: 20px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      background: rgba(8,12,18,0.8);
+      backdrop-filter: blur(10px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+    }
+
+    .logo-icon {
+      width: 38px;
+      height: 38px;
+      background: var(--gold);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .logo-icon svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    .logo-text {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--gold);
+      letter-spacing: 2px;
+    }
+
+    .header-nav {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nav-link {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      text-decoration: none;
+      padding: 6px 14px;
+      border-radius: 6px;
+      transition: color 0.2s, background 0.2s;
+    }
+
+    .nav-link:hover { color: var(--text-primary); background: rgba(255,255,255,0.05); }
+
+    .nav-link.active {
+      color: var(--gold);
+      background: rgba(240,192,64,0.08);
+      border: 1px solid rgba(240,192,64,0.2);
+    }
+
+    /* ── Hero banner ── */
+    .hero {
+      padding: 60px 40px 40px;
+      text-align: center;
+      position: relative;
+    }
+
+    .tournament-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(240,192,64,0.08);
+      border: 1px solid rgba(240,192,64,0.25);
+      border-radius: 20px;
+      padding: 6px 16px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--gold);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+
+    .tournament-tag::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      background: var(--gold);
+      border-radius: 50%;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.8); }
+    }
+
+    .hero-title {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: clamp(32px, 5vw, 56px);
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.1;
+      margin-bottom: 12px;
+      letter-spacing: 1px;
+    }
+
+    .hero-title span { color: var(--gold); }
+
+    .hero-desc {
+      font-size: 15px;
+      color: var(--text-secondary);
+      max-width: 480px;
+      margin: 0 auto 32px;
+      line-height: 1.7;
+    }
+
+    .hero-stats {
+      display: flex;
+      justify-content: center;
+      gap: 32px;
+      flex-wrap: wrap;
+    }
+
+    .stat {
+      text-align: center;
+    }
+
+    .stat-num {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--gold);
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-top: 2px;
+    }
+
+    .stat-divider {
+      width: 1px;
+      background: var(--border);
+      align-self: stretch;
+    }
+
+    /* ── Main content ── */
+    .content {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr minmax(auto, 560px) 1fr;
+      gap: 0;
+      padding: 40px 40px 80px;
+      align-items: start;
+    }
+
+    .content-left {
+      padding-right: 40px;
+    }
+
+    .info-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    .info-card-title {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .info-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      font-size: 13px;
+    }
+
+    .info-item:last-child { border-bottom: none; }
+
+    .info-icon {
+      width: 28px;
+      height: 28px;
+      background: rgba(240,192,64,0.1);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .info-icon svg { width: 14px; height: 14px; stroke: var(--gold); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+    .info-key { color: var(--text-secondary); flex: 1; }
+    .info-val { color: var(--text-primary); font-weight: 500; }
+    .info-val.gold { color: var(--gold); }
+
+    .games-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .game-tag {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 3px 10px;
+      font-size: 11px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .content-right {
+      padding-left: 40px;
+    }
+
+    /* ── Form card ── */
+    .form-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 36px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .form-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    }
+
+    .form-header {
+      margin-bottom: 28px;
+    }
+
+    .form-title {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 24px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 6px;
+    }
+
+    .form-subtitle {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    .step-indicator {
+      display: flex;
+      gap: 6px;
+      margin-top: 16px;
+    }
+
+    .step-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 3px;
+      background: var(--border);
+      transition: all 0.3s;
+    }
+
+    .step-dot.active {
+      width: 24px;
+      background: var(--gold);
+    }
+
+    /* ── Fields ── */
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .field {
+      margin-bottom: 18px;
+    }
+
+    .field label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 7px;
+    }
+
+    .field label .required {
+      color: var(--gold);
+      margin-left: 2px;
+    }
+
+    .input-wrap {
+      position: relative;
+    }
+
+    .input-icon {
+      position: absolute;
+      left: 13px;
+      top: 50%;
+      transform: translateY(-50%);
+      pointer-events: none;
+      color: var(--text-muted);
+    }
+
+    .input-icon svg {
+      width: 16px;
+      height: 16px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      display: block;
+    }
+
+    input, select {
+      width: 100%;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 11px 14px;
+      font-size: 14px;
+      color: var(--text-primary);
+      font-family: 'Exo 2', sans-serif;
+      font-weight: 400;
+      outline: none;
+      transition: border-color 0.2s, background 0.2s;
+      -webkit-appearance: none;
+    }
+
+    input.has-icon, select.has-icon { padding-left: 38px; }
+
+    input::placeholder { color: var(--text-muted); font-size: 13px; }
+
+    input:focus, select:focus {
+      border-color: var(--border-focus);
+      background: var(--bg-input-focus);
+    }
+
+    input.error-field { border-color: var(--error); }
+
+    select {
+      cursor: pointer;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7c96' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 13px center;
+      padding-right: 36px;
+    }
+
+    select option { background: #0d1420; }
+
+    .field-hint {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 5px;
+    }
+
+    .field-error {
+      font-size: 11px;
+      color: var(--error);
+      margin-top: 5px;
+      display: none;
+    }
+
+    .field-error.show { display: block; }
+
+    /* ── Divider ── */
+    .form-divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 8px 0 22px;
+    }
+
+    /* ── Agreement ── */
+    .agreement {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 20px;
+      cursor: pointer;
+    }
+
+    .agreement input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      min-width: 18px;
+      border-radius: 4px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      padding: 0;
+      accent-color: var(--gold);
+      margin-top: 1px;
+    }
+
+    .agreement-text {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .agreement-text a { color: var(--gold); text-decoration: none; }
+
+    /* ── Submit button ── */
+    .btn-submit {
+      width: 100%;
+      background: var(--gold);
+      border: none;
+      border-radius: 8px;
+      padding: 14px;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 17px;
+      font-weight: 700;
+      color: #080c12;
+      cursor: pointer;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .btn-submit:hover {
+      background: var(--gold-hover);
+      box-shadow: 0 0 24px rgba(240,192,64,0.25);
+    }
+
+    .btn-submit:active { transform: scale(0.99); }
+
+    .btn-submit:disabled {
+      background: #1e2d42;
+      color: var(--text-muted);
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .btn-submit svg {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* ── Success screen ── */
+    #successSection {
+      display: none;
+      text-align: center;
+      padding: 20px 10px;
+    }
+
+    .success-circle {
+      width: 80px;
+      height: 80px;
+      background: rgba(74,222,128,0.1);
+      border: 1px solid rgba(74,222,128,0.3);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+    }
+
+    .success-circle svg {
+      width: 36px;
+      height: 36px;
+      stroke: var(--success);
+      fill: none;
+      stroke-width: 2.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .success-title {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 28px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 10px;
+    }
+
+    .success-text {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      max-width: 340px;
+      margin: 0 auto 24px;
+    }
+
+    .success-card {
+      background: rgba(240,192,64,0.06);
+      border: 1px solid rgba(240,192,64,0.2);
+      border-radius: 10px;
+      padding: 16px 20px;
+      text-align: left;
+      margin-bottom: 24px;
+    }
+
+    .success-card-label {
+      font-size: 11px;
+      color: var(--gold);
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .success-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      padding: 4px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+
+    .success-row:last-child { border-bottom: none; }
+    .success-row span:first-child { color: var(--text-secondary); }
+    .success-row span:last-child { color: var(--text-primary); font-weight: 500; }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 11px 24px;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      transition: border-color 0.2s, color 0.2s;
+    }
+
+    .btn-outline:hover { border-color: var(--gold); color: var(--gold); }
+
+    /* ── Spinner ── */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(8,12,18,0.3);
+      border-top-color: #080c12;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      flex-shrink: 0;
+    }
+
+    /* ── Footer ── */
+    footer {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 24px 40px;
+      border-top: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    footer a { color: var(--text-secondary); text-decoration: none; }
+    footer a:hover { color: var(--gold); }
+
+    /* ── Responsive ── */
+    @media (max-width: 1100px) {
+      .content {
+        grid-template-columns: 1fr minmax(auto, 560px);
+      }
+      .content-right { display: none; }
+    }
+
+    @media (max-width: 720px) {
+      header { padding: 16px 20px; }
+      .header-nav { display: none; }
+      .hero { padding: 40px 20px 28px; }
+      .content { grid-template-columns: 1fr; padding: 20px 20px 60px; }
+      .content-left { display: none; }
+      .form-card { padding: 24px 20px; }
+      .field-row { grid-template-columns: 1fr; gap: 0; }
+      footer { padding: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- Header -->
+  
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="tournament-tag">Регистрация открыта</div>
+    <h1 class="hero-title">Турнир <span>Чеченской<br>Республики</span></h1>
+    <p class="hero-desc">Зарегистрируйся и побори соперников в честной игре. Участие бесплатное — победа бесценна.</p>
+    <div class="hero-stats">
+      <div class="stat">
+        <div class="stat-num">128</div>
+        <div class="stat-label">Мест</div>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat">
+        <div class="stat-num">50 000 ₽</div>
+        <div class="stat-label">Призовой фонд</div>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat">
+        <div class="stat-num">3</div>
+        <div class="stat-label">Игры</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Content -->
+  <main class="content">
+
+    <!-- Left info panel -->
+    <aside class="content-left">
+      <div class="info-card">
+        <div class="info-card-title">Детали турнира</div>
+        <div class="info-item">
+          <div class="info-icon">
+            <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </div>
+          <span class="info-key">Дата</span>
+          <span class="info-val">15 июня 2025</span>
+        </div>
+        <div class="info-item">
+          <div class="info-icon">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <span class="info-key">Формат</span>
+          <span class="info-val">Single Elimination</span>
+        </div>
+        <div class="info-item">
+          <div class="info-icon">
+            <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <span class="info-key">Участников</span>
+          <span class="info-val gold">64 / 128</span>
+        </div>
+        <div class="info-item">
+          <div class="info-icon">
+            <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          </div>
+          <span class="info-key">Взнос</span>
+          <span class="info-val">Бесплатно</span>
+        </div>
+        <div class="info-item" style="flex-direction: column; align-items: flex-start; gap: 8px;">
+          <span class="info-key">Игры</span>
+          <div class="games-list">
+            <span class="game-tag">CS2</span>
+            <span class="game-tag">Dota 2</span>
+            <span class="game-tag">Valorant</span>
+            <span class="game-tag">FIFA</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-card">
+        <div class="info-card-title">Призы</div>
+        <div class="info-item">
+          <div class="info-icon" style="background: rgba(255,215,0,0.15);">
+            <svg viewBox="0 0 24 24" style="stroke: #ffd700;"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          </div>
+          <span class="info-key">1 место</span>
+          <span class="info-val gold">25 000 ₽</span>
+        </div>
+        <div class="info-item">
+          <div class="info-icon" style="background: rgba(192,192,192,0.1);">
+            <svg viewBox="0 0 24 24" style="stroke: #c0c0c0;"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          </div>
+          <span class="info-key">2 место</span>
+          <span class="info-val">15 000 ₽</span>
+        </div>
+        <div class="info-item">
+          <div class="info-icon" style="background: rgba(205,127,50,0.1);">
+            <svg viewBox="0 0 24 24" style="stroke: #cd7f32;"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          </div>
+          <span class="info-key">3 место</span>
+          <span class="info-val">10 000 ₽</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Form -->
+    <div>
+      <div class="form-card">
+        <div id="formSection">
+          <div class="form-header">
+            <h2 class="form-title">Заявка участника</h2>
+            <p class="form-subtitle">Все поля обязательны, кроме ссылки на Steam</p>
+            <div class="step-indicator">
+              <div class="step-dot active"></div>
+              <div class="step-dot"></div>
+              <div class="step-dot"></div>
+            </div>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label for="fname">Имя <span class="required">*</span></label>
+              <div class="input-wrap">
+                <span class="input-icon">
+                  <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                </span>
+                <input type="text" id="fname" class="has-icon" placeholder="Ислам" autocomplete="given-name">
+              </div>
+              <p class="field-error" id="fname-err">Введите имя</p>
+            </div>
+            <div class="field">
+              <label for="lname">Фамилия <span class="required">*</span></label>
+              <div class="input-wrap">
+                <input type="text" id="lname" placeholder="Мусаев" autocomplete="family-name">
+              </div>
+              <p class="field-error" id="lname-err">Введите фамилию</p>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="nick">Игровой псевдоним <span class="required">*</span></label>
+            <div class="input-wrap">
+              <span class="input-icon">
+                <svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2" ry="2"/><line x1="6" y1="12" x2="6" y2="12" stroke-width="3"/><line x1="10" y1="12" x2="10" y2="12" stroke-width="3"/><polyline points="14 9 14 12 17 12"/></svg>
+              </span>
+              <input type="text" id="nick" class="has-icon" placeholder="XShadow99">
+            </div>
+            <p class="field-error" id="nick-err">Введите ник</p>
+          </div>
+
+          <div class="field">
+            <label for="email">Email <span class="required">*</span></label>
+            <div class="input-wrap">
+              <span class="input-icon">
+                <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              </span>
+              <input type="email" id="email" class="has-icon" placeholder="player@mail.ru" autocomplete="email">
+            </div>
+            <p class="field-error" id="email-err">Введите корректный email</p>
+          </div>
+
+          <div class="field">
+            <label for="game">Игра <span class="required">*</span></label>
+            <div class="input-wrap">
+              <select id="game">
+                <option value="">— Выберите игру —</option>
+                <option value="CS2">CS2</option>
+                <option value="Dota 2">Dota 2</option>
+                <option value="Valorant">Valorant</option>
+                <option value="FIFA / EA Sports FC">FIFA / EA Sports FC</option>
+                <option value="Mobile Legends">Mobile Legends</option>
+                <option value="Другое">Другое</option>
+              </select>
+            </div>
+            <p class="field-error" id="game-err">Выберите игру</p>
+          </div>
+
+          <div class="field">
+            <label for="steam">Ссылка на Steam профиль</label>
+            <div class="input-wrap">
+              <span class="input-icon">
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M12 8a4 4 0 0 1 4 4"/><circle cx="12" cy="12" r="2"/></svg>
+              </span>
+              <input type="url" id="steam" class="has-icon" placeholder="https://steamcommunity.com/id/username">
+            </div>
+            <p class="field-hint">Необязательно для мобильных игр</p>
+            <p class="field-error" id="steam-err">Ссылка должна начинаться с steamcommunity.com</p>
+          </div>
+
+          <hr class="form-divider">
+
+          <label class="agreement">
+            <input type="checkbox" id="agree">
+            <span class="agreement-text">
+              Я согласен с <a href="#">правилами турнира</a> и даю согласие на обработку персональных данных в соответствии с <a href="#">политикой конфиденциальности</a> Game Genesis.
+            </span>
+          </label>
+
+          <button class="btn-submit" id="submitBtn" onclick="handleSubmit()">
+            <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            Отправить заявку
+          </button>
+        </div>
+
+        <!-- Success -->
+        <div id="successSection">
+          <div class="success-circle">
+            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <p class="success-title">Заявка принята!</p>
+          <p class="success-text">Отлично, <strong id="successNick" style="color:#fff;"></strong>! Организатор получил твои данные. Ждите подтверждения на email.</p>
+
+          <div class="success-card">
+            <div class="success-card-label">Данные заявки</div>
+            <div class="success-row"><span>Имя</span><span id="s-name"></span></div>
+            <div class="success-row"><span>Ник</span><span id="s-nick"></span></div>
+            <div class="success-row"><span>Email</span><span id="s-email"></span></div>
+            <div class="success-row"><span>Игра</span><span id="s-game"></span></div>
+            <div class="success-row" id="s-steam-row"><span>Steam</span><span id="s-steam"></span></div>
+          </div>
+
+          <button class="btn-outline" onclick="resetForm()">← Зарегистрировать ещё участника</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right placeholder (empty for layout balance) -->
+    <div class="content-right"></div>
+
+  </main>
+
+  <footer>
+    © 2024–2025 Game Genesis &nbsp;·&nbsp;
+    <a href="#">Правила платформы</a> &nbsp;·&nbsp;
+    <a href="#">Политика конфиденциальности</a> &nbsp;·&nbsp;
+    <a href="#">Связаться с нами</a>
+  </footer>
+
+</div>
+
+<script>
+  // ─────────────────────────────────────────────────────
+  //  НАСТРОЙКИ — замени URL на свой Google Apps Script
+  // ─────────────────────────────────────────────────────
+  const GOOGLE_SCRIPT_URL = 'YOUR_GOOGLE_APPS_SCRIPT_URL';
+  // ─────────────────────────────────────────────────────
+
+  function validate() {
+    let ok = true;
+
+    const rules = [
+      { id: 'fname',  errId: 'fname-err',  check: v => v.trim().length >= 2 },
+      { id: 'lname',  errId: 'lname-err',  check: v => v.trim().length >= 2 },
+      { id: 'nick',   errId: 'nick-err',   check: v => v.trim().length >= 2 },
+      { id: 'email',  errId: 'email-err',  check: v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim()) },
+      { id: 'game',   errId: 'game-err',   check: v => v !== '' },
+    ];
+
+    rules.forEach(r => {
+      const val = document.getElementById(r.id).value;
+      const err = document.getElementById(r.errId);
+      const inp = document.getElementById(r.id);
+      if (!r.check(val)) {
+        err.classList.add('show');
+        inp.classList.add('error-field');
+        ok = false;
+      } else {
+        err.classList.remove('show');
+        inp.classList.remove('error-field');
+      }
+    });
+
+    const steamVal = document.getElementById('steam').value.trim();
+    const steamErr = document.getElementById('steam-err');
+    const steamInp = document.getElementById('steam');
+    if (steamVal && !steamVal.includes('steamcommunity.com')) {
+      steamErr.classList.add('show');
+      steamInp.classList.add('error-field');
+      ok = false;
+    } else {
+      steamErr.classList.remove('show');
+      steamInp.classList.remove('error-field');
+    }
+
+    if (!document.getElementById('agree').checked) {
+      alert('Пожалуйста, примите условия участия');
+      ok = false;
+    }
+
+    return ok;
+  }
+
+  async function handleSubmit() {
+    if (!validate()) return;
+
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner"></div> Отправляем...';
+
+    const data = {
+      firstName:  document.getElementById('fname').value.trim(),
+      lastName:   document.getElementById('lname').value.trim(),
+      nickname:   document.getElementById('nick').value.trim(),
+      email:      document.getElementById('email').value.trim(),
+      game:       document.getElementById('game').value,
+      steam:      document.getElementById('steam').value.trim(),
+      timestamp:  new Date().toLocaleString('ru-RU'),
+    };
+
+    if (GOOGLE_SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL') {
+      // Demo mode — simulate delay
+      await new Promise(r => setTimeout(r, 1200));
+      showSuccess(data);
+      return;
+    }
+
+    try {
+      await fetch(GOOGLE_SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        body: JSON.stringify(data),
+        headers: { 'Content-Type': 'application/json' }
+      });
+      showSuccess(data);
+    } catch (e) {
+      btn.disabled = false;
+      btn.innerHTML = '<svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Отправить заявку';
+      alert('Ошибка отправки. Проверьте соединение и попробуйте снова.');
+    }
+  }
+
+  function showSuccess(data) {
+    document.getElementById('formSection').style.display = 'none';
+    const s = document.getElementById('successSection');
+    s.style.display = 'block';
+
+    document.getElementById('successNick').textContent = data.nickname;
+    document.getElementById('s-name').textContent  = data.lastName + ' ' + data.firstName;
+    document.getElementById('s-nick').textContent  = data.nickname;
+    document.getElementById('s-email').textContent = data.email;
+    document.getElementById('s-game').textContent  = data.game;
+
+    const steamRow = document.getElementById('s-steam-row');
+    if (data.steam) {
+      document.getElementById('s-steam').textContent = data.steam;
+    } else {
+      steamRow.style.display = 'none';
+    }
+
+    // Animate step dots
+    document.querySelectorAll('.step-dot').forEach((d, i) => {
+      d.style.background = '#4ade80';
+      d.style.width = '6px';
+    });
+  }
+
+  function resetForm() {
+    ['fname','lname','nick','email','steam'].forEach(id => {
+      document.getElementById(id).value = '';
+      document.getElementById(id).classList.remove('error-field');
+    });
+    document.getElementById('game').value = '';
+    document.getElementById('agree').checked = false;
+    document.querySelectorAll('.field-error').forEach(e => e.classList.remove('show'));
+
+    document.getElementById('successSection').style.display = 'none';
+    document.getElementById('formSection').style.display = 'block';
+
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = false;
+    btn.innerHTML = '<svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Отправить заявку';
+
+    document.getElementById('s-steam-row').style.display = '';
+    document.querySelectorAll('.step-dot').forEach((d, i) => {
+      d.style.background = i === 0 ? 'var(--gold)' : 'var(--border)';
+      d.style.width = i === 0 ? '24px' : '6px';
+    });
+  }
+
+  // Live validation on blur
+  document.querySelectorAll('input, select').forEach(el => {
+    el.addEventListener('blur', () => {
+      if (el.value) {
+        el.classList.remove('error-field');
+        const errEl = document.getElementById(el.id + '-err');
+        if (errEl) errEl.classList.remove('show');
+      }
+    });
+  });
+</script>
+</body>
+</html>

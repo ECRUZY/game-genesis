@@ -1,0 +1,1148 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <script src="/nav.js"></script>
+  <script src="/api.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Профиль — Game Genesis</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Exo+2:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --gold: #f0c040;
+      --gold-dim: rgba(240,192,64,0.12);
+      --gold-glow: rgba(240,192,64,0.07);
+      --bg: #080c12;
+      --bg-card: #0d1420;
+      --bg-card2: #111928;
+      --bg-input: #0a1018;
+      --border: #1a2436;
+      --border-hi: #253550;
+      --text: #dde4ef;
+      --text-dim: #5c7090;
+      --text-muted: #2e3f58;
+      --success: #4ade80;
+      --red: #f87171;
+      --blue: #60a5fa;
+      --purple: #a78bfa;
+    }
+    html { scroll-behavior: smooth; }
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: #1e2d42; border-radius: 3px; }
+    body { background: var(--bg); color: var(--text); font-family: 'Exo 2', sans-serif; overflow-x: hidden; }
+
+    .grid-bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; background-image: linear-gradient(rgba(240,192,64,0.022) 1px,transparent 1px),linear-gradient(90deg,rgba(240,192,64,0.022) 1px,transparent 1px); background-size: 50px 50px; }
+
+    /* HEADER */
+    header { position: fixed; top: 0; left: 0; right: 0; z-index: 200; height: 64px; display: flex; align-items: center; padding: 0 32px; background: rgba(8,12,18,0.92); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); }
+    .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; margin-right: 40px; }
+    .logo-hex { width: 36px; height: 36px; background: var(--gold); clip-path: polygon(50% 0%,93% 25%,93% 75%,50% 100%,7% 75%,7% 25%); display: flex; align-items: center; justify-content: center; }
+    .logo-hex svg { width: 18px; height: 18px; }
+    .logo-name { font-family: 'Rajdhani',sans-serif; font-size: 18px; font-weight: 700; color: var(--gold); letter-spacing: 2px; }
+    nav { display: flex; align-items: center; gap: 2px; flex: 1; }
+    .nav-a { font-size: 13px; font-weight: 500; color: var(--text-dim); text-decoration: none; padding: 6px 14px; border-radius: 6px; transition: .2s; }
+    .nav-a:hover { color: var(--text); background: rgba(255,255,255,.04); }
+    .nav-a.active { color: var(--gold); background: var(--gold-glow); }
+    .header-right { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+    .btn-sm { font-family: 'Exo 2',sans-serif; font-size: 13px; padding: 7px 16px; border-radius: 7px; border: 1px solid var(--border-hi); background: transparent; color: var(--text-dim); cursor: pointer; transition: .2s; }
+    .btn-sm:hover { border-color: var(--gold); color: var(--gold); }
+    .btn-sm-gold { font-family: 'Rajdhani',sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 1px; padding: 8px 18px; border-radius: 7px; border: none; background: var(--gold); color: #080c12; cursor: pointer; transition: .2s; }
+    .btn-sm-gold:hover { background: #ffd055; }
+
+    /* SIDEBAR */
+    .sidebar { position: fixed; left: 0; top: 64px; bottom: 0; width: 60px; z-index: 100; display: flex; flex-direction: column; align-items: center; padding: 20px 0; gap: 4px; background: rgba(8,12,18,.9); border-right: 1px solid var(--border); backdrop-filter: blur(10px); }
+    .sb-item { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); cursor: pointer; transition: .2s; position: relative; }
+    .sb-item:hover { color: var(--text); background: rgba(255,255,255,.05); }
+    .sb-item.active { color: var(--gold); background: var(--gold-glow); }
+    .sb-item svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    .sb-item .tip { position: absolute; left: 52px; top: 50%; transform: translateY(-50%); background: #1a2436; color: var(--text); font-size: 12px; padding: 4px 10px; border-radius: 5px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 200; }
+    .sb-item:hover .tip { opacity: 1; }
+    .sb-sep { width: 28px; height: 1px; background: var(--border); margin: 6px 0; }
+
+    /* PAGE */
+    .page {   position: relative; z-index: 1; }
+
+    /* ── HERO COVER ── */
+    .profile-cover {
+      height: 220px; position: relative; overflow: hidden;
+      background: linear-gradient(135deg, #0a1628 0%, #0f1e35 40%, #1a0a2e 100%);
+    }
+    .cover-pattern {
+      position: absolute; inset: 0;
+      background-image: repeating-linear-gradient(45deg, rgba(240,192,64,0.03) 0px, rgba(240,192,64,0.03) 1px, transparent 1px, transparent 40px), repeating-linear-gradient(-45deg, rgba(96,165,250,0.02) 0px, rgba(96,165,250,0.02) 1px, transparent 1px, transparent 40px);
+    }
+    .cover-glow { position: absolute; bottom: -60px; left: 40%; width: 400px; height: 200px; background: radial-gradient(ellipse, rgba(240,192,64,0.08), transparent 70%); }
+    .cover-edit-btn {
+      position: absolute; top: 16px; right: 20px;
+      background: rgba(13,20,32,.7); border: 1px solid var(--border-hi); color: var(--text-dim);
+      border-radius: 8px; padding: 7px 14px; font-size: 12px; font-weight: 500;
+      cursor: pointer; transition: .2s; backdrop-filter: blur(8px);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .cover-edit-btn svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .cover-edit-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+    /* PROFILE INFO BAND */
+    .profile-band {
+      padding: 0 48px 0;
+      position: relative;
+    }
+    .profile-main {
+      display: flex; align-items: flex-end; gap: 24px;
+      margin-top: -54px; margin-bottom: 20px;
+    }
+    .avatar-wrap { position: relative; flex-shrink: 0; }
+    .avatar {
+      width: 108px; height: 108px; border-radius: 16px;
+      background: linear-gradient(135deg, #1a2a4a, #2a1a4a);
+      border: 3px solid var(--bg); overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Rajdhani',sans-serif; font-size: 42px; font-weight: 700;
+      color: var(--gold); position: relative;
+    }
+    .avatar-online {
+      position: absolute; bottom: 6px; right: 6px;
+      width: 14px; height: 14px; border-radius: 50%;
+      background: var(--success); border: 2px solid var(--bg);
+    }
+    .avatar-edit {
+      position: absolute; bottom: -4px; right: -4px;
+      width: 28px; height: 28px; border-radius: 8px;
+      background: var(--gold); border: 2px solid var(--bg);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: .2s;
+    }
+    .avatar-edit svg { width: 13px; height: 13px; stroke: #080c12; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+    .avatar-edit:hover { background: #ffd055; }
+
+    .profile-identity { flex: 1; padding-bottom: 6px; }
+    .profile-username {
+      font-family: 'Rajdhani',sans-serif; font-size: 32px; font-weight: 700; color: #fff; line-height: 1;
+      display: flex; align-items: center; gap: 10px; margin-bottom: 4px;
+    }
+    .verified-badge {
+      width: 22px; height: 22px; background: var(--blue); border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .verified-badge svg { width: 12px; height: 12px; stroke: #fff; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+    .profile-fullname { font-size: 14px; color: var(--text-dim); margin-bottom: 8px; }
+    .profile-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+    .ptag { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; letter-spacing: .4px; }
+    .ptag-game { background: rgba(96,165,250,.1); color: var(--blue); border: 1px solid rgba(96,165,250,.2); }
+    .ptag-role { background: rgba(240,192,64,.1); color: var(--gold); border: 1px solid rgba(240,192,64,.2); }
+    .ptag-uni { background: rgba(167,139,250,.1); color: var(--purple); border: 1px solid rgba(167,139,250,.2); }
+
+    .profile-actions { display: flex; gap: 10px; padding-bottom: 6px; }
+    .btn-edit { font-family: 'Exo 2',sans-serif; font-size: 13px; font-weight: 500; padding: 9px 20px; border-radius: 8px; border: 1px solid var(--border-hi); background: transparent; color: var(--text-dim); cursor: pointer; transition: .2s; display: flex; align-items: center; gap: 7px; }
+    .btn-edit svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .btn-edit:hover { border-color: var(--gold); color: var(--gold); }
+    .btn-create-t { font-family: 'Rajdhani',sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 1px; padding: 9px 20px; border-radius: 8px; border: none; background: var(--gold); color: #080c12; cursor: pointer; transition: .2s; display: flex; align-items: center; gap: 7px; }
+    .btn-create-t svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+    .btn-create-t:hover { background: #ffd055; box-shadow: 0 0 18px rgba(240,192,64,.3); }
+
+    /* STATS ROW */
+    .profile-stats {
+      display: flex; gap: 0;
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 12px; overflow: hidden; margin-bottom: 2px;
+    }
+    .pstat { flex: 1; padding: 14px 20px; text-align: center; border-right: 1px solid var(--border); }
+    .pstat:last-child { border-right: none; }
+    .pstat-val { font-family: 'Rajdhani',sans-serif; font-size: 22px; font-weight: 700; color: var(--gold); }
+    .pstat-key { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: .5px; margin-top: 2px; }
+
+    /* FACEIT CARD */
+    .faceit-card {
+      background: linear-gradient(135deg, rgba(255,85,0,.08), rgba(255,85,0,.03));
+      border: 1px solid rgba(255,85,0,.2); border-radius: 10px;
+      padding: 12px 16px; display: flex; align-items: center; gap: 14px;
+      margin-bottom: 2px;
+    }
+    .faceit-logo {
+      width: 36px; height: 36px; border-radius: 8px;
+      background: #ff5500; display: flex; align-items: center; justify-content: center;
+      font-family: 'Rajdhani',sans-serif; font-size: 11px; font-weight: 700; color: #fff; letter-spacing: 1px;
+      flex-shrink: 0;
+    }
+    .faceit-info { flex: 1; }
+    .faceit-label { font-size: 11px; color: rgba(255,85,0,.7); font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
+    .faceit-nick { font-family: 'Rajdhani',sans-serif; font-size: 16px; font-weight: 700; color: #fff; }
+    .faceit-stats { display: flex; gap: 16px; }
+    .faceit-stat { text-align: center; }
+    .faceit-stat-val { font-family: 'Rajdhani',sans-serif; font-size: 18px; font-weight: 700; }
+    .faceit-stat-val.lvl { color: #ff5500; }
+    .faceit-stat-val.elo { color: #fff; }
+    .faceit-stat-key { font-size: 10px; color: rgba(255,85,0,.6); text-transform: uppercase; letter-spacing: .5px; }
+
+    /* CONTACT ROW */
+    .contact-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
+    .contact-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-dim); }
+    .contact-item svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+
+    /* TABS */
+    .tabs-bar { display: flex; gap: 2px; padding: 16px 48px 0; border-bottom: 1px solid var(--border); background: rgba(8,12,18,.8); backdrop-filter: blur(10px); position: sticky; top: 64px; z-index: 50; }
+    .tab { font-family: 'Exo 2',sans-serif; font-size: 13px; font-weight: 500; color: var(--text-dim); padding: 12px 16px; cursor: pointer; border: none; background: none; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: .2s; display: flex; align-items: center; gap: 7px; }
+    .tab svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .tab:hover { color: var(--text); }
+    .tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+    /* CONTENT */
+    .tab-panel { display: none; padding: 36px 48px 80px; }
+    .tab-panel.active { display: block; }
+
+    /* ── OVERVIEW ── */
+    .overview-grid { display: grid; grid-template-columns: 1fr 360px; gap: 24px; }
+
+    .section-block { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 22px; margin-bottom: 20px; }
+    .block-title { font-family: 'Rajdhani',sans-serif; font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; }
+    .block-title-left { display: flex; align-items: center; gap: 8px; }
+    .block-title-left svg { width: 16px; height: 16px; stroke: var(--gold); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .see-all { font-size: 11px; color: var(--text-dim); cursor: pointer; text-decoration: none; transition: color .2s; }
+    .see-all:hover { color: var(--gold); }
+
+    /* Bio */
+    .bio-text { font-size: 14px; color: var(--text-dim); line-height: 1.7; }
+
+    /* Recent activity */
+    .activity-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid rgba(26,36,54,.5); }
+    .activity-item:last-child { border-bottom: none; }
+    .act-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .act-icon svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .act-icon.win { background: rgba(74,222,128,.1); color: var(--success); }
+    .act-icon.loss { background: rgba(248,113,113,.1); color: var(--red); }
+    .act-icon.trn { background: rgba(240,192,64,.1); color: var(--gold); }
+    .act-info { flex: 1; }
+    .act-title { font-size: 13px; font-weight: 500; color: var(--text); }
+    .act-sub { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+    .act-time { font-size: 11px; color: var(--text-muted); }
+
+    /* ── CLIPS / VIDEOS ── */
+    .clips-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+    .clip-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; cursor: pointer; transition: .2s; }
+    .clip-card:hover { border-color: var(--border-hi); transform: translateY(-2px); }
+    .clip-thumb { height: 160px; position: relative; background: #0a1220; }
+    .clip-thumb-bg { width: 100%; height: 100%; object-fit: cover; opacity: .6; }
+    .clip-grad { position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 40%, rgba(13,20,32,1)); }
+    .clip-play { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+    .play-circle { width: 52px; height: 52px; border-radius: 50%; background: rgba(240,192,64,.9); display: flex; align-items: center; justify-content: center; transition: .2s; }
+    .clip-card:hover .play-circle { transform: scale(1.1); background: var(--gold); }
+    .play-circle svg { width: 20px; height: 20px; fill: #080c12; margin-left: 3px; }
+    .clip-duration { position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,.7); font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; color: #fff; }
+    .clip-views { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,.5); font-size: 11px; padding: 2px 8px; border-radius: 4px; color: rgba(255,255,255,.7); display: flex; align-items: center; gap: 4px; }
+    .clip-body { padding: 14px; }
+    .clip-title { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 6px; line-height: 1.4; }
+    .clip-meta { display: flex; align-items: center; justify-content: space-between; }
+    .clip-game { font-size: 10px; font-weight: 700; background: var(--gold-dim); color: var(--gold); padding: 2px 8px; border-radius: 4px; letter-spacing: .5px; }
+    .clip-date { font-size: 11px; color: var(--text-muted); }
+
+    /* Upload clip */
+    .upload-clip {
+      border: 2px dashed var(--border); border-radius: 12px; height: 160px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 8px; cursor: pointer; transition: .2s; color: var(--text-muted);
+    }
+    .upload-clip:hover { border-color: var(--gold); color: var(--gold); background: var(--gold-glow); }
+    .upload-clip svg { width: 28px; height: 28px; stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+    .upload-clip-text { font-size: 13px; font-weight: 500; }
+    .upload-clip-sub { font-size: 11px; opacity: .6; }
+
+    /* ── TOURNAMENTS ── */
+    .t-list { display: flex; flex-direction: column; gap: 14px; }
+    .t-item {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+      padding: 20px; transition: .2s; cursor: pointer;
+    }
+    .t-item:hover { border-color: var(--border-hi); }
+    .t-item.featured { border-color: rgba(240,192,64,.25); }
+    .t-item-top { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 14px; }
+    .t-item-icon { width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 20px; }
+    .t-item-icon.gold { background: rgba(240,192,64,.1); }
+    .t-item-icon.blue { background: rgba(96,165,250,.1); }
+    .t-item-info { flex: 1; }
+    .t-item-name { font-family: 'Rajdhani',sans-serif; font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+    .t-item-meta { display: flex; gap: 14px; flex-wrap: wrap; }
+    .t-meta-pill { font-size: 11px; color: var(--text-dim); display: flex; align-items: center; gap: 4px; }
+    .t-meta-pill svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .t-item-status { flex-shrink: 0; }
+    .status-pill { font-size: 11px; font-weight: 600; padding: 4px 12px; border-radius: 20px; }
+    .status-live { background: rgba(248,113,113,.12); color: var(--red); border: 1px solid rgba(248,113,113,.25); }
+    .status-open { background: rgba(74,222,128,.1); color: var(--success); border: 1px solid rgba(74,222,128,.2); }
+    .status-done { background: rgba(92,112,144,.1); color: var(--text-dim); border: 1px solid rgba(92,112,144,.2); }
+
+    /* Finance section inside tournament */
+    .finance-expand { display: none; border-top: 1px solid var(--border); margin-top: 14px; padding-top: 16px; }
+    .finance-expand.open { display: block; }
+
+    .finance-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .finance-title { font-family: 'Rajdhani',sans-serif; font-size: 15px; font-weight: 700; color: var(--gold); display: flex; align-items: center; gap: 6px; }
+    .finance-title svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+    .finance-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+    .f-card { background: var(--bg-card2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; }
+    .f-card-val { font-family: 'Rajdhani',sans-serif; font-size: 20px; font-weight: 700; }
+    .f-card-val.green { color: var(--success); }
+    .f-card-val.red { color: var(--red); }
+    .f-card-val.gold { color: var(--gold); }
+    .f-card-val.blue { color: var(--blue); }
+    .f-card-key { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; margin-top: 3px; }
+
+    /* Calculator */
+    .calc-section { background: var(--bg-card2); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+    .calc-section-title { font-size: 12px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+    .calc-row-input { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .calc-row-input label { font-size: 12px; color: var(--text-dim); width: 180px; flex-shrink: 0; }
+    .calc-row-input input { flex: 1; background: var(--bg-input); border: 1px solid var(--border); border-radius: 6px; padding: 7px 12px; font-size: 13px; color: var(--text); font-family: 'Exo 2',sans-serif; outline: none; transition: border-color .2s; }
+    .calc-row-input input:focus { border-color: var(--gold); }
+    .calc-row-input span { font-size: 13px; color: var(--text-dim); flex-shrink: 0; }
+    .calc-results { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 12px; }
+    .cr { background: var(--bg-input); border: 1px solid var(--border); border-radius: 7px; padding: 10px 12px; }
+    .cr-val { font-family: 'Rajdhani',sans-serif; font-size: 17px; font-weight: 700; }
+    .cr-val.green { color: var(--success); }
+    .cr-val.red { color: var(--red); }
+    .cr-val.gold { color: var(--gold); }
+    .cr-key { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; margin-top: 2px; }
+
+    /* Transactions */
+    .transactions { margin-top: 14px; }
+    .tx-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    .tx-title { font-size: 12px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
+    .tx-add { font-size: 12px; color: var(--gold); cursor: pointer; background: none; border: none; font-family: 'Exo 2',sans-serif; display: flex; align-items: center; gap: 4px; transition: opacity .2s; }
+    .tx-add:hover { opacity: .7; }
+    .tx-add svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+    .tx-list { display: flex; flex-direction: column; gap: 6px; max-height: 220px; overflow-y: auto; }
+    .tx-item { display: flex; align-items: center; gap: 10px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 7px; padding: 9px 12px; }
+    .tx-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .tx-dot.income { background: var(--success); }
+    .tx-dot.expense { background: var(--red); }
+    .tx-desc { flex: 1; font-size: 13px; color: var(--text); }
+    .tx-amount { font-family: 'Rajdhani',sans-serif; font-size: 15px; font-weight: 700; }
+    .tx-amount.income { color: var(--success); }
+    .tx-amount.expense { color: var(--red); }
+    .tx-del { background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 2px; transition: color .2s; }
+    .tx-del:hover { color: var(--red); }
+    .tx-del svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; display: block; }
+
+    .tx-input-row { display: flex; gap: 8px; margin-top: 8px; }
+    .tx-input { flex: 1; background: var(--bg-input); border: 1px solid var(--border); border-radius: 6px; padding: 7px 10px; font-size: 13px; color: var(--text); font-family: 'Exo 2',sans-serif; outline: none; transition: border-color .2s; }
+    .tx-input:focus { border-color: var(--gold); }
+    .tx-select { background: var(--bg-input); border: 1px solid var(--border); border-radius: 6px; padding: 7px 10px; font-size: 12px; color: var(--text); font-family: 'Exo 2',sans-serif; outline: none; cursor: pointer; }
+    .tx-btn-add { background: var(--gold); border: none; border-radius: 6px; padding: 7px 14px; font-family: 'Rajdhani',sans-serif; font-size: 14px; font-weight: 700; color: #080c12; cursor: pointer; transition: .2s; white-space: nowrap; }
+    .tx-btn-add:hover { background: #ffd055; }
+
+    /* toggle expand btn */
+    .toggle-finance { background: none; border: 1px solid var(--border); border-radius: 7px; padding: 6px 14px; font-size: 12px; color: var(--text-dim); cursor: pointer; transition: .2s; display: flex; align-items: center; gap: 5px; font-family: 'Exo 2',sans-serif; }
+    .toggle-finance svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: transform .2s; }
+    .toggle-finance:hover { border-color: var(--gold); color: var(--gold); }
+    .toggle-finance.open svg { transform: rotate(180deg); }
+
+    /* Right sidebar in overview */
+    .right-col .section-block { margin-bottom: 16px; }
+    .info-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(26,36,54,.5); font-size: 13px; }
+    .info-row:last-child { border-bottom: none; }
+    .ir-key { color: var(--text-dim); }
+    .ir-val { color: var(--text); font-weight: 500; }
+    .ir-val.gold { color: var(--gold); }
+    .ir-val.green { color: var(--success); }
+
+    /* TOTAL FINANCE TAB */
+    .total-finance-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 28px; }
+    .tf-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; text-align: center; }
+    .tf-val { font-family: 'Rajdhani',sans-serif; font-size: 28px; font-weight: 700; margin-bottom: 4px; }
+    .tf-key { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: .5px; }
+
+    /* ANIMATIONS */
+    .fade-up { opacity: 0; transform: translateY(14px); transition: opacity .4s ease, transform .4s ease; }
+    .fade-up.visible { opacity: 1; transform: translateY(0); }
+
+    /* MODAL */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 500; display: flex; align-items: center; justify-content: center; padding: 20px; opacity: 0; pointer-events: none; transition: opacity .2s; }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .modal { background: var(--bg-card); border: 1px solid var(--border-hi); border-radius: 16px; padding: 28px; width: 100%; max-width: 420px; transform: scale(.95); transition: transform .2s; }
+    .modal-overlay.open .modal { transform: scale(1); }
+    .modal-title { font-family: 'Rajdhani',sans-serif; font-size: 22px; font-weight: 700; color: #fff; margin-bottom: 20px; }
+    .modal-field { margin-bottom: 14px; }
+    .modal-field label { display: block; font-size: 11px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 6px; }
+    .modal-input { width: 100%; background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; font-size: 14px; color: var(--text); font-family: 'Exo 2',sans-serif; outline: none; transition: border-color .2s; }
+    .modal-input:focus { border-color: var(--gold); }
+    .modal-btns { display: flex; gap: 10px; margin-top: 20px; }
+    .modal-save { flex: 1; background: var(--gold); border: none; border-radius: 8px; padding: 11px; font-family: 'Rajdhani',sans-serif; font-size: 15px; font-weight: 700; color: #080c12; cursor: pointer; transition: .2s; }
+    .modal-save:hover { background: #ffd055; }
+    .modal-cancel { background: transparent; border: 1px solid var(--border-hi); border-radius: 8px; padding: 11px 20px; font-family: 'Exo 2',sans-serif; font-size: 13px; color: var(--text-dim); cursor: pointer; transition: .2s; }
+    .modal-cancel:hover { border-color: var(--red); color: var(--red); }
+
+    /* FOOTER */
+    footer { border-top: 1px solid var(--border); padding: 22px 48px; display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: var(--text-muted); flex-wrap: wrap; gap: 10px; }
+    footer a { color: var(--text-dim); text-decoration: none; transition: color .2s; }
+    footer a:hover { color: var(--gold); }
+
+    @media(max-width:1100px) { .overview-grid { grid-template-columns: 1fr; } .finance-grid { grid-template-columns: 1fr 1fr; } .total-finance-grid { grid-template-columns: 1fr 1fr; } }
+    @media(max-width:768px) { .page { margin-left: 0; } .sidebar { display: none; } .profile-band { padding: 0 20px; } .tabs-bar { padding: 0 20px; overflow-x: auto; } .tab-panel { padding: 24px 20px 60px; } .profile-main { flex-direction: column; align-items: flex-start; gap: 14px; } .profile-actions { flex-wrap: wrap; } .clips-grid { grid-template-columns: 1fr; } footer { padding: 20px; } }
+  </style>
+</head>
+<body>
+<div class="grid-bg"></div>
+
+<!-- HEADER -->
+
+
+<!-- SIDEBAR -->
+
+
+<div class="page">
+
+  <!-- COVER -->
+  <div class="profile-cover">
+    <div class="cover-pattern"></div>
+    <div class="cover-glow"></div>
+    <button class="cover-edit-btn" onclick="openModal('cover')">
+      <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      Изменить обложку
+    </button>
+  </div>
+
+  <!-- PROFILE BAND -->
+  <div class="profile-band">
+    <div class="profile-main">
+      <div class="avatar-wrap">
+        <div class="avatar">
+          <span id="avatar-initials">ЗМ</span>
+          <div class="avatar-online"></div>
+        </div>
+        <div class="avatar-edit" onclick="openModal('avatar')">
+          <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </div>
+      </div>
+      <div class="profile-identity">
+        <div class="profile-username">
+          <span id="display-username">ZayTop</span>
+          <div class="verified-badge"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+        </div>
+        <div class="profile-fullname" id="display-fullname">Зайналбек Мусаев</div>
+        <div class="profile-tags">
+          <span class="ptag ptag-game" id="display-game">CS2</span>
+          <span class="ptag ptag-role">Организатор</span>
+          <span class="ptag ptag-uni" id="display-uni">ЧГУ</span>
+        </div>
+      </div>
+      <div class="profile-actions">
+        <button class="btn-edit" onclick="openModal('edit')">
+          <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Редактировать
+        </button>
+        <button class="btn-create-t" onclick="location.href='create-tournament.html'">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Создать турнир
+        </button>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="profile-stats fade-up">
+      <div class="pstat"><div class="pstat-val" id="stat-rank">#1</div><div class="pstat-key">Рейтинг</div></div>
+      <div class="pstat"><div class="pstat-val">4 820</div><div class="pstat-key">Очки</div></div>
+      <div class="pstat"><div class="pstat-val">3</div><div class="pstat-key">Победы</div></div>
+      <div class="pstat"><div class="pstat-val">0</div><div class="pstat-key">Поражения</div></div>
+      <div class="pstat"><div class="pstat-val">2</div><div class="pstat-key">Турниры</div></div>
+      <div class="pstat"><div class="pstat-val" id="stat-followers">148</div><div class="pstat-key">Подписчики</div></div>
+    </div>
+
+    <!-- FACEIT -->
+    <div class="faceit-card fade-up" style="margin-top:14px;">
+      <div class="faceit-logo">FCIT</div>
+      <div class="faceit-info">
+        <div class="faceit-label">Faceit</div>
+        <div class="faceit-nick" id="display-faceit">ZayTop_Official</div>
+      </div>
+      <div class="faceit-stats">
+        <div class="faceit-stat"><div class="faceit-stat-val lvl">10</div><div class="faceit-stat-key">Уровень</div></div>
+        <div class="faceit-stat"><div class="faceit-stat-val elo">2 847</div><div class="faceit-stat-key">ELO</div></div>
+        <div class="faceit-stat"><div class="faceit-stat-val" style="color:var(--success)">74%</div><div class="faceit-stat-key">Win Rate</div></div>
+      </div>
+    </div>
+
+    <!-- CONTACT -->
+    <div class="contact-row fade-up" style="margin-top:10px;margin-bottom:14px;">
+      <div class="contact-item"><svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg><span id="display-email">zaytop@mail.ru</span></div>
+      <div class="contact-item"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 12 18.7a19.5 19.5 0 0 1-7-7 19.79 19.79 0 0 1-3.07-8.63A2 2 0 0 1 3.77 1h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 8.62a16 16 0 0 0 6 6l.92-.92a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg><span id="display-phone">+7 (928) 000-01-01</span></div>
+      <div class="contact-item"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg><span>Грозный, ЧР</span></div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs-bar">
+    <button class="tab active" onclick="switchTab('overview',this)">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Обзор
+    </button>
+    <button class="tab" onclick="switchTab('clips',this)">
+      <svg viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+      Нарезки
+    </button>
+    <button class="tab" onclick="switchTab('tournaments',this)">
+      <svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/></svg>
+      Мои турниры
+    </button>
+    <button class="tab" onclick="switchTab('finance',this)">
+      <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      Финансы
+    </button>
+  </div>
+
+  <!-- ── OVERVIEW ── -->
+  <div id="tab-overview" class="tab-panel active">
+    <div class="overview-grid">
+      <div class="left-col">
+        <!-- Bio -->
+        <div class="section-block fade-up">
+          <div class="block-title">
+            <div class="block-title-left"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> О себе</div>
+            <a class="see-all" onclick="openModal('bio')">Изменить</a>
+          </div>
+          <p class="bio-text" id="display-bio">Профессиональный игрок в CS2, организатор киберспортивных турниров в Чеченской Республике. Студент ЧГУ. Участвую в Game Genesis с момента запуска платформы.</p>
+        </div>
+
+        <!-- Recent activity -->
+        <div class="section-block fade-up">
+          <div class="block-title">
+            <div class="block-title-left"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> Последняя активность</div>
+          </div>
+          <div class="activity-item">
+            <div class="act-icon win"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
+            <div class="act-info"><div class="act-title">Победа в матче #5 — ZayTop vs NazSniperX</div><div class="act-sub">Чемпионат ЧР 2025 · CS2 · Счёт 16–11</div></div>
+            <div class="act-time">2 часа назад</div>
+          </div>
+          <div class="activity-item">
+            <div class="act-icon trn"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+            <div class="act-info"><div class="act-title">Создан новый турнир</div><div class="act-sub">Открытый ЧР 2025 · 64 участника зарегистрировано</div></div>
+            <div class="act-time">1 день назад</div>
+          </div>
+          <div class="activity-item">
+            <div class="act-icon win"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <div class="act-info"><div class="act-title">Победа в матче #1 — ZayTop vs DarkPulse</div><div class="act-sub">Чемпионат ЧР 2025 · CS2 · Счёт 16–9</div></div>
+            <div class="act-time">3 дня назад</div>
+          </div>
+          <div class="activity-item">
+            <div class="act-icon trn"><svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/></svg></div>
+            <div class="act-info"><div class="act-title">Зарегистрирован на Valorant City Cup</div><div class="act-sub">Старт: 22 июня 2025</div></div>
+            <div class="act-time">5 дней назад</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="right-col">
+        <!-- Account info -->
+        <div class="section-block fade-up">
+          <div class="block-title">
+            <div class="block-title-left"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Аккаунт</div>
+            <a class="see-all" onclick="openModal('edit')">Изменить</a>
+          </div>
+          <div class="info-row"><span class="ir-key">Логин</span><span class="ir-val" id="info-username">ZayTop</span></div>
+          <div class="info-row"><span class="ir-key">Email</span><span class="ir-val" id="info-email">zaytop@mail.ru</span></div>
+          <div class="info-row"><span class="ir-key">Телефон</span><span class="ir-val" id="info-phone">+7 (928) 000-01-01</span></div>
+          <div class="info-row"><span class="ir-key">Faceit</span><span class="ir-val" id="info-faceit">ZayTop_Official</span></div>
+          <div class="info-row"><span class="ir-key">Основная игра</span><span class="ir-val" id="info-game">CS2</span></div>
+          <div class="info-row"><span class="ir-key">Университет</span><span class="ir-val" id="info-uni">ЧГУ</span></div>
+          <div class="info-row"><span class="ir-key">Роль</span><span class="ir-val gold">Организатор / Игрок</span></div>
+          <div class="info-row"><span class="ir-key">Верификация</span><span class="ir-val green">✓ Подтверждён</span></div>
+          <div class="info-row"><span class="ir-key">На платформе с</span><span class="ir-val">Май 2025</span></div>
+        </div>
+
+        <!-- Quick finance summary -->
+        <div class="section-block fade-up">
+          <div class="block-title">
+            <div class="block-title-left"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> Финансы (итого)</div>
+            <a class="see-all" onclick="switchTab('finance', document.querySelector('.tab:nth-child(4)'))">Подробнее</a>
+          </div>
+          <div class="info-row"><span class="ir-key">Доходы (турниры)</span><span class="ir-val green" id="total-income-mini">+73 000 ₽</span></div>
+          <div class="info-row"><span class="ir-key">Расходы</span><span class="ir-val" style="color:var(--red)" id="total-expense-mini">−16 000 ₽</span></div>
+          <div class="info-row"><span class="ir-key">Комиссия платформы</span><span class="ir-val" style="color:var(--text-dim)">−9 600 ₽</span></div>
+          <div class="info-row"><span class="ir-key">Чистая прибыль</span><span class="ir-val gold" id="total-net-mini">= 47 400 ₽</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── CLIPS ── -->
+  <div id="tab-clips" class="tab-panel">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;" class="fade-up">
+      <div>
+        <div style="font-family:'Rajdhani',sans-serif;font-size:26px;font-weight:700;color:#fff;margin-bottom:4px;">Мои нарезки</div>
+        <div style="font-size:13px;color:var(--text-dim);">Лучшие моменты из матчей</div>
+      </div>
+      <button class="btn-create-t" onclick="openModal('clip')">
+        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Добавить нарезку
+      </button>
+    </div>
+    <div class="clips-grid fade-up" id="clips-grid">
+
+      <!-- Add clip placeholder -->
+      <div class="clip-card" style="cursor:pointer;" onclick="openModal('clip')">
+        <div class="upload-clip">
+          <svg viewBox="0 0 24 24"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+          <div class="upload-clip-text">Загрузить нарезку</div>
+          <div class="upload-clip-sub">MP4, максимум 500MB</div>
+        </div>
+        <div class="clip-body">
+          <div class="clip-title" style="color:var(--text-muted);">Нажмите чтобы добавить</div>
+        </div>
+      </div>
+
+      <div class="clip-card">
+        <div class="clip-thumb">
+          <div style="width:100%;height:100%;background:linear-gradient(135deg,#0f1e35,#1a0a1e);"></div>
+          <div class="clip-grad"></div>
+          <div class="clip-play"><div class="play-circle"><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg></div></div>
+          <div class="clip-duration">0:47</div>
+          <div class="clip-views"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>1.2K</div>
+        </div>
+        <div class="clip-body">
+          <div class="clip-title">Ace раунд на Dust2 — 5 килов за 8 секунд</div>
+          <div class="clip-meta"><span class="clip-game">CS2</span><span class="clip-date">14 мая 2025</span></div>
+        </div>
+      </div>
+
+      <div class="clip-card">
+        <div class="clip-thumb">
+          <div style="width:100%;height:100%;background:linear-gradient(135deg,#0a1e10,#1e1a0a);"></div>
+          <div class="clip-grad"></div>
+          <div class="clip-play"><div class="play-circle"><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg></div></div>
+          <div class="clip-duration">1:12</div>
+          <div class="clip-views"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>890</div>
+        </div>
+        <div class="clip-body">
+          <div class="clip-title">Финальный раунд — решающий выстрел с CT</div>
+          <div class="clip-meta"><span class="clip-game">CS2</span><span class="clip-date">10 мая 2025</span></div>
+        </div>
+      </div>
+
+      <div class="clip-card">
+        <div class="clip-thumb">
+          <div style="width:100%;height:100%;background:linear-gradient(135deg,#1a100a,#0a1015);"></div>
+          <div class="clip-grad"></div>
+          <div class="clip-play"><div class="play-circle"><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg></div></div>
+          <div class="clip-duration">2:03</div>
+          <div class="clip-views"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>674</div>
+        </div>
+        <div class="clip-body">
+          <div class="clip-title">Нарезка матча #1 — Квалификация ЧР 2025</div>
+          <div class="clip-meta"><span class="clip-game">CS2</span><span class="clip-date">8 мая 2025</span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── TOURNAMENTS ── -->
+  <div id="tab-tournaments" class="tab-panel">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;" class="fade-up">
+      <div>
+        <div style="font-family:'Rajdhani',sans-serif;font-size:26px;font-weight:700;color:#fff;margin-bottom:4px;">Организованные турниры</div>
+        <div style="font-size:13px;color:var(--text-dim);">Управление и финансовый учёт по каждому турниру</div>
+      </div>
+      <button class="btn-create-t" onclick="location.href='create-tournament.html'">
+        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Новый турнир
+      </button>
+    </div>
+
+    <div class="t-list fade-up">
+
+      <!-- Tournament 1: ЧР 2025 -->
+      <div class="t-item featured" id="t1">
+        <div class="t-item-top">
+          <div class="t-item-icon gold">🏆</div>
+          <div class="t-item-info">
+            <div class="t-item-name">Открытый Чемпионат Чеченской Республики 2025</div>
+            <div class="t-item-meta">
+              <span class="t-meta-pill"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>15–22 июня 2025</span>
+              <span class="t-meta-pill"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>64 / 128 участников</span>
+              <span class="t-meta-pill"><svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="8" cy="12" r="2"/></svg>CS2</span>
+              <span class="t-meta-pill"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>50 000 ₽ призовых</span>
+            </div>
+          </div>
+          <div class="t-item-status">
+            <span class="status-pill status-live">● Live</span>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div style="display:flex;gap:10px;">
+            <button onclick="location.href='tournament.html'" style="background:var(--bg-card2);border:1px solid var(--border-hi);border-radius:7px;padding:7px 16px;font-size:12px;color:var(--text-dim);cursor:pointer;transition:.2s;font-family:'Exo 2',sans-serif;" onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--border-hi)';this.style.color='var(--text-dim)'">Страница турнира</button>
+          </div>
+          <button class="toggle-finance" id="tf1-btn" onclick="toggleFinance('t1')">
+            Финансы
+            <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+        </div>
+
+        <!-- Finance expand for tournament 1 -->
+        <div class="finance-expand" id="t1-finance">
+          <div class="finance-header">
+            <div class="finance-title"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> Финансовый учёт — ЧР 2025</div>
+          </div>
+
+          <div class="finance-grid">
+            <div class="f-card"><div class="f-card-val green" id="t1-income">+64 000 ₽</div><div class="f-card-key">Взносы (64 × 1000)</div></div>
+            <div class="f-card"><div class="f-card-val red" id="t1-expenses">−16 000 ₽</div><div class="f-card-key">Расходы</div></div>
+            <div class="f-card"><div class="f-card-val" style="color:var(--text-dim)">−12 800 ₽</div><div class="f-card-key">Платформе (20%)</div></div>
+            <div class="f-card"><div class="f-card-val gold" id="t1-net">= 35 200 ₽</div><div class="f-card-key">Чистая прибыль</div></div>
+          </div>
+
+          <!-- Calculator -->
+          <div class="calc-section" style="margin-bottom:14px;">
+            <div class="calc-section-title">Калькулятор</div>
+            <div class="calc-row-input">
+              <label>Участников зарегистрировалось</label>
+              <input type="number" id="t1-count" value="64" min="0" max="128" oninput="calcT1()">
+              <span>чел.</span>
+            </div>
+            <div class="calc-row-input">
+              <label>Взнос с участника</label>
+              <input type="number" id="t1-fee" value="1000" min="0" oninput="calcT1()">
+              <span>₽</span>
+            </div>
+            <div class="calc-row-input">
+              <label>Прочие расходы (аренда, призы и др.)</label>
+              <input type="number" id="t1-extra" value="16000" min="0" oninput="calcT1()">
+              <span>₽</span>
+            </div>
+            <div class="calc-results">
+              <div class="cr"><div class="cr-val green" id="r1-gross">64 000 ₽</div><div class="cr-key">Валовой сбор</div></div>
+              <div class="cr"><div class="cr-val gold" id="r1-prize">32 000 ₽</div><div class="cr-key">Призовой фонд (50%)</div></div>
+              <div class="cr"><div class="cr-val red" id="r1-platform">12 800 ₽</div><div class="cr-key">Платформе (20%)</div></div>
+            </div>
+          </div>
+
+          <!-- Transactions -->
+          <div class="transactions">
+            <div class="tx-header">
+              <div class="tx-title">Транзакции</div>
+            </div>
+            <div class="tx-list" id="t1-txlist">
+              <div class="tx-item"><div class="tx-dot income"></div><div class="tx-desc">Взносы участников (64 чел.)</div><div class="tx-amount income">+64 000 ₽</div><button class="tx-del" onclick="delTx(this)"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg></button></div>
+              <div class="tx-item"><div class="tx-dot expense"></div><div class="tx-desc">Аренда зала</div><div class="tx-amount expense">−8 000 ₽</div><button class="tx-del" onclick="delTx(this)"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg></button></div>
+              <div class="tx-item"><div class="tx-dot expense"></div><div class="tx-desc">Призы победителям</div><div class="tx-amount expense">−8 000 ₽</div><button class="tx-del" onclick="delTx(this)"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg></button></div>
+            </div>
+            <div class="tx-input-row">
+              <input type="text" class="tx-input" id="t1-tx-desc" placeholder="Описание...">
+              <input type="number" class="tx-input" id="t1-tx-amount" placeholder="Сумма" style="max-width:110px;">
+              <select class="tx-select" id="t1-tx-type">
+                <option value="income">Доход +</option>
+                <option value="expense">Расход −</option>
+              </select>
+              <button class="tx-btn-add" onclick="addTx('t1')">+ Добавить</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tournament 2: Valorant -->
+      <div class="t-item" id="t2">
+        <div class="t-item-top">
+          <div class="t-item-icon blue">🎮</div>
+          <div class="t-item-info">
+            <div class="t-item-name">Valorant City Cup — Грозный</div>
+            <div class="t-item-meta">
+              <span class="t-meta-pill"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>22 июня 2025</span>
+              <span class="t-meta-pill"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>12 / 64 участников</span>
+              <span class="t-meta-pill"><svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/></svg>Valorant</span>
+              <span class="t-meta-pill"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>10 000 ₽ призовых</span>
+            </div>
+          </div>
+          <div class="t-item-status"><span class="status-pill status-open">● Регистрация</span></div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div style="display:flex;gap:10px;">
+            <button onclick="location.href='tournament-register.html'" style="background:var(--bg-card2);border:1px solid var(--border-hi);border-radius:7px;padding:7px 16px;font-size:12px;color:var(--text-dim);cursor:pointer;font-family:'Exo 2',sans-serif;" onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--border-hi)';this.style.color='var(--text-dim)'">Страница турнира</button>
+          </div>
+          <button class="toggle-finance" id="tf2-btn" onclick="toggleFinance('t2')">
+            Финансы
+            <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+        </div>
+        <div class="finance-expand" id="t2-finance">
+          <div class="finance-header">
+            <div class="finance-title"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> Финансовый учёт — Valorant City Cup</div>
+          </div>
+          <div class="finance-grid">
+            <div class="f-card"><div class="f-card-val green" id="t2-income">+9 000 ₽</div><div class="f-card-key">Взносы (12 × 750)</div></div>
+            <div class="f-card"><div class="f-card-val red" id="t2-expenses">−0 ₽</div><div class="f-card-key">Расходы</div></div>
+            <div class="f-card"><div class="f-card-val" style="color:var(--text-dim)">−1 800 ₽</div><div class="f-card-key">Платформе (20%)</div></div>
+            <div class="f-card"><div class="f-card-val gold" id="t2-net">= 7 200 ₽</div><div class="f-card-key">Чистая прибыль (пока)</div></div>
+          </div>
+          <div class="calc-section" style="margin-bottom:14px;">
+            <div class="calc-section-title">Калькулятор (прогноз при полном наборе)</div>
+            <div class="calc-row-input">
+              <label>Участников зарегистрировалось</label>
+              <input type="number" id="t2-count" value="12" min="0" max="64" oninput="calcT2()">
+              <span>чел.</span>
+            </div>
+            <div class="calc-row-input">
+              <label>Взнос с участника</label>
+              <input type="number" id="t2-fee" value="750" min="0" oninput="calcT2()">
+              <span>₽</span>
+            </div>
+            <div class="calc-row-input">
+              <label>Прочие расходы</label>
+              <input type="number" id="t2-extra" value="0" min="0" oninput="calcT2()">
+              <span>₽</span>
+            </div>
+            <div class="calc-results">
+              <div class="cr"><div class="cr-val green" id="r2-gross">9 000 ₽</div><div class="cr-key">Валовой сбор</div></div>
+              <div class="cr"><div class="cr-val gold" id="r2-prize">4 500 ₽</div><div class="cr-key">Призовой фонд (50%)</div></div>
+              <div class="cr"><div class="cr-val red" id="r2-platform">1 800 ₽</div><div class="cr-key">Платформе (20%)</div></div>
+            </div>
+          </div>
+          <div class="transactions">
+            <div class="tx-header"><div class="tx-title">Транзакции</div></div>
+            <div class="tx-list" id="t2-txlist">
+              <div class="tx-item"><div class="tx-dot income"></div><div class="tx-desc">Взносы участников (12 чел.)</div><div class="tx-amount income">+9 000 ₽</div><button class="tx-del" onclick="delTx(this)"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></button></div>
+            </div>
+            <div class="tx-input-row">
+              <input type="text" class="tx-input" id="t2-tx-desc" placeholder="Описание...">
+              <input type="number" class="tx-input" id="t2-tx-amount" placeholder="Сумма" style="max-width:110px;">
+              <select class="tx-select" id="t2-tx-type">
+                <option value="income">Доход +</option>
+                <option value="expense">Расход −</option>
+              </select>
+              <button class="tx-btn-add" onclick="addTx('t2')">+ Добавить</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── FINANCE TOTAL ── -->
+  <div id="tab-finance" class="tab-panel">
+    <div style="font-family:'Rajdhani',sans-serif;font-size:26px;font-weight:700;color:#fff;margin-bottom:6px;" class="fade-up">Сводная финансовая отчётность</div>
+    <div style="font-size:13px;color:var(--text-dim);margin-bottom:24px;" class="fade-up">Все турниры · автоматически рассчитывается</div>
+
+    <div class="total-finance-grid fade-up">
+      <div class="tf-card"><div class="tf-val" style="color:var(--success)" id="f-total-income">+73 000 ₽</div><div class="tf-key">Валовые доходы</div></div>
+      <div class="tf-card"><div class="tf-val" style="color:var(--red)" id="f-total-expense">−16 000 ₽</div><div class="tf-key">Расходы</div></div>
+      <div class="tf-card"><div class="tf-val" style="color:var(--text-dim)" id="f-total-platform">−14 600 ₽</div><div class="tf-key">Комиссия платформы</div></div>
+      <div class="tf-card"><div class="tf-val" style="color:var(--gold)" id="f-total-net">= 42 400 ₽</div><div class="tf-key">Чистая прибыль</div></div>
+    </div>
+
+    <!-- Main calculator -->
+    <div class="section-block fade-up" style="max-width:680px;">
+      <div class="block-title">
+        <div class="block-title-left"><svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="16" y1="12" x2="8" y2="12"/><line x1="8" y1="18" x2="12" y2="18"/></svg> Калькулятор нового турнира</div>
+      </div>
+      <div class="calc-row-input" style="margin-bottom:14px;">
+        <label style="width:200px;">Макс. участников</label>
+        <input type="number" id="mc-slots" value="64" min="8" oninput="mainCalc()" style="max-width:100px;">
+      </div>
+      <div class="calc-row-input" style="margin-bottom:14px;">
+        <label style="width:200px;">Взнос с участника (₽)</label>
+        <input type="number" id="mc-fee" value="500" min="0" oninput="mainCalc()">
+      </div>
+      <div class="calc-row-input" style="margin-bottom:14px;">
+        <label style="width:200px;">Доля призового фонда (%)</label>
+        <input type="number" id="mc-pct" value="50" min="50" max="80" oninput="mainCalc()">
+        <span style="font-size:11px;color:var(--text-muted);">50–80%</span>
+      </div>
+      <div class="calc-row-input" style="margin-bottom:18px;">
+        <label style="width:200px;">Прочие расходы (₽)</label>
+        <input type="number" id="mc-exp" value="5000" min="0" oninput="mainCalc()">
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+        <div class="cr"><div class="cr-val green" id="mc-gross">32 000 ₽</div><div class="cr-key">Валовой сбор</div></div>
+        <div class="cr"><div class="cr-val gold" id="mc-prize">16 000 ₽</div><div class="cr-key">Призовой фонд (50%)</div></div>
+        <div class="cr"><div class="cr-val red" id="mc-platform">6 400 ₽</div><div class="cr-key">Платформе (20%)</div></div>
+        <div class="cr"><div class="cr-val" style="color:var(--blue)" id="mc-organizer">4 600 ₽</div><div class="cr-key">Организатору (после расходов)</div></div>
+        <div class="cr"><div class="cr-val" style="color:var(--text-dim)" id="mc-exp-show">5 000 ₽</div><div class="cr-key">Расходы</div></div>
+        <div class="cr"><div class="cr-val green" id="mc-net">4 600 ₽</div><div class="cr-key">Чистая прибыль</div></div>
+      </div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:14px;line-height:1.6;">* Расчёт при 100% заполнении турнира. Комиссия платформы 20% от валового сбора. Призовой фонд минимум 50% от сбора.</div>
+    </div>
+  </div>
+
+  <footer>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div class="logo-hex" style="width:24px;height:24px;"><svg viewBox="0 0 18 18" fill="none" style="width:12px;height:12px;"><polygon points="9,1 16,4.5 16,13.5 9,17 2,13.5 2,4.5" stroke="#080c12" stroke-width="1.5"/><circle cx="9" cy="9" r="2.5" fill="#080c12"/></svg></div>
+      <span style="font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;color:var(--gold);letter-spacing:1.5px;">GAME GENESIS</span>
+      <span style="font-size:12px;color:var(--text-muted);">© 2024–2025</span>
+    </div>
+    <div style="display:flex;gap:20px;font-size:12px;"><a href="#">Правила</a><a href="#">Поддержка</a><a href="auth.html">Выйти</a></div>
+  </footer>
+</div>
+
+<!-- EDIT PROFILE MODAL -->
+<div class="modal-overlay" id="modal-edit">
+  <div class="modal">
+    <div class="modal-title" id="modal-title-text">Редактировать профиль</div>
+    <div id="modal-body">
+      <div class="modal-field"><label>Логин (никнейм)</label><input class="modal-input" id="m-username" value="ZayTop"></div>
+      <div class="modal-field"><label>Имя и фамилия</label><input class="modal-input" id="m-fullname" value="Зайналбек Мусаев"></div>
+      <div class="modal-field"><label>Email</label><input class="modal-input" id="m-email" type="email" value="zaytop@mail.ru"></div>
+      <div class="modal-field"><label>Телефон</label><input class="modal-input" id="m-phone" value="+7 (928) 000-01-01"></div>
+      <div class="modal-field"><label>Faceit никнейм</label><input class="modal-input" id="m-faceit" value="ZayTop_Official"></div>
+      <div class="modal-field"><label>Основная игра</label>
+        <select class="modal-input" id="m-game" style="cursor:pointer;">
+          <option value="CS2" selected>CS2</option><option value="Dota 2">Dota 2</option><option value="Valorant">Valorant</option><option value="FIFA 25">FIFA 25</option>
+        </select>
+      </div>
+      <div class="modal-field"><label>Университет</label><input class="modal-input" id="m-uni" value="ЧГУ"></div>
+    </div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeModal()">Отмена</button>
+      <button class="modal-save" onclick="saveProfile()">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── TABS ──
+  function switchTab(id, el) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    if (el) el.classList.add('active');
+    else document.querySelector('.tab:nth-child(' + ({overview:1,clips:2,tournaments:3,finance:4}[id]) + ')').classList.add('active');
+    document.getElementById('tab-' + id).classList.add('active');
+    triggerFade();
+  }
+
+  // ── MODAL ──
+  function openModal(type) {
+    const modal = document.getElementById('modal-edit');
+    const title = document.getElementById('modal-title-text');
+    const body = document.getElementById('modal-body');
+
+    if (type === 'edit') {
+      title.textContent = 'Редактировать профиль';
+      body.innerHTML = `
+        <div class="modal-field"><label>Логин (никнейм)</label><input class="modal-input" id="m-username" value="${document.getElementById('display-username').textContent}"></div>
+        <div class="modal-field"><label>Имя и фамилия</label><input class="modal-input" id="m-fullname" value="${document.getElementById('display-fullname').textContent}"></div>
+        <div class="modal-field"><label>Email</label><input class="modal-input" id="m-email" type="email" value="${document.getElementById('display-email').textContent}"></div>
+        <div class="modal-field"><label>Телефон</label><input class="modal-input" id="m-phone" value="${document.getElementById('display-phone').textContent}"></div>
+        <div class="modal-field"><label>Faceit никнейм</label><input class="modal-input" id="m-faceit" value="${document.getElementById('display-faceit').textContent}"></div>
+        <div class="modal-field"><label>Основная игра</label>
+          <select class="modal-input" id="m-game" style="cursor:pointer;">
+            <option value="CS2">CS2</option><option value="Dota 2">Dota 2</option><option value="Valorant">Valorant</option><option value="FIFA 25">FIFA 25</option>
+          </select>
+        </div>
+        <div class="modal-field"><label>Университет</label><input class="modal-input" id="m-uni" value="${document.getElementById('display-uni').textContent}"></div>
+        <div class="modal-field"><label>О себе</label><textarea class="modal-input" id="m-bio" style="min-height:80px;resize:vertical;">${document.getElementById('display-bio').textContent}</textarea></div>
+      `;
+      document.querySelector('.modal-save').onclick = saveProfile;
+    } else if (type === 'bio') {
+      title.textContent = 'О себе';
+      body.innerHTML = `<div class="modal-field"><label>Описание</label><textarea class="modal-input" id="m-bio" style="min-height:120px;resize:vertical;">${document.getElementById('display-bio').textContent}</textarea></div>`;
+      document.querySelector('.modal-save').onclick = () => { document.getElementById('display-bio').textContent = document.getElementById('m-bio').value; closeModal(); };
+    } else if (type === 'clip') {
+      title.textContent = 'Добавить нарезку';
+      body.innerHTML = `
+        <div class="modal-field"><label>Название нарезки</label><input class="modal-input" id="m-clip-title" placeholder="Ace на Inferno..."></div>
+        <div class="modal-field"><label>Игра</label>
+          <select class="modal-input" id="m-clip-game" style="cursor:pointer;"><option>CS2</option><option>Dota 2</option><option>Valorant</option><option>FIFA 25</option></select>
+        </div>
+        <div class="modal-field"><label>Длительность</label><input class="modal-input" id="m-clip-dur" placeholder="1:23"></div>
+      `;
+      document.querySelector('.modal-save').onclick = addClip;
+    } else if (type === 'avatar' || type === 'cover') {
+      title.textContent = type === 'avatar' ? 'Изменить аватар' : 'Изменить обложку';
+      body.innerHTML = `
+        <div style="border:2px dashed var(--border);border-radius:10px;padding:30px;text-align:center;cursor:pointer;color:var(--text-dim);" onclick="alert('В MVP: загрузка файлов подключается к бэкенду')">
+          <svg viewBox="0 0 24 24" style="width:32px;height:32px;stroke:currentColor;fill:none;stroke-width:1.5;margin:0 auto 10px;display:block"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+          <div style="font-size:14px;font-weight:500;">Нажмите чтобы выбрать файл</div>
+          <div style="font-size:11px;margin-top:4px;opacity:.5;">PNG, JPG · Макс. 5MB</div>
+        </div>
+      `;
+      document.querySelector('.modal-save').onclick = closeModal;
+    }
+    modal.classList.add('open');
+  }
+
+  function closeModal() { document.getElementById('modal-edit').classList.remove('open'); }
+  document.getElementById('modal-edit').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
+
+  function saveProfile() {
+    const get = id => { const el = document.getElementById(id); return el ? el.value : ''; };
+    const uname = get('m-username') || document.getElementById('display-username').textContent;
+    const fname = get('m-fullname') || document.getElementById('display-fullname').textContent;
+    const email = get('m-email') || document.getElementById('display-email').textContent;
+    const phone = get('m-phone') || document.getElementById('display-phone').textContent;
+    const faceit = get('m-faceit') || document.getElementById('display-faceit').textContent;
+    const game = get('m-game') || document.getElementById('display-game').textContent;
+    const uni = get('m-uni') || document.getElementById('display-uni').textContent;
+    const bio = get('m-bio');
+
+    document.getElementById('display-username').textContent = uname;
+    document.getElementById('display-fullname').textContent = fname;
+    document.getElementById('display-email').textContent = email;
+    document.getElementById('display-phone').textContent = phone;
+    document.getElementById('display-faceit').textContent = faceit;
+    document.getElementById('display-game').textContent = game;
+    document.getElementById('display-uni').textContent = uni;
+    if (bio) document.getElementById('display-bio').textContent = bio;
+
+    document.getElementById('info-username').textContent = uname;
+    document.getElementById('info-email').textContent = email;
+    document.getElementById('info-phone').textContent = phone;
+    document.getElementById('info-faceit').textContent = faceit;
+    document.getElementById('info-game').textContent = game;
+    document.getElementById('info-uni').textContent = uni;
+
+    // Update avatar initials
+    const parts = fname.split(' ');
+    const initials = parts.map(p => p[0]).join('').toUpperCase().slice(0,2);
+    document.getElementById('avatar-initials').textContent = initials;
+
+    closeModal();
+  }
+
+  function addClip() {
+    const title = document.getElementById('m-clip-title').value.trim() || 'Новая нарезка';
+    const game = document.getElementById('m-clip-game').value;
+    const dur = document.getElementById('m-clip-dur').value || '0:30';
+    const grid = document.getElementById('clips-grid');
+    const colors = ['#0f1e35,#1a0a1e','#0a1e10,#1e1a0a','#1a100a,#0a1015','#0a1020,#201020'];
+    const c = colors[Math.floor(Math.random()*colors.length)];
+    const card = document.createElement('div');
+    card.className = 'clip-card';
+    card.innerHTML = `
+      <div class="clip-thumb">
+        <div style="width:100%;height:100%;background:linear-gradient(135deg,${c});"></div>
+        <div class="clip-grad"></div>
+        <div class="clip-play"><div class="play-circle"><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3" fill="#080c12"/></svg></div></div>
+        <div class="clip-duration">${dur}</div>
+        <div class="clip-views"><svg viewBox="0 0 24 24" style="width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>0</div>
+      </div>
+      <div class="clip-body">
+        <div class="clip-title">${title}</div>
+        <div class="clip-meta"><span class="clip-game">${game}</span><span class="clip-date">Только что</span></div>
+      </div>`;
+    grid.insertBefore(card, grid.children[1]);
+    closeModal();
+  }
+
+  // ── FINANCE TOGGLE ──
+  function toggleFinance(tid) {
+    const el = document.getElementById(tid + '-finance');
+    const btn = document.getElementById('tf' + tid.replace('t','') + '-btn');
+    const isOpen = el.classList.contains('open');
+    el.classList.toggle('open', !isOpen);
+    btn.classList.toggle('open', !isOpen);
+  }
+
+  // ── TRANSACTIONS ──
+  function addTx(tid) {
+    const desc = document.getElementById(tid + '-tx-desc').value.trim();
+    const amount = parseFloat(document.getElementById(tid + '-tx-amount').value);
+    const type = document.getElementById(tid + '-tx-type').value;
+    if (!desc || !amount) return;
+
+    const list = document.getElementById(tid + '-txlist');
+    const item = document.createElement('div');
+    item.className = 'tx-item';
+    const sign = type === 'income' ? '+' : '−';
+    item.innerHTML = `
+      <div class="tx-dot ${type}"></div>
+      <div class="tx-desc">${desc}</div>
+      <div class="tx-amount ${type}">${sign}${amount.toLocaleString('ru-RU')} ₽</div>
+      <button class="tx-del" onclick="delTx(this)"><svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;display:block;"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></button>`;
+    list.appendChild(item);
+    document.getElementById(tid + '-tx-desc').value = '';
+    document.getElementById(tid + '-tx-amount').value = '';
+    updateTotals();
+  }
+
+  function delTx(btn) { btn.closest('.tx-item').remove(); updateTotals(); }
+
+  function updateTotals() {
+    let totalIncome = 0, totalExpense = 0;
+    document.querySelectorAll('.tx-item').forEach(item => {
+      const amtEl = item.querySelector('.tx-amount');
+      if (!amtEl) return;
+      const raw = amtEl.textContent.replace(/[^\d]/g,'');
+      const val = parseInt(raw) || 0;
+      if (amtEl.classList.contains('income')) totalIncome += val;
+      else totalExpense += val;
+    });
+    const platform = Math.round(totalIncome * 0.2);
+    const net = totalIncome - totalExpense - platform;
+    const fmt = v => v.toLocaleString('ru-RU') + ' ₽';
+
+    const el = id => document.getElementById(id);
+    if (el('total-income-mini')) el('total-income-mini').textContent = '+' + fmt(totalIncome);
+    if (el('total-expense-mini')) el('total-expense-mini').textContent = '−' + fmt(totalExpense);
+    if (el('total-net-mini')) el('total-net-mini').textContent = '= ' + fmt(net);
+    if (el('f-total-income')) el('f-total-income').textContent = '+' + fmt(totalIncome);
+    if (el('f-total-expense')) el('f-total-expense').textContent = '−' + fmt(totalExpense);
+    if (el('f-total-platform')) el('f-total-platform').textContent = '−' + fmt(platform);
+    if (el('f-total-net')) el('f-total-net').textContent = '= ' + fmt(net);
+  }
+
+  // ── CALCULATORS ──
+  function calcT(count, fee, extra, ids) {
+    const gross = count * fee;
+    const platform = Math.round(gross * 0.2);
+    const prize = Math.round(gross * 0.5);
+    const net = gross - extra - platform;
+    const fmt = v => v.toLocaleString('ru-RU') + ' ₽';
+    document.getElementById(ids.gross).textContent = fmt(gross);
+    document.getElementById(ids.prize).textContent = fmt(prize);
+    document.getElementById(ids.platform).textContent = fmt(platform);
+  }
+
+  function calcT1() {
+    calcT(
+      parseInt(document.getElementById('t1-count').value)||0,
+      parseInt(document.getElementById('t1-fee').value)||0,
+      parseInt(document.getElementById('t1-extra').value)||0,
+      { gross:'r1-gross', prize:'r1-prize', platform:'r1-platform' }
+    );
+  }
+  function calcT2() {
+    calcT(
+      parseInt(document.getElementById('t2-count').value)||0,
+      parseInt(document.getElementById('t2-fee').value)||0,
+      parseInt(document.getElementById('t2-extra').value)||0,
+      { gross:'r2-gross', prize:'r2-prize', platform:'r2-platform' }
+    );
+  }
+
+  function mainCalc() {
+    const slots = parseInt(document.getElementById('mc-slots').value)||0;
+    const fee = parseInt(document.getElementById('mc-fee').value)||0;
+    const pct = Math.min(80, Math.max(50, parseInt(document.getElementById('mc-pct').value)||50));
+    const exp = parseInt(document.getElementById('mc-exp').value)||0;
+    const gross = slots * fee;
+    const prize = Math.round(gross * pct / 100);
+    const platform = Math.round(gross * 0.2);
+    const organizer = gross - prize - platform;
+    const net = organizer - exp;
+    const fmt = v => v.toLocaleString('ru-RU') + ' ₽';
+    document.getElementById('mc-gross').textContent = fmt(gross);
+    document.getElementById('mc-prize').textContent = fmt(prize);
+    document.getElementById('mc-platform').textContent = fmt(platform);
+    document.getElementById('mc-organizer').textContent = fmt(Math.max(0, organizer));
+    document.getElementById('mc-exp-show').textContent = fmt(exp);
+    document.getElementById('mc-net').textContent = fmt(Math.max(0, net));
+    document.getElementById('mc-net').style.color = net >= 0 ? 'var(--success)' : 'var(--red)';
+  }
+
+  // ── FADE REVEAL ──
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.06 });
+  function triggerFade() {
+    document.querySelectorAll('.fade-up').forEach(el => {
+      el.classList.remove('visible');
+      observer.observe(el);
+      setTimeout(() => el.classList.add('visible'), 80);
+    });
+  }
+  triggerFade();
+  mainCalc();
+</script>
+</body>
+</html>
