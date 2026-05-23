@@ -9,135 +9,89 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Exo+2:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root { --gold:#f0c040;--gold-dim:rgba(240,192,64,0.1);--bg:#080c12;--bg-card:#0d1420;--bg-card2:#111928;--bg-input:#0a1018;--border:#1a2436;--border-hi:#253550;--text:#dde4ef;--text-dim:#5c7090;--text-muted:#2e3f58;--success:#4ade80;--red:#f87171;--blue:#60a5fa; }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--gold:#f0c040;--gold-dim:rgba(240,192,64,0.1);--bg:#080c12;--bg-card:#0d1420;--bg-card2:#111928;--bg-input:#0a1018;--border:#1a2436;--border-hi:#253550;--text:#dde4ef;--text-dim:#5c7090;--text-muted:#2e3f58;--success:#4ade80;--red:#f87171;--blue:#60a5fa}
     ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:#1e2d42;border-radius:3px}
-    body{background:var(--bg);color:var(--text);font-family:"Exo 2",sans-serif}
+    body{background:var(--bg);color:var(--text);font-family:'Exo 2',sans-serif}
     .grid-bg{position:fixed;inset:0;z-index:0;pointer-events:none;background-image:linear-gradient(rgba(240,192,64,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(240,192,64,0.02) 1px,transparent 1px);background-size:50px 50px}
     .page{position:relative;z-index:1;min-height:100vh}
-
-    /* HEADER */
-    .t-header{position:relative;overflow:hidden;min-height:200px;display:flex;align-items:flex-end;padding:0 48px 32px}
+    .t-header{position:relative;overflow:hidden;min-height:190px;display:flex;align-items:flex-end;padding:0 48px 30px}
     .t-bg{position:absolute;inset:0;background:linear-gradient(135deg,#0f1e35,#1a0a2e,#0a1020);z-index:0}
-    .t-overlay{position:absolute;inset:0;z-index:1;background:linear-gradient(to top,rgba(8,12,18,.95) 0%,transparent 60%)}
+    .t-overlay{position:absolute;inset:0;z-index:1;background:linear-gradient(to top,rgba(8,12,18,.95),transparent 60%)}
     .t-content{position:relative;z-index:2}
-    .t-breadcrumb{display:flex;align-items:center;gap:6px;margin-bottom:10px;font-size:12px;color:var(--text-dim)}
-    .t-breadcrumb a{color:var(--text-dim);text-decoration:none}.t-breadcrumb a:hover{color:var(--gold)}
-    .t-name{font-family:"Rajdhani",sans-serif;font-size:clamp(22px,3.5vw,36px);font-weight:700;color:#fff;margin-bottom:8px}
-    .t-pills{display:flex;gap:12px;flex-wrap:wrap}
-    .t-pill{font-size:12px;padding:3px 12px;border-radius:20px;border:1px solid;font-weight:600}
-    .t-pill.gold{color:var(--gold);border-color:rgba(240,192,64,.3);background:rgba(240,192,64,.08)}
-    .t-pill.green{color:var(--success);border-color:rgba(74,222,128,.3);background:rgba(74,222,128,.08)}
-    .t-pill.blue{color:var(--blue);border-color:rgba(96,165,250,.3);background:rgba(96,165,250,.08)}
-
-    /* LAYOUT */
-    .wrap{display:grid;grid-template-columns:1fr 340px;gap:28px;padding:28px 48px 80px;align-items:start}
-
-    /* MODE CARDS */
-    .mode-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}
-    .mc{background:var(--bg-card);border:2px solid var(--border);border-radius:14px;padding:20px 16px;text-align:center;cursor:pointer;transition:.2s;user-select:none}
+    .t-bc{display:flex;align-items:center;gap:6px;margin-bottom:10px;font-size:12px;color:var(--text-dim)}
+    .t-bc a{color:var(--text-dim);text-decoration:none}.t-bc a:hover{color:var(--gold)}
+    .t-name{font-family:'Rajdhani',sans-serif;font-size:clamp(22px,3.5vw,36px);font-weight:700;color:#fff;margin-bottom:8px}
+    .t-pills{display:flex;gap:10px;flex-wrap:wrap}
+    .tp{font-size:12px;padding:3px 12px;border-radius:20px;border:1px solid;font-weight:600}
+    .tp.gold{color:var(--gold);border-color:rgba(240,192,64,.3);background:rgba(240,192,64,.08)}
+    .tp.green{color:var(--success);border-color:rgba(74,222,128,.3);background:rgba(74,222,128,.08)}
+    .tp.blue{color:var(--blue);border-color:rgba(96,165,250,.3);background:rgba(96,165,250,.08)}
+    .wrap{display:grid;grid-template-columns:1fr 320px;gap:24px;padding:24px 48px 80px;align-items:start}
+    .mode-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:22px}
+    .mc{background:var(--bg-card);border:2px solid var(--border);border-radius:14px;padding:18px 14px;text-align:center;cursor:pointer;transition:.2s;user-select:none}
     .mc:hover{border-color:var(--border-hi)}.mc.sel{border-color:var(--gold);background:var(--gold-dim)}
-    .mc-icon{font-size:30px;margin-bottom:8px}.mc-title{font-family:"Rajdhani",sans-serif;font-size:16px;font-weight:700;color:#fff;margin-bottom:4px}
+    .mc-icon{font-size:28px;margin-bottom:8px}.mc-title{font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;color:#fff;margin-bottom:4px}
     .mc-desc{font-size:11px;color:var(--text-dim);line-height:1.5}.mc.sel .mc-desc{color:rgba(240,192,64,.7)}
-
-    /* PANELS */
     .fp{display:none}.fp.active{display:block}
-
-    /* FORM BLOCK */
-    .fb{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:22px;margin-bottom:14px;position:relative;overflow:hidden}
-    .fb::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
-    .fb-title{font-family:"Rajdhani",sans-serif;font-size:17px;font-weight:700;color:#fff;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+    .fb{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:12px;position:relative;overflow:hidden}
+    .fb::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+    .fb-title{font-family:'Rajdhani',sans-serif;font-size:17px;font-weight:700;color:#fff;margin-bottom:14px;display:flex;align-items:center;gap:8px}
     .fb-title svg{width:16px;height:16px;stroke:var(--gold);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-
-    /* FIELDS */
-    .field{margin-bottom:14px}
+    .field{margin-bottom:13px}
     .field label{display:block;font-size:11px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px}
-    .req{color:var(--gold);margin-left:2px}
-    .hint{font-size:11px;color:var(--text-muted);margin-top:4px}
+    .req{color:var(--gold);margin-left:2px}.hint{font-size:11px;color:var(--text-muted);margin-top:4px}
     .ferr{font-size:11px;color:var(--red);margin-top:4px;display:none}.ferr.show{display:block}
     .frow{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     .frow3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
-    input,select,textarea{width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text);font-family:"Exo 2",sans-serif;outline:none;transition:border-color .2s;-webkit-appearance:none}
-    input.ico{padding-left:38px}
+    input,select{width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text);font-family:'Exo 2',sans-serif;outline:none;transition:border-color .2s;-webkit-appearance:none}
     input::placeholder{color:var(--text-muted);font-size:13px}
     input:focus,select:focus{border-color:var(--gold);background:#0c1520}
-    .iw{position:relative}
-    .ii{position:absolute;left:13px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--text-muted)}
-    .ii svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;display:block}
-    select{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%235c7090' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
-    select option{background:#0d1420}
-
-    /* PLAYER CARD */
-    .pc{background:var(--bg-card2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:10px}
+    select{cursor:pointer}select option{background:#0d1420}
+    .pc{background:var(--bg-card2);border:1px solid var(--border);border-radius:12px;padding:15px;margin-bottom:10px}
     .pc-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}
-    .pc-badge{width:26px;height:26px;border-radius:7px;background:var(--gold-dim);border:1px solid rgba(240,192,64,.3);display:flex;align-items:center;justify-content:center;font-family:"Rajdhani",sans-serif;font-size:13px;font-weight:700;color:var(--gold);flex-shrink:0}
-    .pc-badge.cap{background:var(--gold);color:#080c12}
-    .pc-lbl{font-size:12px;font-weight:600;color:var(--text-dim)}.pc-lbl.cap{color:var(--gold)}
-
-    /* COUNT SELECTOR */
-    .cnt-row{display:flex;align-items:center;gap:12px;margin-bottom:18px}
-    .cnt-lbl{font-size:13px;color:var(--text-dim)}
-    .cnt-btns{display:flex;gap:6px}
-    .cb{width:36px;height:36px;border-radius:8px;border:1px solid var(--border);background:var(--bg-card2);font-family:"Rajdhani",sans-serif;font-size:15px;font-weight:700;color:var(--text-dim);cursor:pointer;transition:.2s}
+    .pc-badge{width:26px;height:26px;border-radius:7px;background:var(--gold-dim);border:1px solid rgba(240,192,64,.3);display:flex;align-items:center;justify-content:center;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;color:var(--gold);flex-shrink:0}
+    .pc-badge.cap{background:var(--gold);color:#080c12}.pc-lbl{font-size:12px;font-weight:600;color:var(--text-dim)}.pc-lbl.cap{color:var(--gold)}
+    .cnt-row{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+    .cnt-lbl{font-size:13px;color:var(--text-dim)}.cnt-btns{display:flex;gap:6px}
+    .cb{width:36px;height:36px;border-radius:8px;border:1px solid var(--border);background:var(--bg-card2);font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;color:var(--text-dim);cursor:pointer;transition:.2s}
     .cb:hover{border-color:var(--border-hi);color:var(--text)}.cb.sel{border-color:var(--gold);background:var(--gold-dim);color:var(--gold)}
-
-    /* NOTICE */
-    .notice-blue{background:rgba(96,165,250,.06);border:1px solid rgba(96,165,250,.2);border-radius:10px;padding:14px 16px;margin-bottom:14px;font-size:13px;color:var(--blue);line-height:1.6}
-    .notice-gold{background:rgba(240,192,64,.06);border:1px solid rgba(240,192,64,.2);border-radius:10px;padding:14px 16px;margin-bottom:14px;font-size:13px;color:var(--gold);line-height:1.6}
-    .notice-blue b,.notice-gold b{color:#fff}
-
-    /* AGREE */
-    .ag-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:18px}
+    .nb{background:rgba(96,165,250,.06);border:1px solid rgba(96,165,250,.2);border-radius:10px;padding:13px 15px;margin-bottom:12px;font-size:13px;color:var(--blue);line-height:1.6}
+    .ng{background:rgba(240,192,64,.06);border:1px solid rgba(240,192,64,.2);border-radius:10px;padding:13px 15px;margin-bottom:12px;font-size:13px;color:var(--gold);line-height:1.6}
+    .nb b,.ng b{color:#fff}
+    .ag-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:16px}
     .ag-row input[type=checkbox]{width:18px;height:18px;min-width:18px;border-radius:4px;accent-color:var(--gold);padding:0;margin-top:1px;cursor:pointer}
     .ag-text{font-size:12px;color:var(--text-dim);line-height:1.6}.ag-text a{color:var(--gold);text-decoration:none}
-
-    /* SUBMIT */
-    .btn-sub{width:100%;background:var(--gold);border:none;border-radius:10px;padding:13px;font-family:"Rajdhani",sans-serif;font-size:17px;font-weight:700;letter-spacing:1.5px;color:#080c12;cursor:pointer;transition:.2s;display:flex;align-items:center;justify-content:center;gap:9px}
-    .btn-sub:hover{background:#ffd055;box-shadow:0 0 22px rgba(240,192,64,.3)}
+    .btn-sub{width:100%;background:var(--gold);border:none;border-radius:10px;padding:13px;font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;letter-spacing:1.5px;color:#080c12;cursor:pointer;transition:.2s;display:flex;align-items:center;justify-content:center;gap:9px}
+    .btn-sub:hover{background:#ffd055;box-shadow:0 0 20px rgba(240,192,64,.3)}
     .btn-sub:disabled{background:var(--border-hi);color:var(--text-muted);cursor:not-allowed;box-shadow:none}
     .btn-sub svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
-
-    /* RIGHT */
     .rp{position:sticky;top:20px}
-    .ic{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:14px}
-    .ic-title{font-family:"Rajdhani",sans-serif;font-size:15px;font-weight:700;color:#fff;margin-bottom:12px;display:flex;align-items:center;gap:7px}
+    .ic{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:14px}
+    .ic-title{font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;color:#fff;margin-bottom:12px;display:flex;align-items:center;gap:7px}
     .ic-title svg{width:14px;height:14px;stroke:var(--gold);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
     .ic-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(26,36,54,.5);font-size:13px}
-    .ic-row:last-child{border-bottom:none}
-    .ick{color:var(--text-dim)}.icv{color:var(--text);font-weight:500}
-    .icv.gold{color:var(--gold);font-family:"Rajdhani",sans-serif;font-size:15px;font-weight:700}
+    .ic-row:last-child{border-bottom:none}.ick{color:var(--text-dim)}.icv{color:var(--text);font-weight:500}
+    .icv.gold{color:var(--gold);font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700}
     .icv.green{color:var(--success)}
-
-    /* SLOTS */
-    .sl-wrap{margin-top:10px}
-    .sl-lbl{display:flex;justify-content:space-between;font-size:11px;color:var(--text-dim);margin-bottom:5px}
-    .sl-bar{height:5px;background:var(--border);border-radius:3px;overflow:hidden}
-    .sl-fill{height:100%;background:var(--gold);border-radius:3px;width:50%}
-
-    /* FREE POOL */
+    .sl-wrap{margin-top:10px}.sl-lbl{display:flex;justify-content:space-between;font-size:11px;color:var(--text-dim);margin-bottom:5px}
+    .sl-bar{height:5px;background:var(--border);border-radius:3px;overflow:hidden}.sl-fill{height:100%;background:var(--gold);border-radius:3px;width:50%}
     .fp-box{background:var(--bg-card);border:1px solid rgba(96,165,250,.2);border-radius:14px;padding:18px}
-    .fp-title{font-family:"Rajdhani",sans-serif;font-size:15px;font-weight:700;color:var(--blue);margin-bottom:10px;display:flex;align-items:center;gap:7px}
-    .fp-title svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-    .fpi{display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid rgba(26,36,54,.4);font-size:12px}
-    .fpi:last-child{border-bottom:none}
-    .fpa{width:28px;height:28px;border-radius:6px;background:rgba(96,165,250,.1);border:1px solid rgba(96,165,250,.2);display:flex;align-items:center;justify-content:center;font-family:"Rajdhani",sans-serif;font-size:11px;font-weight:700;color:var(--blue);flex-shrink:0}
+    .fp-title{font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;color:var(--blue);margin-bottom:10px}
+    .fpi{display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid rgba(26,36,54,.4);font-size:12px}.fpi:last-child{border-bottom:none}
+    .fpa{width:28px;height:28px;border-radius:6px;background:rgba(96,165,250,.1);border:1px solid rgba(96,165,250,.2);display:flex;align-items:center;justify-content:center;font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;color:var(--blue);flex-shrink:0}
     .fpn{color:var(--text)}.fps{font-size:11px;color:var(--text-dim)}
-
-    /* SUCCESS */
     .ss{display:none;text-align:center;padding:48px 24px}.ss.show{display:block}
-    .ss-icon{font-size:52px;margin-bottom:18px}
-    .ss-title{font-family:"Rajdhani",sans-serif;font-size:30px;font-weight:700;color:#fff;margin-bottom:8px}
+    .ss-icon{font-size:52px;margin-bottom:16px}.ss-title{font-family:'Rajdhani',sans-serif;font-size:30px;font-weight:700;color:#fff;margin-bottom:8px}
     .ss-sub{font-size:14px;color:var(--text-dim);line-height:1.7;max-width:420px;margin:0 auto 24px}
     .ss-card{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:18px;text-align:left;max-width:420px;margin:0 auto 24px}
     .ss-lbl{font-size:11px;font-weight:700;color:var(--gold);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px}
-    .ss-row{display:flex;justify-content:space-between;font-size:13px;padding:5px 0;border-bottom:1px solid rgba(26,36,54,.5)}
-    .ss-row:last-child{border-bottom:none}.ss-row span:first-child{color:var(--text-dim)}.ss-row span:last-child{color:var(--text);font-weight:500}
-    .btn-back{display:inline-flex;align-items:center;gap:7px;padding:11px 24px;border:1px solid var(--border-hi);border-radius:10px;background:transparent;color:var(--text-dim);cursor:pointer;font-family:"Rajdhani",sans-serif;font-size:15px;font-weight:700;letter-spacing:1px;transition:.2s;text-decoration:none}
+    .ss-row{display:flex;justify-content:space-between;font-size:13px;padding:5px 0;border-bottom:1px solid rgba(26,36,54,.5)}.ss-row:last-child{border-bottom:none}
+    .ss-row span:first-child{color:var(--text-dim)}.ss-row span:last-child{color:var(--text);font-weight:500}
+    .btn-back{display:inline-flex;align-items:center;gap:7px;padding:11px 24px;border:1px solid var(--border-hi);border-radius:10px;background:transparent;color:var(--text-dim);cursor:pointer;font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;letter-spacing:1px;transition:.2s;text-decoration:none}
     .btn-back:hover{border-color:var(--gold);color:var(--gold)}
-
     @keyframes spin{to{transform:rotate(360deg)}}
-    .spin{width:16px;height:16px;border:2px solid rgba(8,12,18,.3);border-top-color:#080c12;border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
-
+    .spin{width:16px;height:16px;border:2px solid rgba(8,12,18,.3);border-top-color:#080c12;border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0;display:inline-block}
     @media(max-width:960px){.wrap{grid-template-columns:1fr}.rp{position:static}}
     @media(max-width:600px){.wrap{padding:20px 20px 60px}.t-header{padding:0 20px 24px}.mode-cards{grid-template-columns:1fr}.frow,.frow3{grid-template-columns:1fr}}
   </style>
@@ -150,16 +104,16 @@
     <div class="t-bg"></div>
     <div class="t-overlay"></div>
     <div class="t-content">
-      <div class="t-breadcrumb">
+      <div class="t-bc">
         <a href="/index.html">Главная</a> &rsaquo;
         <a href="/tournaments.html">Турниры</a> &rsaquo;
         <span>Регистрация</span>
       </div>
       <div class="t-name">Открытый Чемпионат Чеченской Республики 2025</div>
       <div class="t-pills">
-        <span class="t-pill blue">CS2 · 5 на 5</span>
-        <span class="t-pill gold">50 000 ₽ призовых</span>
-        <span class="t-pill green">Регистрация открыта</span>
+        <span class="tp blue">CS2 &middot; 5 на 5</span>
+        <span class="tp gold">50 000 ₽ призовых</span>
+        <span class="tp green">Регистрация открыта</span>
       </div>
     </div>
   </div>
@@ -171,7 +125,7 @@
         <h2 class="ss-title" id="s-t">Заявка отправлена!</h2>
         <p class="ss-sub" id="s-s"></p>
         <div class="ss-card" id="s-c"></div>
-        <a href="/tournament.html" class="btn-back">← К турниру</a>
+        <a href="/tournament.html" class="btn-back">&larr; К турниру</a>
       </div>
 
       <div id="fw">
@@ -180,17 +134,17 @@
 
         <div class="mode-cards">
           <div class="mc sel" id="mc-full" onclick="setMode('full')">
-            <div class="mc-icon">⚔️</div>
+            <div class="mc-icon">&#9876;&#65039;</div>
             <div class="mc-title">Полная команда</div>
             <div class="mc-desc">Есть все 5 игроков. Капитан регистрирует всю команду.</div>
           </div>
           <div class="mc" id="mc-partial" onclick="setMode('partial')">
-            <div class="mc-icon">🔍</div>
+            <div class="mc-icon">&#128269;</div>
             <div class="mc-title">Неполный состав</div>
-            <div class="mc-desc">2–4 игрока. Организатор добавит недостающих из пула.</div>
+            <div class="mc-desc">2–4 игрока. Организатор добавит недостающих.</div>
           </div>
           <div class="mc" id="mc-solo" onclick="setMode('solo')">
-            <div class="mc-icon">🧩</div>
+            <div class="mc-icon">&#129513;</div>
             <div class="mc-title">Без команды</div>
             <div class="mc-desc">Организатор включит вас в команду где нужны игроки.</div>
           </div>
@@ -202,10 +156,7 @@
             <div class="fb-title"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Название команды</div>
             <div class="field">
               <label>Название <span class="req">*</span></label>
-              <div class="iw">
-                <span class="ii"><svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/></svg></span>
-                <input type="text" id="fn-team" class="ico" placeholder="Team Grozniy">
-              </div>
+              <input type="text" id="fn-team" placeholder="Team Grozniy">
               <div class="ferr" id="err-fn-team">Введите название команды</div>
             </div>
           </div>
@@ -218,18 +169,15 @@
 
         <!-- PARTIAL -->
         <div class="fp" id="panel-partial">
-          <div class="notice-gold"><b>⚡ Неполный состав</b> — введите данных своих игроков. Организатор подберёт недостающих из пула свободных участников.</div>
+          <div class="ng"><b>&#9889; Неполный состав</b> — введите данные своих игроков. Организатор добавит недостающих из пула свободных участников.</div>
           <div class="fb">
             <div class="fb-title"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Команда</div>
             <div class="field">
-              <label>Название команды <span class="req">*</span></label>
-              <div class="iw">
-                <span class="ii"><svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/></svg></span>
-                <input type="text" id="pt-team" class="ico" placeholder="Team Grozniy">
-              </div>
+              <label>Название <span class="req">*</span></label>
+              <input type="text" id="pt-team" placeholder="Team Grozniy">
             </div>
             <div class="cnt-row">
-              <span class="cnt-lbl">Сколько игроков у вас есть:</span>
+              <span class="cnt-lbl">Сколько игроков:</span>
               <div class="cnt-btns">
                 <button class="cb sel" onclick="setCnt(2,this)">2</button>
                 <button class="cb" onclick="setCnt(3,this)">3</button>
@@ -246,7 +194,7 @@
 
         <!-- SOLO -->
         <div class="fp" id="panel-solo">
-          <div class="notice-blue"><b>🧩 Свободный агент</b> — вы попадёте в пул одиночных игроков. Организатор добавит вас в команду где не хватает игроков.</div>
+          <div class="nb"><b>&#129513; Свободный агент</b> — вы попадёте в пул одиночных игроков. Организатор добавит вас в команду где не хватает игроков.</div>
           <div class="fb">
             <div class="fb-title"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Ваши данные</div>
             <div class="frow">
@@ -282,7 +230,6 @@
       </div>
     </div>
 
-    <!-- RIGHT -->
     <div class="rp">
       <div class="ic">
         <div class="ic-title"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>О турнире</div>
@@ -298,7 +245,7 @@
         </div>
       </div>
       <div class="fp-box">
-        <div class="fp-title"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="23" y1="21" x2="23" y2="19"/><line x1="19" y1="19" x2="19" y2="21"/><line x1="21" y1="19" x2="21" y2="17"/></svg>Свободные игроки (<span id="fc">3</span>)</div>
+        <div class="fp-title">Свободные игроки (<span id="fc">3</span>)</div>
         <div id="fpool">
           <div class="fpi"><div class="fpa">АМ</div><div><div class="fpn">ArbiFire</div><div class="fps">Арби Магомадов · Faceit 7</div></div></div>
           <div class="fpi"><div class="fpa">РА</div><div><div class="fpn">RusKnight</div><div class="fps">Руслан Алиев · Premier 14k</div></div></div>
@@ -308,71 +255,76 @@
     </div>
   </div>
 </div>
-
 <script>
-const TS = 5; // team size
-let mode = 'full', partCnt = 2;
+var TS = 5;
+var mode = 'full';
+var partCnt = 2;
 
 function setMode(m) {
   mode = m;
-  ['full','partial','solo'].forEach(x => {
+  ['full','partial','solo'].forEach(function(x) {
     document.getElementById('mc-'+x).classList.toggle('sel', x===m);
     document.getElementById('panel-'+x).classList.toggle('active', x===m);
   });
 }
 
 function mkPlayer(i, cap, pfx) {
-  return \`<div class="pc">
-    <div class="pc-head">
-      <div class="pc-badge \${cap?'cap':''}">\${cap?'★':i}</div>
-      <div class="pc-lbl \${cap?'cap':''}">\${cap?'Капитан (вы)':'Игрок '+i}</div>
-    </div>
-    <div class="frow3">
-      <div class="field"><label>ФИО <span class="req">*</span></label><input type="text" id="\${pfx}-\${i}-n" placeholder="\${cap?'Ваше ФИО':'ФИО игрока'}"></div>
-      <div class="field"><label>Никнейм <span class="req">*</span></label><input type="text" id="\${pfx}-\${i}-k" placeholder="XShadow99"></div>
-      <div class="field"><label>Steam <span class="req">*</span></label><input type="url" id="\${pfx}-\${i}-s" placeholder="steamcommunity.com/id/..."></div>
-    </div>
-  </div>\`;
+  var div = document.createElement('div');
+  div.className = 'pc';
+  div.innerHTML =
+    '<div class="pc-head">' +
+      '<div class="pc-badge ' + (cap?'cap':'') + '">' + (cap?'&starf;':i) + '</div>' +
+      '<div class="pc-lbl ' + (cap?'cap':'') + '">' + (cap?'Капитан (вы)':'Игрок '+i) + '</div>' +
+    '</div>' +
+    '<div class="frow3">' +
+      '<div class="field"><label>ФИО <span class="req">*</span></label><input type="text" id="' + pfx+'-'+i+'-n" placeholder="' + (cap?'Ваше ФИО':'ФИО игрока') + '"></div>' +
+      '<div class="field"><label>Никнейм <span class="req">*</span></label><input type="text" id="' + pfx+'-'+i+'-k" placeholder="XShadow99"></div>' +
+      '<div class="field"><label>Steam <span class="req">*</span></label><input type="url" id="' + pfx+'-'+i+'-s" placeholder="steamcommunity.com/id/..."></div>' +
+    '</div>';
+  return div;
 }
 
 function buildFull() {
-  let h = '';
-  for (let i=1;i<=TS;i++) h += mkPlayer(i, i===1, 'f');
-  document.getElementById('full-wrap').innerHTML = h;
+  var wrap = document.getElementById('full-wrap');
+  wrap.innerHTML = '';
+  for (var i = 1; i <= TS; i++) wrap.appendChild(mkPlayer(i, i===1, 'f'));
 }
 
 function buildPartial(n) {
-  let h = '';
-  for (let i=1;i<=n;i++) h += mkPlayer(i, i===1, 'p');
-  const miss = TS-n;
-  h += \`<div class="fb" style="border-color:rgba(96,165,250,.25);background:rgba(96,165,250,.04);">
-    <div style="display:flex;align-items:center;gap:12px;">
-      <div style="font-size:26px;">🔍</div>
-      <div>
-        <div style="font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;color:var(--blue);">Ищем \${miss} игрок\${miss===1?'а':'ов'}</div>
-        <div style="font-size:12px;color:var(--text-dim);margin-top:3px;">Организатор подберёт из пула свободных игроков</div>
-      </div>
-    </div>
-  </div>\`;
-  document.getElementById('partial-wrap').innerHTML = h;
-  const btn = document.getElementById('partial-btn');
-  if (btn) btn.innerHTML = \`<svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>Отправить заявку (\${n}/5, ищем \${miss})\`;
+  var wrap = document.getElementById('partial-wrap');
+  wrap.innerHTML = '';
+  for (var i = 1; i <= n; i++) wrap.appendChild(mkPlayer(i, i===1, 'p'));
+  var miss = TS - n;
+  var notice = document.createElement('div');
+  notice.className = 'fb';
+  notice.style.cssText = 'border-color:rgba(96,165,250,.25);background:rgba(96,165,250,.04);';
+  notice.innerHTML =
+    '<div style="display:flex;align-items:center;gap:12px;">' +
+      '<div style="font-size:26px;">&#128269;</div>' +
+      '<div>' +
+        '<div style="font-family:Rajdhani,sans-serif;font-size:16px;font-weight:700;color:var(--blue);">&#1048;&#1097;&#1077;&#1084; ' + miss + ' &#1080;&#1075;&#1088;&#1086;&#1082;' + (miss===1?'&#1072;':'&#1086;&#1074;') + '</div>' +
+        '<div style="font-size:12px;color:var(--text-dim);margin-top:3px;">Организатор подберёт из пула</div>' +
+      '</div>' +
+    '</div>';
+  wrap.appendChild(notice);
+  var btn = document.getElementById('partial-btn');
+  if (btn) btn.innerHTML = 'Отправить заявку (' + n + '/5, ищем ' + miss + ')';
 }
 
 function setCnt(n, btn) {
   partCnt = n;
-  document.querySelectorAll('.cb').forEach(b=>b.classList.remove('sel'));
+  document.querySelectorAll('.cb').forEach(function(b){ b.classList.remove('sel'); });
   btn.classList.add('sel');
   buildPartial(n);
 }
 
 function getPlayers(pfx, cnt) {
-  const pl = [];
-  for (let i=1;i<=cnt;i++) {
+  var pl = [];
+  for (var i = 1; i <= cnt; i++) {
     pl.push({
-      name: document.getElementById(\`\${pfx}-\${i}-n\`)?.value?.trim()||'',
-      nick: document.getElementById(\`\${pfx}-\${i}-k\`)?.value?.trim()||'',
-      steam: document.getElementById(\`\${pfx}-\${i}-s\`)?.value?.trim()||'',
+      name:  (document.getElementById(pfx+'-'+i+'-n')||{value:''}).value.trim(),
+      nick:  (document.getElementById(pfx+'-'+i+'-k')||{value:''}).value.trim(),
+      steam: (document.getElementById(pfx+'-'+i+'-s')||{value:''}).value.trim(),
       is_captain: i===1
     });
   }
@@ -380,90 +332,83 @@ function getPlayers(pfx, cnt) {
 }
 
 function okPlayers(pfx, cnt) {
-  for (let i=1;i<=cnt;i++) {
-    const n=document.getElementById(\`\${pfx}-\${i}-n\`)?.value?.trim();
-    const k=document.getElementById(\`\${pfx}-\${i}-k\`)?.value?.trim();
-    const s=document.getElementById(\`\${pfx}-\${i}-s\`)?.value?.trim();
+  for (var i=1; i<=cnt; i++) {
+    var n=(document.getElementById(pfx+'-'+i+'-n')||{value:''}).value.trim();
+    var k=(document.getElementById(pfx+'-'+i+'-k')||{value:''}).value.trim();
+    var s=(document.getElementById(pfx+'-'+i+'-s')||{value:''}).value.trim();
     if (!n||!k||!s) return false;
   }
   return true;
 }
 
-async function submitFull() {
-  const tn = document.getElementById('fn-team').value.trim();
+function submitFull() {
+  var tn = document.getElementById('fn-team').value.trim();
   if (!tn) { document.getElementById('err-fn-team').classList.add('show'); return; }
   document.getElementById('err-fn-team').classList.remove('show');
   if (!document.getElementById('full-ag').checked) { alert('Подтвердите согласие участников'); return; }
-  if (!okPlayers('f', TS)) { alert('Заполните ФИО, никнейм и Steam всех 5 игроков'); return; }
-  await send({ type:'full', team_name:tn, players:getPlayers('f',TS), needs:0 });
+  if (!okPlayers('f',TS)) { alert('Заполните ФИО, никнейм и Steam всех 5 игроков'); return; }
+  doSend({ type:'full', team_name:tn, players:getPlayers('f',TS), needs:0 });
 }
 
-async function submitPartial() {
-  const tn = document.getElementById('pt-team').value.trim() || 'Без названия';
+function submitPartial() {
+  var tn = document.getElementById('pt-team').value.trim() || 'Без названия';
   if (!document.getElementById('partial-ag').checked) { alert('Подтвердите согласие'); return; }
-  if (!okPlayers('p', partCnt)) { alert('Заполните данные всех ваших игроков'); return; }
-  await send({ type:'partial', team_name:tn, players:getPlayers('p',partCnt), needs:TS-partCnt });
+  if (!okPlayers('p',partCnt)) { alert('Заполните данные всех ваших игроков'); return; }
+  doSend({ type:'partial', team_name:tn, players:getPlayers('p',partCnt), needs:TS-partCnt });
 }
 
-async function submitSolo() {
-  const fn=document.getElementById('s-fn').value.trim();
-  const ln=document.getElementById('s-ln').value.trim();
-  const nk=document.getElementById('s-nick').value.trim();
-  const st=document.getElementById('s-steam').value.trim();
-  const em=document.getElementById('s-email').value.trim();
-  let ok=true;
-  const chk=(id,cond)=>{document.getElementById('err-'+id).classList.toggle('show',!cond);if(!cond)ok=false;};
+function submitSolo() {
+  var fn=document.getElementById('s-fn').value.trim();
+  var ln=document.getElementById('s-ln').value.trim();
+  var nk=document.getElementById('s-nick').value.trim();
+  var st=document.getElementById('s-steam').value.trim();
+  var em=document.getElementById('s-email').value.trim();
+  var ok=true;
+  function chk(id,cond){document.getElementById('err-'+id).classList.toggle('show',!cond);if(!cond)ok=false;}
   chk('s-fn',fn.length>=2); chk('s-ln',ln.length>=2); chk('s-nick',nk.length>=2);
-  chk('s-steam',st.includes('steam')); chk('s-email',/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em));
+  chk('s-steam',st.indexOf('steam')>=0); chk('s-email',/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em));
   if (!ok) return;
   if (!document.getElementById('solo-ag').checked) { alert('Примите правила турнира'); return; }
-  await send({ type:'solo', team_name:null, needs:0,
-    players:[{name:fn+' '+ln, nick:nk, steam:st, email:em, phone:document.getElementById('s-phone').value, level:document.getElementById('s-lvl').value, is_captain:true}]
+  doSend({ type:'solo', team_name:null, needs:0,
+    players:[{name:fn+' '+ln, nick:nk, steam:st, email:em,
+      phone:document.getElementById('s-phone').value,
+      level:document.getElementById('s-lvl').value, is_captain:true}]
   });
 }
 
-async function send(data) {
-  const activeBtn = document.querySelector('.fp.active .btn-sub');
-  if (activeBtn) { activeBtn.disabled=true; activeBtn.innerHTML='<div class="spin"></div> Отправляем...'; }
-  await new Promise(r=>setTimeout(r,1200));
-  // TODO реальный API: fetch('/api/tournaments/1/register', { method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('gg_token')}, body:JSON.stringify(data) })
-  showSuccess(data);
+function doSend(data) {
+  var btn = document.querySelector('.fp.active .btn-sub');
+  if (btn) { btn.disabled=true; btn.textContent='Отправляем...'; }
+  setTimeout(function(){ showSuccess(data); }, 1200);
 }
 
 function showSuccess(d) {
   document.getElementById('fw').style.display='none';
-  const ss=document.getElementById('ss'); ss.classList.add('show');
-  const ic={'full':'🏆','partial':'⚡','solo':'🧩'};
-  const ti={'full':'Команда зарегистрирована!','partial':'Заявка принята!','solo':'Вы в списке игроков!'};
-  const su={'full':\`Команда "\${d.team_name}" зарегистрирована. Организатор свяжется с капитаном.\`,
-    'partial':\`Заявка команды "\${d.team_name}" принята. Найдём \${d.needs} игрок\${d.needs===1?'а':'ов'} для вас.\`,
-    'solo':'Вы добавлены в пул свободных. Организатор включит вас в подходящую команду.'};
-  document.getElementById('s-ic').textContent=ic[d.type];
-  document.getElementById('s-t').textContent=ti[d.type];
-  document.getElementById('s-s').textContent=su[d.type];
-  const tl={'full':'Полная команда (5/5)','partial':\`Неполный состав (\${d.players.length}/5)\`,'solo':'Свободный агент'};
-  document.getElementById('s-c').innerHTML=\`
-    <div class="ss-lbl">Данные заявки</div>
-    <div class="ss-row"><span>Тип</span><span>\${tl[d.type]}</span></div>
-    \${d.team_name?\`<div class="ss-row"><span>Команда</span><span>\${d.team_name}</span></div>\`:''}
-    <div class="ss-row"><span>Капитан</span><span>\${d.players[0]?.nick} — \${d.players[0]?.name}</span></div>
-    \${d.players.length>1?\`<div class="ss-row"><span>Состав</span><span>\${d.players.map(p=>p.nick).join(', ')}</span></div>\`:''}
-    \${d.needs>0?\`<div class="ss-row"><span>Ищем игроков</span><span style="color:var(--gold)">\${d.needs}</span></div>\`:''}
-  \`;
+  document.getElementById('ss').classList.add('show');
+  var icons={full:'🏆',partial:'⚡',solo:'🧩'};
+  var titles={full:'Команда зарегистрирована!',partial:'Заявка принята!',solo:'Вы в списке!'};
+  document.getElementById('s-ic').textContent = icons[d.type]||'✅';
+  document.getElementById('s-t').textContent = titles[d.type];
+  var tl={full:'Полная команда (5/5)',partial:'Неполный состав ('+d.players.length+'/5)',solo:'Свободный агент'};
+  var html = '<div class="ss-lbl">Данные заявки</div>' +
+    '<div class="ss-row"><span>Тип</span><span>'+tl[d.type]+'</span></div>' +
+    (d.team_name?'<div class="ss-row"><span>Команда</span><span>'+d.team_name+'</span></div>':'') +
+    '<div class="ss-row"><span>Капитан</span><span>'+d.players[0].nick+' — '+d.players[0].name+'</span></div>' +
+    (d.players.length>1?'<div class="ss-row"><span>Состав</span><span>'+d.players.map(function(p){return p.nick;}).join(', ')+'</span></div>':'') +
+    (d.needs>0?'<div class="ss-row"><span>Ищем</span><span style="color:var(--gold)">'+d.needs+' игр.</span></div>':'');
+  document.getElementById('s-c').innerHTML = html;
   if (d.type==='solo') {
-    const fc=document.getElementById('fc'); if(fc) fc.textContent=parseInt(fc.textContent)+1;
-    const pool=document.getElementById('fpool');
-    if (pool) {
-      const el=document.createElement('div'); el.className='fpi';
-      const ini=d.players[0].name.split(' ').map(w=>w[0]).join('').toUpperCase();
-      el.innerHTML=\`<div class="fpa" style="background:rgba(240,192,64,.1);border-color:rgba(240,192,64,.2);color:var(--gold);">\${ini}</div><div><div class="fpn">\${d.players[0].nick}</div><div class="fps">\${d.players[0].name} · \${d.players[0].level||'—'}</div></div>\`;
-      pool.appendChild(el);
-    }
+    var fc=document.getElementById('fc'); if(fc) fc.textContent=parseInt(fc.textContent)+1;
+    var pool=document.getElementById('fpool');
+    if(pool){var el=document.createElement('div');el.className='fpi';var ini=d.players[0].name.split(' ').map(function(w){return w[0];}).join('').toUpperCase();el.innerHTML='<div class="fpa" style="background:rgba(240,192,64,.1);border-color:rgba(240,192,64,.2);color:var(--gold);">'+ini+'</div><div><div class="fpn">'+d.players[0].nick+'</div><div class="fps">'+d.players[0].name+'</div></div>';pool.appendChild(el);}
   }
 }
 
-buildFull();
-buildPartial(2);
+document.addEventListener('DOMContentLoaded', function() {
+  buildFull();
+  buildPartial(2);
+});
 </script>
+-e 
 </body>
 </html>
