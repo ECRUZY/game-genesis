@@ -293,13 +293,13 @@
     <h1 class="hero-title">Все турниры<br><em>Чеченской Республики</em></h1>
     <p class="hero-sub">Находи соревнования по своей игре, регистрируйся и побеждай. Студенческие лиги, открытые чемпионаты и онлайн турниры.</p>
     <div class="hero-counters">
-      <div class="hcount"><div class="hcount-val" id="cnt-total">0</div><div class="hcount-key">Турниров</div></div>
+      <div class="hcount"><div class="hcount-val" id="cnt-total">—</div><div class="hcount-key">Турниров</div></div>
       <div class="hcount-sep"></div>
-      <div class="hcount"><div class="hcount-val" id="cnt-open">0</div><div class="hcount-key">Открытых</div></div>
+      <div class="hcount"><div class="hcount-val" id="cnt-open">—</div><div class="hcount-key">Открытых</div></div>
       <div class="hcount-sep"></div>
-      <div class="hcount"><div class="hcount-val" id="cnt-players">0</div><div class="hcount-key">Игроков</div></div>
+      <div class="hcount"><div class="hcount-val" id="cnt-players">—</div><div class="hcount-key">Игроков</div></div>
       <div class="hcount-sep"></div>
-      <div class="hcount"><div class="hcount-val">0 ₽</div><div class="hcount-key">Призовых</div></div>
+      <div class="hcount"><div class="hcount-val" id="cnt-prize">0 ₽</div><div class="hcount-key">Призовых</div></div>
     </div>
   </div>
 
@@ -385,14 +385,14 @@
   <!-- CONTENT -->
   <div class="content">
 
-    <!-- FEATURED — загружается из API -->
+    <!-- FEATURED -->
     <div class="featured-strip fade-up" id="featured-section" style="display:none;"></div>
 
     <!-- GRID -->
     <div>
       <div class="grid-label">
         <span>Все турниры</span>
-        <span class="result-count" id="result-count">Загружаем...</span>
+        <span class="result-count" id="result-count">Показано: 8</span>
       </div>
       <div class="t-grid" id="t-grid">
 
@@ -427,288 +427,298 @@
   </footer>
 
 </div>
-
 <script>
-// ═══════════════════════════════════════
-//  ЗАГРУЗКА ТУРНИРОВ ИЗ РЕАЛЬНОГО API
-// ═══════════════════════════════════════
+var ALL_TOURNAMENTS = [];
 
-let ALL_TOURNAMENTS = [];
-
-const GAME_BG = {
+var GAME_BG = {
   'CS2':            'linear-gradient(135deg,#0f1e35,#0a1520)',
   'Dota 2':         'linear-gradient(135deg,#150a20,#0f1830)',
   'Valorant':       'linear-gradient(135deg,#200a0a,#1a0f20)',
   'FIFA 25':        'linear-gradient(135deg,#0a1e10,#0f1a0a)',
-  'Mobile Legends': 'linear-gradient(135deg,#0a1528,#1a1008)',
+  'Mobile Legends': 'linear-gradient(135deg,#0a1528,#1a1008)'
 };
-const STATUS_LABEL = { live:'Live', open:'Открыта', soon:'Скоро', done:'Завершён' };
-const STATUS_CLS   = { live:'fc-tag-live', open:'fc-tag-open', soon:'fc-tag-soon', done:'fc-tag-done' };
+var STATUS_LABEL = {live:'Live', open:'Открыта', soon:'Скоро', done:'Завершён'};
+var STATUS_CLS   = {live:'fc-tag-live', open:'fc-tag-open', soon:'fc-tag-soon', done:'fc-tag-done'};
 
-
-function updateCounters() {
-  const total = ALL_TOURNAMENTS.length;
-  const open  = ALL_TOURNAMENTS.filter(t => t.status === 'open').length;
-  const live  = ALL_TOURNAMENTS.filter(t => t.status === 'live').length;
-  const prize = ALL_TOURNAMENTS.reduce((s, t) => s + (t.prize_pool||0), 0);
-  const players = ALL_TOURNAMENTS.reduce((s, t) => s + (t.filled_count||0), 0);
-
-  // Hero stats
-  const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-  // Пробуем разные id (страница может использовать разные)
-  ['hs-total','cnt-total','stat-total'].forEach(id => set(id, total));
-  ['hs-open','cnt-open','stat-open'].forEach(id => set(id, open + live));
-  ['hs-players','cnt-players','stat-players'].forEach(id => set(id, players));
-  ['hs-prize','cnt-prize','stat-prize'].forEach(id => set(id, prize > 0 ? prize.toLocaleString('ru-RU') + ' ₽' : '0 ₽'));
-
-  // Tab counters
-  set('tab-all-cnt',  total);
-  set('tab-live-cnt', live);
-
-  // Game counts
-  const games = ['CS2', 'Dota 2', 'Valorant', 'FIFA 25', 'Mobile Legends'];
-  games.forEach(g => {
-    const cnt = ALL_TOURNAMENTS.filter(t => t.game === g).length;
-    document.querySelectorAll('.game-filter-btn').forEach(btn => {
-      if (btn.dataset.game === g) {
-        const sp = btn.querySelector('.game-count');
-        if (sp) sp.textContent = cnt;
-      }
-    });
-  });
-  // Все игры
-  const allBtn = document.querySelector('.game-filter-btn[data-game="all"]');
-  if (allBtn) {
-    const sp = allBtn.querySelector('.game-count');
-    if (sp) sp.textContent = total;
-  }
+function fmtDate(d) {
+  if (!d) return 'Дата уточняется';
+  return new Date(d).toLocaleDateString('ru-RU', {day:'numeric', month:'long'});
 }
 
+// ── ЗАГРУЗКА ──
 async function loadTournaments() {
   showSkeleton();
   try {
-    const res = await fetch('/api/tournaments?limit=50');
-    if (!res.ok) throw new Error('Ошибка сервера');
+    var res = await fetch('/api/tournaments?limit=50');
+    if (!res.ok) throw new Error('Ошибка ' + res.status);
     ALL_TOURNAMENTS = await res.json();
-    renderAll();
     updateCounters();
+    renderFeatured();
+    filterCards();
   } catch(e) {
     console.error(e);
-    document.getElementById('t-grid').innerHTML =
+    var grid = document.getElementById('t-grid');
+    if (grid) grid.innerHTML =
       '<div style="grid-column:1/-1;text-align:center;padding:60px 20px;">' +
       '<div style="font-size:36px;margin-bottom:12px;">⚠️</div>' +
-      '<div style="font-size:16px;color:var(--text-dim);margin-bottom:16px;">Не удалось загрузить турниры</div>' +
+      '<div style="font-size:15px;color:var(--text-dim);margin-bottom:16px;">Не удалось загрузить данные</div>' +
       '<button onclick="loadTournaments()" style="padding:10px 20px;background:var(--gold);border:none;border-radius:8px;font-family:Rajdhani,sans-serif;font-weight:700;color:#080c12;cursor:pointer;">Попробовать снова</button>' +
       '</div>';
-    document.getElementById('featured-section').style.display = 'none';
   }
 }
 
 function showSkeleton() {
-  const grid = document.getElementById('t-grid');
-  grid.innerHTML = Array(6).fill(0).map(() =>
-    '<div class="t-card" style="opacity:.3;pointer-events:none;">' +
-    '<div style="height:140px;background:#111928;border-radius:10px 10px 0 0;"></div>' +
-    '<div style="padding:14px;">' +
-    '<div style="height:16px;background:#1a2436;border-radius:4px;margin-bottom:10px;"></div>' +
-    '<div style="height:12px;background:#1a2436;border-radius:4px;width:60%;margin-bottom:14px;"></div>' +
-    '<div style="height:4px;background:#1a2436;border-radius:2px;margin-bottom:14px;"></div>' +
-    '<div style="display:flex;justify-content:space-between;"><div style="height:20px;background:#1a2436;border-radius:4px;width:35%;"></div><div style="height:28px;background:#1a2436;border-radius:6px;width:28%;"></div></div>' +
-    '</div></div>'
-  ).join('');
+  var grid = document.getElementById('t-grid');
+  if (!grid) return;
+  var html = '';
+  for (var s = 0; s < 6; s++) {
+    html += '<div class="t-card" style="opacity:.3;pointer-events:none;">' +
+      '<div style="height:140px;background:#111928;border-radius:10px 10px 0 0;"></div>' +
+      '<div style="padding:14px;">' +
+      '<div style="height:16px;background:#1a2436;border-radius:4px;margin-bottom:10px;"></div>' +
+      '<div style="height:12px;background:#1a2436;border-radius:4px;width:60%;"></div>' +
+      '</div></div>';
+  }
+  grid.innerHTML = html;
 }
 
-// ── СОСТОЯНИЕ ФИЛЬТРОВ ──
-let filterGame   = 'all';
-let filterStatus = new Set();
-let filterSearch = '';
-let filterSort   = 'date';
+// ── СЧЁТЧИКИ ──
+function updateCounters() {
+  var total   = ALL_TOURNAMENTS.length;
+  var open    = ALL_TOURNAMENTS.filter(function(t){return t.status==='open';}).length;
+  var live    = ALL_TOURNAMENTS.filter(function(t){return t.status==='live';}).length;
+  var players = ALL_TOURNAMENTS.reduce(function(s,t){return s+(t.filled_count||0);}, 0);
+  var prize   = ALL_TOURNAMENTS.reduce(function(s,t){return s+(t.prize_pool||0);}, 0);
 
-// ── РЕНДЕР ВСЕГО ──
-function renderAll() {
-  renderFeatured();
-  filterCards();
+  function set(id, val) { var el = document.getElementById(id); if (el) el.textContent = val; }
+
+  // Hero stats — пробуем разные id
+  ['cnt-total','hs-total'].forEach(function(id){ set(id, total); });
+  ['cnt-open','hs-open'].forEach(function(id){ set(id, open+live); });
+  ['cnt-players','hs-players'].forEach(function(id){ set(id, players); });
+  ['cnt-prize','hs-prize'].forEach(function(id){ set(id, prize > 0 ? prize.toLocaleString('ru-RU') + ' ₽' : '0 ₽'); });
+
+  // Tab счётчики
+  set('tab-all-cnt',  total);
+  set('tab-live-cnt', live);
+  set('tab-edu-cnt',  0);
+
+  // Игровые счётчики
+  var games = ['CS2','Dota 2','Valorant','FIFA 25','Mobile Legends'];
+  document.querySelectorAll('.game-filter-btn, .game-btn, [data-game]').forEach(function(btn) {
+    var g = btn.dataset.game;
+    if (!g) return;
+    var cnt = g === 'all' ? total : ALL_TOURNAMENTS.filter(function(t){return t.game===g;}).length;
+    var sp = btn.querySelector('.game-count, .cnt');
+    if (sp) sp.textContent = cnt;
+  });
 }
 
-// ── FEATURED (первый открытый/live турнир) ──
+// ── FEATURED ──
 function renderFeatured() {
-  const sec = document.getElementById('featured-section');
-  const featured = ALL_TOURNAMENTS.find(t => t.status === 'live' || t.status === 'open');
+  var sec = document.getElementById('featured-section');
+  if (!sec) return;
+
+  var featured = null;
+  for (var i = 0; i < ALL_TOURNAMENTS.length; i++) {
+    if (ALL_TOURNAMENTS[i].status === 'live' || ALL_TOURNAMENTS[i].status === 'open') {
+      featured = ALL_TOURNAMENTS[i];
+      break;
+    }
+  }
   if (!featured) { sec.style.display = 'none'; return; }
 
-  const filled = featured.filled_count || 0;
-  const fmtDate = d => d ? new Date(d).toLocaleDateString('ru-RU', {day:'numeric', month:'long'}) : 'Дата уточняется';
-  const bg = GAME_BG[featured.game] || GAME_BG['CS2'];
+  var bg = GAME_BG[featured.game] || GAME_BG['CS2'];
+  var filled = featured.filled_count || 0;
+  var statusLbl = STATUS_LABEL[featured.status] || featured.status;
+  var statusCls = STATUS_CLS[featured.status] || 'fc-tag-open';
+  var isLive = featured.status === 'live';
+  var prize = featured.prize_pool > 0 ? featured.prize_pool.toLocaleString('ru-RU') + ' ₽' : 'Без призов';
+  var isFree = !featured.entry_fee || featured.entry_fee === 0;
 
   sec.style.display = 'block';
-  sec.innerHTML =
-    '<div class="strip-label">⭐ Главный турнир</div>' +
-    '<div class="featured-card" style="cursor:pointer" data-id="' + featured.id + '" id="feat-card">' +
-      '<div class="fc-img">' +
-        '<div class="fc-img-bg" style="background:' + bg + ';"></div>' +
-        '<div class="fc-img-overlay"></div>' +
-      '</div>' +
-      '<div class="fc-body">' +
-        '<div>' +
-          '<div class="fc-meta">' +
-            '<span class="fc-tag fc-tag-game">' + featured.game + '</span>' +
-            '<span class="fc-tag ' + (STATUS_CLS[featured.status]||'fc-tag-open') + '">' +
-              (featured.status === 'live' ? '<span style="width:5px;height:5px;border-radius:50%;background:currentColor;animation:blink 1s infinite;display:inline-block;margin-right:4px;"></span>' : '') +
-              STATUS_LABEL[featured.status] +
-            '</span>' +
-            (featured.entry_fee === 0 ? '<span class="fc-tag fc-tag-free">Бесплатно</span>' : '') +
-          '</div>' +
-          '<div class="fc-title">' + featured.name + '</div>' +
-          '<div class="fc-desc">' + (featured.description || 'Соревнование на платформе Game Genesis') + '</div>' +
-          '<div class="fc-stats">' +
-            '<div><div class="fc-stat-val">' + (featured.prize_pool > 0 ? featured.prize_pool.toLocaleString('ru-RU') + ' ₽' : 'Без призов') + '</div><div class="fc-stat-key">Призовой фонд</div></div>' +
-            '<div><div class="fc-stat-val">' + filled + ' / ' + (featured.max_slots||16) + '</div><div class="fc-stat-key">Участников</div></div>' +
-            '<div><div class="fc-stat-val">' + fmtDate(featured.start_date) + '</div><div class="fc-stat-key">Дата старта</div></div>' +
-          '</div>' +
-        '</div>' +
-        '<div class="fc-btns">' +
-          '<button class="btn-gold" data-reg="' + featured.id + '">' +
-            '<svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>' +
-            'Подать заявку' +
-          '</button>' +
-          '<button class="btn-ghost" data-detail="' + featured.id + '">Подробнее</button>' +
-        '</div>' +
-      '</div>' +
-    '</div>';
-  // Обработчики кликов
-  setTimeout(function() {
-    var fc = document.getElementById('feat-card');
-    if (fc) fc.addEventListener('click', function() {
-      location.href = '/tournament.html?id=' + fc.dataset.id;
-    });
-    var regBtn = fc ? fc.querySelector('[data-reg]') : null;
-    if (regBtn) regBtn.addEventListener('click', function(e) {
-      e.stopPropagation();
-      location.href = '/tournament-register.html?id=' + regBtn.dataset.reg;
-    });
-    var detBtn = fc ? fc.querySelector('[data-detail]') : null;
-    if (detBtn) detBtn.addEventListener('click', function(e) {
-      e.stopPropagation();
-      location.href = '/tournament.html?id=' + detBtn.dataset.detail;
-    });
-  }, 50);
-
-}
-
-// ── ФИЛЬТРАЦИЯ И РЕНДЕР КАРТОЧЕК ──
-function filterCards() {
-  const q = (document.getElementById('search-input') || {value:''}).value.toLowerCase();
-  filterSearch = q;
-  filterSort = (document.getElementById('sort-select') || {value:'date'}).value;
-
-  let list = ALL_TOURNAMENTS.filter(t => {
-    if (filterGame !== 'all' && t.game !== filterGame) return false;
-    if (filterStatus.size > 0 && !filterStatus.has(t.status)) return false;
-    if (q && !t.name.toLowerCase().includes(q) && !t.game.toLowerCase().includes(q)) return false;
-    return true;
-  });
-
-  // Сортировка
-  if (filterSort === 'prize') list.sort((a,b) => (b.prize_pool||0) - (a.prize_pool||0));
-  else if (filterSort === 'players') list.sort((a,b) => (b.filled_count||0) - (a.filled_count||0));
-  else if (filterSort === 'name') list.sort((a,b) => a.name.localeCompare(b.name, 'ru'));
-  else list.sort((a,b) => new Date(b.created_at||0) - new Date(a.created_at||0));
-
-  renderCards(list);
-}
-
-function renderCards(list) {
-  const grid = document.getElementById('t-grid');
-  const empty = document.getElementById('empty-state');
-  const cnt = document.getElementById('result-count');
-
-  if (cnt) cnt.textContent = 'Найдено: ' + list.length;
-
-  if (!list.length) {
-    grid.innerHTML = '';
-    if (empty) empty.style.display = 'block';
-    return;
-  }
-  if (empty) empty.style.display = 'none';
-
-  const fmtDate = d => d ? new Date(d).toLocaleDateString('ru-RU', {day:'numeric', month:'long'}) : '—';
-
-  grid.innerHTML = list.map((t, i) => {
-    const filled = t.filled_count || 0;
-    const pct = t.max_slots > 0 ? Math.round(filled / t.max_slots * 100) : 0;
-    const bg = GAME_BG[t.game] || GAME_BG['CS2'];
-    const statusLabel = STATUS_LABEL[t.status] || t.status;
-    const statusCls = STATUS_CLS[t.status] || 'fc-tag-open';
-    const btnLabel = t.status === 'open' ? 'Записаться' : t.status === 'live' ? 'Смотреть' : 'Подробнее';
-
-    return '<a href="/tournament.html?id=' + t.id + '" class="t-card" style="animation-delay:' + (i*0.04) + 's;text-decoration:none;">' +
-      '<div class="t-thumb" style="background:' + bg + ';">' +
-        '<div class="t-thumb-overlay"></div>' +
-        '<span class="t-game-badge">' + t.game + '</span>' +
-        '<span class="t-status-badge ' + statusCls + '">' +
-          (t.status === 'live' ? '<span style="width:5px;height:5px;border-radius:50%;background:currentColor;animation:blink 1s infinite;display:inline-block;margin-right:4px;"></span>' : '') +
-          statusLabel +
-        '</span>' +
-      '</div>' +
-      '<div class="t-body">' +
-        '<div class="t-name">' + t.name + '</div>' +
-        '<div class="t-meta-row">' +
-          '<span class="t-meta-item">📅 ' + fmtDate(t.start_date) + '</span>' +
-          '<span class="t-meta-item">👥 ' + filled + ' / ' + (t.max_slots||16) + '</span>' +
-          '<span class="t-meta-item" style="color:' + (t.entry_fee>0?'var(--gold)':'var(--success)') + ';">' +
-            (t.entry_fee > 0 ? t.entry_fee + ' ₽' : 'Бесплатно') +
+  sec.innerHTML = '<div class="strip-label">\u2B50 \u0413\u043B\u0430\u0432\u043D\u044B\u0439 \u0442\u0443\u0440\u043D\u0438\u0440</div>' +
+    '<div class="featured-card" id="fc-main">' +
+    '<div class="fc-img">' +
+      '<div class="fc-img-bg" style="background:' + bg + ';"></div>' +
+      '<div class="fc-img-overlay"></div>' +
+    '</div>' +
+    '<div class="fc-body">' +
+      '<div>' +
+        '<div class="fc-meta">' +
+          '<span class="fc-tag fc-tag-game">' + featured.game + '</span>' +
+          '<span class="fc-tag ' + statusCls + '">' +
+            (isLive ? '<span style="width:5px;height:5px;border-radius:50%;background:currentColor;animation:blink 1s infinite;display:inline-block;margin-right:4px;"></span>' : '') +
+            statusLbl +
           '</span>' +
+          (isFree ? '<span class="fc-tag fc-tag-free">\u0411\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u043E</span>' : '') +
         '</div>' +
-        '<div class="t-progress">' +
-          '<div class="t-progress-bar" style="width:' + pct + '%;"></div>' +
-        '</div>' +
-        '<div class="t-footer">' +
-          '<div class="t-prize-wrap">' +
-            '<div class="t-prize">' + (t.prize_pool > 0 ? t.prize_pool.toLocaleString('ru-RU') + ' ₽' : '—') + '</div>' +
-            '<div class="t-prize-key">Призовой фонд</div>' +
-          '</div>' +
-          '<button class="t-btn" data-reg="' + t.id + '">' +
-            btnLabel +
-          '</button>' +
+        '<div class="fc-title">' + featured.name + '</div>' +
+        '<div class="fc-desc">' + (featured.description || '\u0421\u043E\u0440\u0435\u0432\u043D\u043E\u0432\u0430\u043D\u0438\u0435 \u043D\u0430 \u043F\u043B\u0430\u0442\u0444\u043E\u0440\u043C\u0435 Game Genesis') + '</div>' +
+        '<div class="fc-stats">' +
+          '<div><div class="fc-stat-val">' + prize + '</div><div class="fc-stat-key">\u041F\u0440\u0438\u0437\u043E\u0432\u043E\u0439 \u0444\u043E\u043D\u0434</div></div>' +
+          '<div><div class="fc-stat-val">' + filled + ' / ' + (featured.max_slots||16) + '</div><div class="fc-stat-key">\u0423\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u043E\u0432</div></div>' +
+          '<div><div class="fc-stat-val">' + fmtDate(featured.start_date) + '</div><div class="fc-stat-key">\u0414\u0430\u0442\u0430 \u0441\u0442\u0430\u0440\u0442\u0430</div></div>' +
         '</div>' +
       '</div>' +
-    '</a>';
-  }).join('');
-  // Делегирование кликов на кнопки регистрации
-  setTimeout(function() {
-    document.querySelectorAll('[data-reg]').forEach(function(btn) {
-      btn.addEventListener('click', function(e) {
-        e.preventDefault(); e.stopPropagation();
-        location.href = '/tournament-register.html?id=' + btn.dataset.reg;
-      });
-    });
-  }, 50);
+      '<div class="fc-btns">' +
+        '<button class="btn-gold" id="fc-reg-btn">' +
+          '<svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>' +
+          '\u041F\u043E\u0434\u0430\u0442\u044C \u0437\u0430\u044F\u0432\u043A\u0443' +
+        '</button>' +
+        '<button class="btn-ghost" id="fc-detail-btn">\u041F\u043E\u0434\u0440\u043E\u0431\u043D\u0435\u0435</button>' +
+      '</div>' +
+    '</div></div>';
 
+  // Обработчики — без кавычек в onclick
+  var tid = featured.id;
+  document.getElementById('fc-main').addEventListener('click', function() {
+    window.location.href = '/tournament.html?id=' + tid;
+  });
+  document.getElementById('fc-reg-btn').addEventListener('click', function(e) {
+    e.stopPropagation();
+    window.location.href = '/tournament-register.html?id=' + tid;
+  });
+  document.getElementById('fc-detail-btn').addEventListener('click', function(e) {
+    e.stopPropagation();
+    window.location.href = '/tournament.html?id=' + tid;
+  });
 }
 
 // ── ФИЛЬТРЫ ──
+var filterGame   = 'all';
+var filterStatus = {};
+var filterSort   = 'date';
+
+function setTab(tab, btn) {
+  document.querySelectorAll('.tab-btn, [id^="tab-"]').forEach(function(b){ b.classList.remove('active'); });
+  if (btn) btn.classList.add('active');
+  if (tab === 'live') { filterStatus = {live:true}; }
+  else if (tab === 'edu') { filterStatus = {}; }  // TODO: когда добавим edu поле
+  else { filterStatus = {}; }
+  filterCards();
+}
+
 function setGame(game, btn) {
   filterGame = game;
-  document.querySelectorAll('.game-filter-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.game-filter-btn, .game-btn, [data-game]').forEach(function(b){ b.classList.remove('active'); });
   if (btn) btn.classList.add('active');
   filterCards();
 }
 
 function toggleStatus(status, btn) {
-  if (filterStatus.has(status)) filterStatus.delete(status);
-  else filterStatus.add(status);
-  if (btn) btn.classList.toggle('active');
+  if (filterStatus[status]) {
+    delete filterStatus[status];
+    if (btn) btn.classList.remove('active');
+  } else {
+    filterStatus[status] = true;
+    if (btn) btn.classList.add('active');
+  }
   filterCards();
 }
 
-// Intersection Observer для анимаций
-const observer = new IntersectionObserver(entries => {
-  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
-}, { threshold: 0.05 });
-document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+function filterCards() {
+  var inp = document.getElementById('search-input');
+  var q = inp ? inp.value.toLowerCase() : '';
+  var sel = document.getElementById('sort-select');
+  filterSort = sel ? sel.value : 'date';
 
-// Запуск
+  var list = ALL_TOURNAMENTS.filter(function(t) {
+    if (filterGame !== 'all' && t.game !== filterGame) return false;
+    var statKeys = Object.keys(filterStatus);
+    if (statKeys.length > 0 && !filterStatus[t.status]) return false;
+    if (q && t.name.toLowerCase().indexOf(q) < 0 && t.game.toLowerCase().indexOf(q) < 0) return false;
+    return true;
+  });
+
+  if (filterSort === 'prize') list.sort(function(a,b){ return (b.prize_pool||0)-(a.prize_pool||0); });
+  else if (filterSort === 'players') list.sort(function(a,b){ return (b.filled_count||0)-(a.filled_count||0); });
+  else if (filterSort === 'name') list.sort(function(a,b){ return a.name.localeCompare(b.name,'ru'); });
+  else list.sort(function(a,b){ return new Date(b.created_at||0)-new Date(a.created_at||0); });
+
+  renderCards(list);
+}
+
+function renderCards(list) {
+  var grid = document.getElementById('t-grid');
+  var empty = document.getElementById('empty-state');
+  var cnt = document.getElementById('result-count');
+
+  if (cnt) cnt.textContent = '\u041D\u0430\u0439\u0434\u0435\u043D\u043E: ' + list.length;
+
+  if (!list.length) {
+    if (grid) grid.innerHTML = '';
+    if (empty) empty.style.display = 'block';
+    return;
+  }
+  if (empty) empty.style.display = 'none';
+  if (!grid) return;
+
+  var html = '';
+  for (var i = 0; i < list.length; i++) {
+    var t = list[i];
+    var filled = t.filled_count || 0;
+    var pct = t.max_slots > 0 ? Math.round(filled / t.max_slots * 100) : 0;
+    var bg = GAME_BG[t.game] || GAME_BG['CS2'];
+    var statusLbl = STATUS_LABEL[t.status] || t.status;
+    var statusCls = STATUS_CLS[t.status] || 'fc-tag-open';
+    var isLive = t.status === 'live';
+    var btnLbl = t.status === 'open' ? '\u0417\u0430\u043F\u0438\u0441\u0430\u0442\u044C\u0441\u044F' :
+                 t.status === 'live' ? '\u0421\u043C\u043E\u0442\u0440\u0435\u0442\u044C' : '\u041F\u043E\u0434\u0440\u043E\u0431\u043D\u0435\u0435';
+
+    html += '<div class="t-card" data-id="' + t.id + '" style="cursor:pointer;animation-delay:' + (i*0.04) + 's">' +
+      '<div class="t-thumb" style="background:' + bg + ';">' +
+        '<div class="t-thumb-overlay"></div>' +
+        '<span class="t-game-badge">' + t.game + '</span>' +
+        '<span class="t-status-badge ' + statusCls + '">' +
+          (isLive ? '<span style="width:5px;height:5px;border-radius:50%;background:currentColor;animation:blink 1s infinite;display:inline-block;margin-right:4px;"></span>' : '') +
+          statusLbl +
+        '</span>' +
+      '</div>' +
+      '<div class="t-body">' +
+        '<div class="t-name">' + t.name + '</div>' +
+        '<div class="t-meta-row">' +
+          '<span class="t-meta-item">\uD83D\uDCC5 ' + fmtDate(t.start_date) + '</span>' +
+          '<span class="t-meta-item">\uD83D\uDC65 ' + filled + ' / ' + (t.max_slots||16) + '</span>' +
+          '<span class="t-meta-item" style="color:' + (t.entry_fee>0?'var(--gold)':'var(--success)') + ';">' +
+            (t.entry_fee > 0 ? t.entry_fee + ' \u20BD' : '\u0411\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u043E') +
+          '</span>' +
+        '</div>' +
+        '<div class="t-progress"><div class="t-progress-bar" style="width:' + pct + '%;"></div></div>' +
+        '<div class="t-footer">' +
+          '<div class="t-prize-wrap">' +
+            '<div class="t-prize">' + (t.prize_pool > 0 ? t.prize_pool.toLocaleString('ru-RU') + ' \u20BD' : '\u2014') + '</div>' +
+            '<div class="t-prize-key">\u041F\u0440\u0438\u0437\u043E\u0432\u043E\u0439 \u0444\u043E\u043D\u0434</div>' +
+          '</div>' +
+          '<button class="t-btn" data-reg="' + t.id + '" style="white-space:nowrap;">' + btnLbl + '</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }
+  grid.innerHTML = html;
+
+  // Делегирование кликов — один раз на grid
+  grid.onclick = function(e) {
+    var card = e.target.closest('.t-card');
+    if (!card) return;
+    var btn = e.target.closest('[data-reg]');
+    if (btn) {
+      e.stopPropagation();
+      window.location.href = '/tournament-register.html?id=' + btn.dataset.reg;
+    } else {
+      window.location.href = '/tournament.html?id=' + card.dataset.id;
+    }
+  };
+}
+
+// Intersection Observer
+var obs = new IntersectionObserver(function(entries) {
+  entries.forEach(function(e) { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.05 });
+document.querySelectorAll('.fade-up').forEach(function(el) { obs.observe(el); });
+
 loadTournaments();
 </script>
+
 </body>
 </html>
