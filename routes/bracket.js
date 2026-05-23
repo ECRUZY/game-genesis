@@ -320,6 +320,37 @@ router.put('/:tid/matches/:mid', auth, async (req, res) => {
     const match = result.rows[0]
     const loser_id = match.winner_team_id === match.team1_id ? match.team2_id : match.team1_id
 
+    // Обновляем рейтинг игроков команды-победителя (+25) и проигравшей (-25, мин. 0)
+    try {
+      // Игроки победившей команды
+      const winPlayers = await db.query(
+        'SELECT tp.* FROM team_players tp WHERE tp.team_id=$1',
+        [winner_team_id]
+      )
+      for (const p of winPlayers.rows) {
+        // Ищем пользователя по никнейму
+        await db.query(
+          'UPDATE users SET rating=rating+25, wins=wins+1 WHERE LOWER(username)=LOWER($1) OR LOWER(faceit_nick)=LOWER($1)',
+          [p.nickname]
+        )
+      }
+      // Игроки проигравшей команды
+      if (loser_id) {
+        const losePlayers = await db.query(
+          'SELECT tp.* FROM team_players tp WHERE tp.team_id=$1',
+          [loser_id]
+        )
+        for (const p of losePlayers.rows) {
+          await db.query(
+            'UPDATE users SET rating=GREATEST(0, rating-25), losses=losses+1 WHERE LOWER(username)=LOWER($1) OR LOWER(faceit_nick)=LOWER($1)',
+            [p.nickname]
+          )
+        }
+      }
+    } catch(ratingErr) {
+      console.log('Rating update skipped:', ratingErr.message)
+    }
+
     // Если это Upper bracket — проигравший идёт в Lower
     if (match.bracket_type === 'upper') {
       // Найдём ближайший пустой матч в Lower bracket того же раунда
