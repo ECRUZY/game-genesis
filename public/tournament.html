@@ -1,8 +1,6 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <script src="/nav.js"></script>
-  <script src="/api.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Турнир Чеченской Республики — Game Genesis</title>
@@ -91,7 +89,7 @@
     .sb-sep { width: 28px; height: 1px; background: var(--border); margin: 6px 0; }
 
     /* ── PAGE ── */
-    .page {   position: relative; z-index: 1; }
+    .page { margin-left: 60px; padding-top: 64px; position: relative; z-index: 1; }
 
     /* ── TOURNAMENT HERO ── */
     .t-hero {
@@ -101,7 +99,7 @@
     }
     .t-hero-bg {
       position: absolute; inset: 0;
-      background: url('/images/hero-bg.jpg') center/cover no-repeat;
+      background: url('https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/Heart_of_Chechnya_at_night.jpg/1280px-Heart_of_Chechnya_at_night.jpg') center/cover no-repeat;
       z-index: 0;
     }
     .t-hero-overlay {
@@ -398,10 +396,55 @@
 <div class="grid-bg"></div>
 
 <!-- HEADER -->
-
+<header>
+  <a href="index.html" class="logo">
+    <div class="logo-hex">
+      <svg viewBox="0 0 18 18" fill="none"><polygon points="9,1 16,4.5 16,13.5 9,17 2,13.5 2,4.5" stroke="#080c12" stroke-width="1.5"/><circle cx="9" cy="9" r="2.5" fill="#080c12"/></svg>
+    </div>
+    <span class="logo-name">GAME GENESIS</span>
+  </a>
+  <nav>
+    <a href="index.html" class="nav-a">Главная</a>
+    <a href="#" class="nav-a active">Турниры</a>
+    <a href="#" onclick="location.href='/tournament-register.html?id='+(new URLSearchParams(window.location.search).get('id')||'1')" class="nav-a">Регистрация</a>
+    <a href="#" class="nav-a">Рейтинг</a>
+    <a href="create-tournament.html" class="nav-a">Создать турнир</a>
+    <a href="#" class="nav-a">Лиги</a>
+  </nav>
+  <div class="header-right">
+    <button class="btn-login" onclick="location.href='auth.html'">Войти</button>
+    <button class="btn-cta" onclick="location.href='/tournament-register.html?id=' + (new URLSearchParams(window.location.search).get('id') || '1')">Участвовать</button>
+  </div>
+</header>
 
 <!-- SIDEBAR -->
-
+<aside class="sidebar">
+  <div class="sb-item" onclick="location.href='index.html'">
+    <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    <span class="tip">Главная</span>
+  </div>
+  <div class="sb-item active">
+    <svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/></svg>
+    <span class="tip">Турниры</span>
+  </div>
+  <div class="sb-item">
+    <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    <span class="tip">Рейтинг</span>
+  </div>
+  <div class="sb-item">
+    <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    <span class="tip">Лиги</span>
+  </div>
+  <div class="sb-sep"></div>
+  <div class="sb-item" onclick="location.href='/tournament-register.html?id=' + (new URLSearchParams(window.location.search).get('id') || '1')">
+    <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    <span class="tip">Регистрация</span>
+  </div>
+  <div class="sb-item">
+    <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    <span class="tip">Профиль</span>
+  </div>
+</aside>
 
 <div class="page">
 
@@ -430,7 +473,7 @@
       <p class="t-desc">Крупнейший студенческий киберспортивный турнир региона. Команды из университетов Грозного, Гудермеса, Шали и других городов республики сражаются за звание чемпиона.</p>
 
       <div class="t-hero-actions">
-        <button class="btn-primary" onclick="location.href='tournament-register.html'">
+        <button class="btn-primary" onclick="location.href='/tournament-register.html?id=' + (new URLSearchParams(window.location.search).get('id') || '1')">
           <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
           Подать заявку
         </button>
@@ -804,7 +847,7 @@
           </tr>
         </tbody>
       </table>
-      <div class="rating-note">Рейтинг обновляется автоматически по результатам матчей. Для участия в рейтинге необходимо <a href="tournament-register.html" style="color:var(--gold);">зарегистрироваться</a> на платформе.</div>
+      <div class="rating-note">Рейтинг обновляется автоматически по результатам матчей. Для участия в рейтинге необходимо <a href="#" onclick="location.href='/tournament-register.html?id='+(new URLSearchParams(window.location.search).get('id')||'1')" style="color:var(--gold);">зарегистрироваться</a> на платформе.</div>
     </div>
   </div>
 
@@ -815,7 +858,7 @@
         <h2 class="ratings-title">Участники</h2>
         <p class="ratings-sub" style="margin-bottom:0">64 из 128 зарегистрировано</p>
       </div>
-      <button class="btn-primary" onclick="location.href='tournament-register.html'">
+      <button class="btn-primary" onclick="location.href='/tournament-register.html?id=' + (new URLSearchParams(window.location.search).get('id') || '1')">
         <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Зарегистрироваться
       </button>
@@ -909,7 +952,7 @@
     </div>
 
     <div style="text-align:center;margin-top:36px;" class="fade-up">
-      <button class="btn-primary" onclick="location.href='tournament-register.html'" style="margin:0 auto;max-width:260px;">
+      <button class="btn-primary" onclick="location.href='/tournament-register.html?id=' + (new URLSearchParams(window.location.search).get('id') || '1')" style="margin:0 auto;max-width:260px;">
         <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
         Зарегистрироваться на турнир
       </button>
@@ -952,6 +995,42 @@
     entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); });
   }, { threshold: 0.08 });
   document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+</script>
+
+<script>
+// Загружаем реальный турнир по ID из URL
+(async function() {
+  var tid = new URLSearchParams(window.location.search).get('id');
+  if (!tid) return; // Если нет id — оставляем демо данные
+
+  try {
+    var res = await fetch('/api/tournaments/' + tid);
+    if (!res.ok) return;
+    var data = await res.json();
+    var t = data.tournament;
+    if (!t) return;
+
+    // Обновляем заголовок страницы
+    document.title = t.name + ' — Game Genesis';
+
+    // Обновляем элементы если есть
+    var set = function(id, val) { var el = document.getElementById(id); if (el && val) el.textContent = val; };
+    var fmtDate = function(d) { return d ? new Date(d).toLocaleDateString('ru-RU',{day:'numeric',month:'long',year:'numeric'}) : '—'; };
+
+    // Название турнира в breadcrumb и заголовке
+    document.querySelectorAll('.t-title, [class*="t-title"]').forEach(function(el) {
+      if (el.textContent.includes('Чемпионат') || el.textContent.includes('Открытый')) {
+        el.innerHTML = t.name;
+      }
+    });
+
+    // Обновляем мета-панель
+    set('s-status', {live:'Live',open:'Открыта',done:'Завершён',soon:'Скоро'}[t.status] || t.status);
+    set('s-participants', (data.participants ? data.participants.length : 0) + ' / ' + (t.max_slots||16));
+    set('s-matches-done', data.matches ? data.matches.filter(function(m){return m.status==='done';}).length : 0);
+
+  } catch(e) { console.error('Ошибка загрузки турнира:', e); }
+})();
 </script>
 </body>
 </html>
