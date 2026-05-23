@@ -1,8 +1,6 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <script src="/nav.js"></script>
-  <script src="/api.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Войти / Регистрация — Game Genesis</title>
@@ -50,7 +48,7 @@
     }
     .left-bg {
       position: absolute; inset: 0;
-      background: url('/images/hero-bg.jpg') center/cover no-repeat;
+      background: url('https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/Heart_of_Chechnya_at_night.jpg/800px-Heart_of_Chechnya_at_night.jpg') center/cover no-repeat;
       z-index: 0;
     }
     .left-overlay {
@@ -574,7 +572,7 @@
 
         <div class="resend-row">
           Не получили?
-          <button class="resend-btn" id="resend-btn" onclick="startResend()" disabled>
+          <button class="resend-btn" id="resend-btn" onclick="resendCode()" disabled>
             Отправить снова (<span id="resend-timer">60</span>с)
           </button>
         </div>
@@ -685,15 +683,19 @@
       setInputState('r-username', 'err'); return;
     }
     status.className = 'username-status loading'; status.textContent = '...';
-    unameTimer = setTimeout(() => {
-      // Simulate check
-      const taken = ['admin','genesis','player1','test'].includes(val.toLowerCase());
-      if (taken) {
-        status.className = 'username-status err'; status.textContent = '✗ Занят';
-        setInputState('r-username', 'err');
-      } else {
-        status.className = 'username-status ok'; status.textContent = '✓ Свободен';
-        setInputState('r-username', 'ok');
+    unameTimer = setTimeout(async () => {
+      try {
+        const res = await fetch('/api/auth/check-username/' + encodeURIComponent(val));
+        const data = await res.json();
+        if (data.available) {
+          status.className = 'username-status ok'; status.textContent = '✓ Свободен';
+          setInputState('r-username', 'ok');
+        } else {
+          status.className = 'username-status err'; status.textContent = '✗ Занят';
+          setInputState('r-username', 'err');
+        }
+      } catch(e) {
+        status.className = 'username-status loading'; status.textContent = '...';
       }
     }, 600);
   }
@@ -713,7 +715,7 @@
   }
 
   // ── STEP 2 ──
-  function reg2Next() {
+  async function reg2Next() {
     const pass = document.getElementById('r-pass').value;
     const pass2 = document.getElementById('r-pass2').value;
     let ok = true;
@@ -727,11 +729,59 @@
     if (!document.getElementById('r-agree').checked) { alert('Примите правила платформы'); ok = false; }
     if (!ok) return;
 
-    const email = document.getElementById('r-email').value;
-    document.getElementById('shown-email').textContent = email;
-    showRegStep(3);
-    startResend();
-    document.getElementById('cd-0').focus();
+    const btn = document.querySelector('#reg-step-2 .btn-submit');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner"></div> Создаём аккаунт...';
+
+    try {
+      const body = {
+        username:  document.getElementById('r-username').value.trim(),
+        email:     document.getElementById('r-email').value.trim(),
+        phone:     document.getElementById('r-phone').value.trim(),
+        password:  pass,
+        full_name: document.getElementById('r-fname').value.trim() + ' ' + document.getElementById('r-lname').value.trim(),
+        game:      document.getElementById('r-game').value || 'CS2'
+      };
+
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || 'Ошибка регистрации');
+        btn.disabled = false;
+        btn.innerHTML = 'Далее →';
+        return;
+      }
+
+      // Сохраняем токен и данные пользователя
+      localStorage.setItem('gg_token', data.token);
+      localStorage.setItem('gg_user', JSON.stringify(data.user));
+
+      // Показываем реальный код верификации в демо-режиме
+      const emailEl = document.getElementById('shown-email');
+      if (emailEl) emailEl.textContent = body.email;
+
+      const subEl = document.querySelector('#reg-step-3 .auth-sub');
+      if (subEl) {
+        subEl.innerHTML = `Шаг 3 из 3 — Код отправлен на <strong style="color:#fff">${body.email}</strong>`;
+        if (data.dev_code) {
+          subEl.innerHTML += `<br><span style="color:var(--gold);font-size:12px;">Демо-код: <b style="font-size:14px;">${data.dev_code}</b></span>`;
+        }
+      }
+
+      showRegStep(3);
+      startResend();
+      document.getElementById('cd-0').focus();
+
+    } catch(e) {
+      alert('Ошибка сети. Проверьте подключение.');
+      btn.disabled = false;
+      btn.innerHTML = 'Далее →';
+    }
   }
 
   // ── PASSWORD STRENGTH ──
@@ -779,7 +829,7 @@
     return c;
   }
 
-  function verifyCode() {
+  async function verifyCode() {
     const code = getCode();
     const btn = document.getElementById('verify-btn');
     if (code.length < 6) { document.getElementById('code-err').textContent = 'Введите все 6 цифр'; document.getElementById('code-err').style.display = 'block'; return; }
@@ -787,8 +837,21 @@
     btn.disabled = true;
     btn.innerHTML = '<div class="spinner"></div> Проверяем...';
 
-    setTimeout(() => {
-      if (code === '123456') {
+    try {
+      const token = localStorage.getItem('gg_token');
+      const res = await fetch('/api/auth/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ code })
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        // Обновляем статус верификации
+        const user = JSON.parse(localStorage.getItem('gg_user') || '{}');
+        user.verified = true;
+        localStorage.setItem('gg_user', JSON.stringify(user));
+
         document.getElementById('code-ok').style.display = 'block';
         document.getElementById('code-err').style.display = 'none';
         setTimeout(() => {
@@ -797,23 +860,25 @@
           showRegStep(4);
         }, 700);
       } else {
-        document.getElementById('code-err').textContent = 'Неверный код. Попробуйте ещё раз.';
+        document.getElementById('code-err').textContent = data.error || 'Неверный код.';
         document.getElementById('code-err').style.display = 'block';
         btn.disabled = false;
         btn.innerHTML = '<svg viewBox="0 0 24 24" style="width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round"><polyline points="20 6 9 17 4 12"/></svg> Подтвердить';
-        // shake
         const ci = document.getElementById('code-inputs');
-        ci.style.animation = 'none';
         ci.style.transform = 'translateX(-6px)';
         setTimeout(() => { ci.style.transform = 'translateX(6px)'; }, 80);
         setTimeout(() => { ci.style.transform = 'translateX(-4px)'; }, 160);
         setTimeout(() => { ci.style.transform = 'translateX(4px)'; }, 240);
         setTimeout(() => { ci.style.transform = 'translateX(0)'; }, 320);
-        // clear
         for (let i = 0; i < 6; i++) { document.getElementById('cd-' + i).value = ''; document.getElementById('cd-' + i).classList.remove('filled'); }
         document.getElementById('cd-0').focus();
       }
-    }, 1000);
+    } catch(e) {
+      document.getElementById('code-err').textContent = 'Ошибка сети.';
+      document.getElementById('code-err').style.display = 'block';
+      btn.disabled = false;
+      btn.innerHTML = 'Подтвердить';
+    }
   }
 
   // ── RESEND TIMER ──
@@ -827,8 +892,33 @@
     resendInterval = setInterval(() => {
       t--;
       timer.textContent = t;
-      if (t <= 0) { clearInterval(resendInterval); btn.disabled = false; btn.textContent = 'Отправить снова'; }
+      if (t <= 0) {
+        clearInterval(resendInterval);
+        btn.disabled = false;
+        btn.innerHTML = 'Отправить снова';
+      }
     }, 1000);
+  }
+
+  async function resendCode() {
+    try {
+      const token = localStorage.getItem('gg_token');
+      const res = await fetch('/api/auth/resend-code', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      const data = await res.json();
+      if (data.dev_code) {
+        const subEl = document.querySelector('#reg-step-3 .auth-sub');
+        if (subEl) {
+          const email = document.getElementById('shown-email')?.textContent || '';
+          subEl.innerHTML = `Шаг 3 из 3 — Код отправлен на <strong style="color:#fff">${email}</strong><br><span style="color:var(--gold);font-size:12px;">Новый демо-код: <b style="font-size:14px;">${data.dev_code}</b></span>`;
+        }
+      }
+      startResend();
+    } catch(e) {
+      startResend();
+    }
   }
 
   // ── EYE TOGGLE ──
@@ -842,7 +932,7 @@
   }
 
   // ── LOGIN ──
-  function doLogin() {
+  async function doLogin() {
     const login = document.getElementById('l-login').value.trim();
     const pass = document.getElementById('l-pass').value;
     let ok = true;
@@ -853,19 +943,32 @@
     const btn = document.querySelector('#panel-login .btn-submit');
     btn.disabled = true;
     btn.innerHTML = '<div class="spinner"></div> Входим...';
-
     document.getElementById('login-err-box').style.display = 'none';
 
-    setTimeout(() => {
-      // demo: any credentials work except "wrong"
-      if (login.toLowerCase() === 'wrong') {
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ login, password: pass })
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        localStorage.setItem('gg_token', data.token);
+        localStorage.setItem('gg_user', JSON.stringify(data.user));
+        location.href = '/profile.html';
+      } else {
         document.getElementById('login-err-box').style.display = 'block';
+        document.getElementById('login-err-box').textContent = data.error || 'Неверный логин или пароль.';
         btn.disabled = false;
         btn.innerHTML = '<svg viewBox="0 0 24 24" style="width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg> Войти';
-      } else {
-        location.href = 'profile.html';
       }
-    }, 1200);
+    } catch(e) {
+      document.getElementById('login-err-box').style.display = 'block';
+      document.getElementById('login-err-box').textContent = 'Ошибка сети. Проверьте подключение.';
+      btn.disabled = false;
+      btn.innerHTML = 'Войти';
+    }
   }
 
   // ── FORGOT PASSWORD ──
