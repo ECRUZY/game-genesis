@@ -63,7 +63,7 @@
     .sb-sep { width: 28px; height: 1px; background: var(--border); margin: 6px 0; }
 
     /* PAGE */
-    .page {   position: relative; z-index: 1; }
+    .page { margin-left: 60px; padding-top: 64px; position: relative; z-index: 1; }
 
     /* ── HERO COVER ── */
     .profile-cover {
@@ -386,10 +386,37 @@
 <div class="grid-bg"></div>
 
 <!-- HEADER -->
-
+<header>
+  <a href="index.html" class="logo">
+    <div class="logo-hex"><svg viewBox="0 0 18 18" fill="none"><polygon points="9,1 16,4.5 16,13.5 9,17 2,13.5 2,4.5" stroke="#080c12" stroke-width="1.5"/><circle cx="9" cy="9" r="2.5" fill="#080c12"/></svg></div>
+    <span class="logo-name">GAME GENESIS</span>
+  </a>
+  <nav>
+    <a href="index.html" class="nav-a">Главная</a>
+    <a href="tournament.html" class="nav-a">Турниры</a>
+    <a href="create-tournament.html" class="nav-a">Создать турнир</a>
+    <a href="#" class="nav-a">Рейтинг</a>
+    <a href="#" class="nav-a">Лиги</a>
+  </nav>
+  <div class="header-right">
+    <button class="btn-sm active" onclick="location.href='profile.html'" style="border-color:var(--gold);color:var(--gold);">
+      ZayTop
+    </button>
+    <button class="btn-sm" onclick="location.href='auth.html'">Выйти</button>
+  </div>
+</header>
 
 <!-- SIDEBAR -->
-
+<aside class="sidebar">
+  <div class="sb-item" onclick="location.href='index.html'"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span class="tip">Главная</span></div>
+  <div class="sb-item" onclick="location.href='tournament.html'"><svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/></svg><span class="tip">Турниры</span></div>
+  <div class="sb-item" onclick="location.href='create-tournament.html'"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg><span class="tip">Создать турнир</span></div>
+  <div class="sb-sep"></div>
+  <div class="sb-item active"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span class="tip">Профиль</span></div>
+  <div class="sb-item"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="tip">Уведомления</span></div>
+  <div class="sb-sep"></div>
+  <div class="sb-item" onclick="location.href='auth.html'"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg><span class="tip">Выйти</span></div>
+</aside>
 
 <div class="page">
 
@@ -417,14 +444,14 @@
       </div>
       <div class="profile-identity">
         <div class="profile-username">
-          <span id="display-username">ZayTop</span>
+          <span id="display-username"> </span>
           <div class="verified-badge"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
         </div>
-        <div class="profile-fullname" id="display-fullname">Зайналбек Мусаев</div>
+        <div class="profile-fullname" id="display-fullname"> </div>
         <div class="profile-tags">
-          <span class="ptag ptag-game" id="display-game">CS2</span>
+          <span class="ptag ptag-game" id="display-game"> </span>
           <span class="ptag ptag-role">Организатор</span>
-          <span class="ptag ptag-uni" id="display-uni">ЧГУ</span>
+          <span class="ptag ptag-uni" id="display-uni"> </span>
         </div>
       </div>
       <div class="profile-actions">
@@ -441,32 +468,21 @@
 
     <!-- STATS -->
     <div class="profile-stats fade-up">
-      <div class="pstat"><div class="pstat-val" id="stat-rank">#1</div><div class="pstat-key">Рейтинг</div></div>
-      <div class="pstat"><div class="pstat-val">4 820</div><div class="pstat-key">Очки</div></div>
-      <div class="pstat"><div class="pstat-val">3</div><div class="pstat-key">Победы</div></div>
-      <div class="pstat"><div class="pstat-val">0</div><div class="pstat-key">Поражения</div></div>
+      <div class="pstat"><div class="pstat-val" id="stat-rank">—</div><div class="pstat-key">Рейтинг</div></div>
+      <div class="pstat"><div class="pstat-val" id="stat-rating">0</div><div class="pstat-key">Очки</div></div>
+      <div class="pstat"><div class="pstat-val" id="stat-wins">0</div><div class="pstat-key">Победы</div></div>
+      <div class="pstat"><div class="pstat-val" id="stat-losses">0</div><div class="pstat-key">Поражения</div></div>
       <div class="pstat"><div class="pstat-val">2</div><div class="pstat-key">Турниры</div></div>
-      <div class="pstat"><div class="pstat-val" id="stat-followers">148</div><div class="pstat-key">Подписчики</div></div>
+      
     </div>
 
-    <!-- FACEIT -->
-    <div class="faceit-card fade-up" style="margin-top:14px;">
-      <div class="faceit-logo">FCIT</div>
-      <div class="faceit-info">
-        <div class="faceit-label">Faceit</div>
-        <div class="faceit-nick" id="display-faceit">ZayTop_Official</div>
-      </div>
-      <div class="faceit-stats">
-        <div class="faceit-stat"><div class="faceit-stat-val lvl">10</div><div class="faceit-stat-key">Уровень</div></div>
-        <div class="faceit-stat"><div class="faceit-stat-val elo">2 847</div><div class="faceit-stat-key">ELO</div></div>
-        <div class="faceit-stat"><div class="faceit-stat-val" style="color:var(--success)">74%</div><div class="faceit-stat-key">Win Rate</div></div>
-      </div>
+    
     </div>
 
     <!-- CONTACT -->
     <div class="contact-row fade-up" style="margin-top:10px;margin-bottom:14px;">
-      <div class="contact-item"><svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg><span id="display-email">zaytop@mail.ru</span></div>
-      <div class="contact-item"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 12 18.7a19.5 19.5 0 0 1-7-7 19.79 19.79 0 0 1-3.07-8.63A2 2 0 0 1 3.77 1h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 8.62a16 16 0 0 0 6 6l.92-.92a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg><span id="display-phone">+7 (928) 000-01-01</span></div>
+      <div class="contact-item"><svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg><span id="display-email"> </span></div>
+      <div class="contact-item"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 12 18.7a19.5 19.5 0 0 1-7-7 19.79 19.79 0 0 1-3.07-8.63A2 2 0 0 1 3.77 1h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 8.62a16 16 0 0 0 6 6l.92-.92a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg><span id="display-phone"> </span></div>
       <div class="contact-item"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg><span>Грозный, ЧР</span></div>
     </div>
   </div>
@@ -509,27 +525,7 @@
           <div class="block-title">
             <div class="block-title-left"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> Последняя активность</div>
           </div>
-          <div class="activity-item">
-            <div class="act-icon win"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
-            <div class="act-info"><div class="act-title">Победа в матче #5 — ZayTop vs NazSniperX</div><div class="act-sub">Чемпионат ЧР 2025 · CS2 · Счёт 16–11</div></div>
-            <div class="act-time">2 часа назад</div>
-          </div>
-          <div class="activity-item">
-            <div class="act-icon trn"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
-            <div class="act-info"><div class="act-title">Создан новый турнир</div><div class="act-sub">Открытый ЧР 2025 · 64 участника зарегистрировано</div></div>
-            <div class="act-time">1 день назад</div>
-          </div>
-          <div class="activity-item">
-            <div class="act-icon win"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
-            <div class="act-info"><div class="act-title">Победа в матче #1 — ZayTop vs DarkPulse</div><div class="act-sub">Чемпионат ЧР 2025 · CS2 · Счёт 16–9</div></div>
-            <div class="act-time">3 дня назад</div>
-          </div>
-          <div class="activity-item">
-            <div class="act-icon trn"><svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/></svg></div>
-            <div class="act-info"><div class="act-title">Зарегистрирован на Valorant City Cup</div><div class="act-sub">Старт: 22 июня 2025</div></div>
-            <div class="act-time">5 дней назад</div>
-          </div>
-        </div>
+          
       </div>
 
       <div class="right-col">
@@ -539,15 +535,15 @@
             <div class="block-title-left"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Аккаунт</div>
             <a class="see-all" onclick="openModal('edit')">Изменить</a>
           </div>
-          <div class="info-row"><span class="ir-key">Логин</span><span class="ir-val" id="info-username">ZayTop</span></div>
-          <div class="info-row"><span class="ir-key">Email</span><span class="ir-val" id="info-email">zaytop@mail.ru</span></div>
-          <div class="info-row"><span class="ir-key">Телефон</span><span class="ir-val" id="info-phone">+7 (928) 000-01-01</span></div>
-          <div class="info-row"><span class="ir-key">Faceit</span><span class="ir-val" id="info-faceit">ZayTop_Official</span></div>
-          <div class="info-row"><span class="ir-key">Основная игра</span><span class="ir-val" id="info-game">CS2</span></div>
-          <div class="info-row"><span class="ir-key">Университет</span><span class="ir-val" id="info-uni">ЧГУ</span></div>
-          <div class="info-row"><span class="ir-key">Роль</span><span class="ir-val gold">Организатор / Игрок</span></div>
+          <div class="info-row"><span class="ir-key">Логин</span><span class="ir-val" id="info-username"> </span></div>
+          <div class="info-row"><span class="ir-key">Email</span><span class="ir-val" id="info-email"> </span></div>
+          <div class="info-row"><span class="ir-key">Телефон</span><span class="ir-val" id="info-phone"> </span></div>
+          <div class="info-row"><span class="ir-key">Faceit</span><span class="ir-val" id="info-faceit"> </span></div>
+          <div class="info-row"><span class="ir-key">Основная игра</span><span class="ir-val" id="info-game"> </span></div>
+          <div class="info-row"><span class="ir-key">Университет</span><span class="ir-val" id="info-uni"> </span></div>
+          <div class="info-row"><span class="ir-key">Роль</span><span class="ir-val gold" id="info-role">—</span></div>
           <div class="info-row"><span class="ir-key">Верификация</span><span class="ir-val green">✓ Подтверждён</span></div>
-          <div class="info-row"><span class="ir-key">На платформе с</span><span class="ir-val">Май 2025</span></div>
+          <div class="info-row"><span class="ir-key">На платформе с</span><span class="ir-val" id="info-created">—</span></div>
         </div>
 
         <!-- Quick finance summary -->
@@ -591,47 +587,11 @@
         </div>
       </div>
 
-      <div class="clip-card">
-        <div class="clip-thumb">
-          <div style="width:100%;height:100%;background:linear-gradient(135deg,#0f1e35,#1a0a1e);"></div>
-          <div class="clip-grad"></div>
-          <div class="clip-play"><div class="play-circle"><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg></div></div>
-          <div class="clip-duration">0:47</div>
-          <div class="clip-views"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>1.2K</div>
-        </div>
-        <div class="clip-body">
-          <div class="clip-title">Ace раунд на Dust2 — 5 килов за 8 секунд</div>
-          <div class="clip-meta"><span class="clip-game">CS2</span><span class="clip-date">14 мая 2025</span></div>
-        </div>
-      </div>
+      
 
-      <div class="clip-card">
-        <div class="clip-thumb">
-          <div style="width:100%;height:100%;background:linear-gradient(135deg,#0a1e10,#1e1a0a);"></div>
-          <div class="clip-grad"></div>
-          <div class="clip-play"><div class="play-circle"><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg></div></div>
-          <div class="clip-duration">1:12</div>
-          <div class="clip-views"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>890</div>
-        </div>
-        <div class="clip-body">
-          <div class="clip-title">Финальный раунд — решающий выстрел с CT</div>
-          <div class="clip-meta"><span class="clip-game">CS2</span><span class="clip-date">10 мая 2025</span></div>
-        </div>
-      </div>
+      
 
-      <div class="clip-card">
-        <div class="clip-thumb">
-          <div style="width:100%;height:100%;background:linear-gradient(135deg,#1a100a,#0a1015);"></div>
-          <div class="clip-grad"></div>
-          <div class="clip-play"><div class="play-circle"><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg></div></div>
-          <div class="clip-duration">2:03</div>
-          <div class="clip-views"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>674</div>
-        </div>
-        <div class="clip-body">
-          <div class="clip-title">Нарезка матча #1 — Квалификация ЧР 2025</div>
-          <div class="clip-meta"><span class="clip-game">CS2</span><span class="clip-date">8 мая 2025</span></div>
-        </div>
-      </div>
+      
 
     </div>
   </div>
@@ -649,110 +609,9 @@
       </button>
     </div>
 
-    <div class="t-list fade-up">
+    <div class="t-list fade-up" id="my-tournaments-list">
 
-      <!-- Tournament 1: ЧР 2025 -->
-      <div class="t-item featured" id="t1">
-        <div class="t-item-top">
-          <div class="t-item-icon gold">🏆</div>
-          <div class="t-item-info">
-            <div class="t-item-name">Открытый Чемпионат Чеченской Республики 2025</div>
-            <div class="t-item-meta">
-              <span class="t-meta-pill"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>15–22 июня 2025</span>
-              <span class="t-meta-pill"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>64 / 128 участников</span>
-              <span class="t-meta-pill"><svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="8" cy="12" r="2"/></svg>CS2</span>
-              <span class="t-meta-pill"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>50 000 ₽ призовых</span>
-            </div>
-          </div>
-          <div class="t-item-status">
-            <span class="status-pill status-live">● Live</span>
-          </div>
-        </div>
-
-        <div style="display:flex;align-items:center;justify-content:space-between;">
-          <div style="display:flex;gap:10px;">
-            <button onclick="location.href='tournament.html'" style="background:var(--bg-card2);border:1px solid var(--border-hi);border-radius:7px;padding:7px 16px;font-size:12px;color:var(--text-dim);cursor:pointer;transition:.2s;font-family:'Exo 2',sans-serif;" onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--border-hi)';this.style.color='var(--text-dim)'">Страница турнира</button>
-          </div>
-          <button class="toggle-finance" id="tf1-btn" onclick="toggleFinance('t1')">
-            Финансы
-            <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-          </button>
-        </div>
-
-        <!-- Finance expand for tournament 1 -->
-        <div class="finance-expand" id="t1-finance">
-          <div class="finance-header">
-            <div class="finance-title"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> Финансовый учёт — ЧР 2025</div>
-          </div>
-
-          <div class="finance-grid">
-            <div class="f-card"><div class="f-card-val green" id="t1-income">+64 000 ₽</div><div class="f-card-key">Взносы (64 × 1000)</div></div>
-            <div class="f-card"><div class="f-card-val red" id="t1-expenses">−16 000 ₽</div><div class="f-card-key">Расходы</div></div>
-            <div class="f-card"><div class="f-card-val" style="color:var(--text-dim)">−12 800 ₽</div><div class="f-card-key">Платформе (20%)</div></div>
-            <div class="f-card"><div class="f-card-val gold" id="t1-net">= 35 200 ₽</div><div class="f-card-key">Чистая прибыль</div></div>
-          </div>
-
-          <!-- Calculator -->
-          <div class="calc-section" style="margin-bottom:14px;">
-            <div class="calc-section-title">Калькулятор</div>
-            <div class="calc-row-input">
-              <label>Участников зарегистрировалось</label>
-              <input type="number" id="t1-count" value="64" min="0" max="128" oninput="calcT1()">
-              <span>чел.</span>
-            </div>
-            <div class="calc-row-input">
-              <label>Взнос с участника</label>
-              <input type="number" id="t1-fee" value="1000" min="0" oninput="calcT1()">
-              <span>₽</span>
-            </div>
-            <div class="calc-row-input">
-              <label>Прочие расходы (аренда, призы и др.)</label>
-              <input type="number" id="t1-extra" value="16000" min="0" oninput="calcT1()">
-              <span>₽</span>
-            </div>
-            <div class="calc-results">
-              <div class="cr"><div class="cr-val green" id="r1-gross">64 000 ₽</div><div class="cr-key">Валовой сбор</div></div>
-              <div class="cr"><div class="cr-val gold" id="r1-prize">32 000 ₽</div><div class="cr-key">Призовой фонд (50%)</div></div>
-              <div class="cr"><div class="cr-val red" id="r1-platform">12 800 ₽</div><div class="cr-key">Платформе (20%)</div></div>
-            </div>
-          </div>
-
-          <!-- Transactions -->
-          <div class="transactions">
-            <div class="tx-header">
-              <div class="tx-title">Транзакции</div>
-            </div>
-            <div class="tx-list" id="t1-txlist">
-              <div class="tx-item"><div class="tx-dot income"></div><div class="tx-desc">Взносы участников (64 чел.)</div><div class="tx-amount income">+64 000 ₽</div><button class="tx-del" onclick="delTx(this)"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg></button></div>
-              <div class="tx-item"><div class="tx-dot expense"></div><div class="tx-desc">Аренда зала</div><div class="tx-amount expense">−8 000 ₽</div><button class="tx-del" onclick="delTx(this)"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg></button></div>
-              <div class="tx-item"><div class="tx-dot expense"></div><div class="tx-desc">Призы победителям</div><div class="tx-amount expense">−8 000 ₽</div><button class="tx-del" onclick="delTx(this)"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg></button></div>
-            </div>
-            <div class="tx-input-row">
-              <input type="text" class="tx-input" id="t1-tx-desc" placeholder="Описание...">
-              <input type="number" class="tx-input" id="t1-tx-amount" placeholder="Сумма" style="max-width:110px;">
-              <select class="tx-select" id="t1-tx-type">
-                <option value="income">Доход +</option>
-                <option value="expense">Расход −</option>
-              </select>
-              <button class="tx-btn-add" onclick="addTx('t1')">+ Добавить</button>
-            </div>
-          </div>
-        </div>
       </div>
-
-      <!-- Tournament 2: Valorant -->
-      <div class="t-item" id="t2">
-        <div class="t-item-top">
-          <div class="t-item-icon blue">🎮</div>
-          <div class="t-item-info">
-            <div class="t-item-name">Valorant City Cup — Грозный</div>
-            <div class="t-item-meta">
-              <span class="t-meta-pill"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>22 июня 2025</span>
-              <span class="t-meta-pill"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>12 / 64 участников</span>
-              <span class="t-meta-pill"><svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/></svg>Valorant</span>
-              <span class="t-meta-pill"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>10 000 ₽ призовых</span>
-            </div>
-          </div>
           <div class="t-item-status"><span class="status-pill status-open">● Регистрация</span></div>
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between;">
@@ -887,7 +746,7 @@
       <div class="modal-field"><label>Faceit никнейм</label><input class="modal-input" id="m-faceit" value="ZayTop_Official"></div>
       <div class="modal-field"><label>Основная игра</label>
         <select class="modal-input" id="m-game" style="cursor:pointer;">
-          <option value="CS2" selected>CS2</option><option value="Dota 2">Dota 2</option><option value="Valorant">Valorant</option><option value="FIFA 25">FIFA 25</option>
+          <option value="CS2" selected> </option><option value="Dota 2">Dota 2</option><option value="Valorant">Valorant</option><option value="FIFA 25">FIFA 25</option>
         </select>
       </div>
       <div class="modal-field"><label>Университет</label><input class="modal-input" id="m-uni" value="ЧГУ"></div>
@@ -900,13 +759,178 @@
 </div>
 
 <script>
+  // ════════════════════════════════════════
+  //  ЗАГРУЗКА РЕАЛЬНЫХ ДАННЫХ ПОЛЬЗОВАТЕЛЯ
+  // ════════════════════════════════════════
+
+  const TOKEN = localStorage.getItem('gg_token');
+  const CACHED_USER = JSON.parse(localStorage.getItem('gg_user') || 'null');
+
+  // Если не вошёл — редирект
+  if (!TOKEN || !CACHED_USER) {
+    location.href = '/auth.html';
+  }
+
+  // Заполняем сразу из кэша (быстро)
+  function fillProfile(user) {
+    if (!user) return;
+    const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val || '—'; };
+
+    set('display-username', user.username);
+    set('display-fullname', user.full_name);
+    set('display-email', user.email);
+    set('display-phone', user.phone);
+    set('display-game', user.game || 'CS2');
+    set('display-uni', user.university || '');
+    set('display-faceit', user.faceit_nick || '');
+    set('display-bio', user.bio || 'Расскажите о себе...');
+
+    set('info-username', user.username);
+    set('info-email', user.email);
+    set('info-phone', user.phone);
+    set('info-faceit', user.faceit_nick || '—');
+    set('info-game', user.game || 'CS2');
+    set('info-uni', user.university || '—');
+    set('info-role', user.role === 'organizer' ? 'Организатор' : 'Игрок');
+
+    // Статистика
+    set('stat-wins', user.wins || 0);
+    set('stat-losses', user.losses || 0);
+    set('stat-rating', user.rating || 0);
+    set('stat-rank', user.rating > 0 ? '#?' : '—');
+
+    // Аватар — инициалы
+    const av = document.getElementById('avatar-initials');
+    if (av && user.full_name) {
+      av.textContent = user.full_name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+    }
+
+    // Дата регистрации
+    if (user.created_at) {
+      const d = new Date(user.created_at);
+      set('info-created', d.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' }));
+    }
+
+    // Теги
+    const gameTag = document.getElementById('display-game-tag');
+    if (gameTag) gameTag.textContent = user.game || 'CS2';
+    const uniTag = document.getElementById('display-uni-tag');
+    if (uniTag) uniTag.textContent = user.university || '';
+  }
+
+  // Сразу показываем кэш
+  fillProfile(CACHED_USER);
+
+  // Затем загружаем свежие данные с сервера
+  async function loadProfile() {
+    try {
+      const res = await fetch('/api/users/profile', {
+        headers: { 'Authorization': 'Bearer ' + TOKEN }
+      });
+      if (res.status === 401) { location.href = '/auth.html'; return; }
+      const data = await res.json();
+      if (data.user) {
+        fillProfile(data.user);
+        localStorage.setItem('gg_user', JSON.stringify(data.user));
+      }
+      // Турниры организатора
+      if (data.organized_tournaments) {
+        renderMyTournaments(data.organized_tournaments);
+      }
+      // Нарезки
+      if (data.clips) {
+        renderClips(data.clips);
+      }
+    } catch(e) {
+      console.error('Ошибка загрузки профиля:', e);
+    }
+  }
+
+  loadProfile();
+
+  // ── ТУРНИРЫ ОРГАНИЗАТОРА ──
+  function renderMyTournaments(list) {
+    const container = document.getElementById('my-tournaments-list');
+    if (!container) return;
+    if (!list || !list.length) {
+      container.innerHTML = `<div style="text-align:center;padding:32px;color:var(--text-muted);">
+        <p style="margin-bottom:12px;">Вы ещё не создали ни одного турнира</p>
+        <a href="/create-tournament.html" style="color:var(--gold);text-decoration:none;font-weight:600;">+ Создать первый турнир</a>
+      </div>`;
+      return;
+    }
+    container.innerHTML = list.map(t => `
+      <div class="t-item">
+        <div class="t-item-top">
+          <div class="t-item-icon gold">🏆</div>
+          <div class="t-item-info">
+            <div class="t-item-name">${t.name}</div>
+            <div class="t-item-meta">
+              <span class="t-meta-pill">${t.game}</span>
+              <span class="t-meta-pill">${t.status}</span>
+              <span class="t-meta-pill">${t.start_date || ''}</span>
+            </div>
+          </div>
+        </div>
+      </div>`).join('');
+  }
+
+  // ── НАРЕЗКИ ──
+  function renderClips(list) {
+    const grid = document.getElementById('clips-grid');
+    if (!grid) return;
+    // Убираем демо-нарезки, оставляем только кнопку загрузки
+    const uploadCard = grid.querySelector('.clip-card[onclick]') || grid.children[0];
+    grid.innerHTML = '';
+    // Кнопка добавить
+    const addBtn = document.createElement('div');
+    addBtn.className = 'clip-card';
+    addBtn.style.cursor = 'pointer';
+    addBtn.onclick = () => openModal('clip');
+    addBtn.innerHTML = `
+      <div class="upload-clip">
+        <svg viewBox="0 0 24 24"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+        <div class="upload-clip-text">Загрузить нарезку</div>
+        <div class="upload-clip-sub">MP4, максимум 500MB</div>
+      </div>
+      <div class="clip-body"><div class="clip-title" style="color:var(--text-muted);">Нажмите чтобы добавить</div></div>`;
+    grid.appendChild(addBtn);
+
+    if (list && list.length) {
+      list.forEach(clip => {
+        const card = document.createElement('div');
+        card.className = 'clip-card';
+        const colors = ['#0f1e35,#1a0a1e','#0a1e10,#1e1a0a','#1a100a,#0a1015'];
+        const col = colors[Math.floor(Math.random()*colors.length)];
+        card.innerHTML = `
+          <div class="clip-thumb">
+            <div style="width:100%;height:100%;background:linear-gradient(135deg,${col});"></div>
+            <div class="clip-grad"></div>
+            <div class="clip-play"><div class="play-circle"><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3" fill="#080c12"/></svg></div></div>
+            <div class="clip-duration">${clip.duration || '0:30'}</div>
+            <div class="clip-views">👁 ${clip.views || 0}</div>
+          </div>
+          <div class="clip-body">
+            <div class="clip-title">${clip.title}</div>
+            <div class="clip-meta"><span class="clip-game">${clip.game || 'CS2'}</span><span class="clip-date">${new Date(clip.created_at).toLocaleDateString('ru-RU')}</span></div>
+          </div>`;
+        grid.appendChild(card);
+      });
+    }
+  }
+
   // ── TABS ──
   function switchTab(id, el) {
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
     if (el) el.classList.add('active');
-    else document.querySelector('.tab:nth-child(' + ({overview:1,clips:2,tournaments:3,finance:4}[id]) + ')').classList.add('active');
-    document.getElementById('tab-' + id).classList.add('active');
+    else {
+      const idx = {overview:1,clips:2,tournaments:3,finance:4}[id];
+      const tabEl = document.querySelector('.tab:nth-child('+idx+')');
+      if (tabEl) tabEl.classList.add('active');
+    }
+    const panel = document.getElementById('tab-' + id);
+    if (panel) panel.classList.add('active');
     triggerFade();
   }
 
@@ -915,34 +939,43 @@
     const modal = document.getElementById('modal-edit');
     const title = document.getElementById('modal-title-text');
     const body = document.getElementById('modal-body');
+    const user = JSON.parse(localStorage.getItem('gg_user') || '{}');
 
     if (type === 'edit') {
       title.textContent = 'Редактировать профиль';
       body.innerHTML = `
-        <div class="modal-field"><label>Логин (никнейм)</label><input class="modal-input" id="m-username" value="${document.getElementById('display-username').textContent}"></div>
-        <div class="modal-field"><label>Имя и фамилия</label><input class="modal-input" id="m-fullname" value="${document.getElementById('display-fullname').textContent}"></div>
-        <div class="modal-field"><label>Email</label><input class="modal-input" id="m-email" type="email" value="${document.getElementById('display-email').textContent}"></div>
-        <div class="modal-field"><label>Телефон</label><input class="modal-input" id="m-phone" value="${document.getElementById('display-phone').textContent}"></div>
-        <div class="modal-field"><label>Faceit никнейм</label><input class="modal-input" id="m-faceit" value="${document.getElementById('display-faceit').textContent}"></div>
+        <div class="modal-field"><label>Имя и фамилия</label><input class="modal-input" id="m-fullname" value="${user.full_name || ''}"></div>
+        <div class="modal-field"><label>Телефон</label><input class="modal-input" id="m-phone" value="${user.phone || ''}"></div>
         <div class="modal-field"><label>Основная игра</label>
-          <select class="modal-input" id="m-game" style="cursor:pointer;">
-            <option value="CS2">CS2</option><option value="Dota 2">Dota 2</option><option value="Valorant">Valorant</option><option value="FIFA 25">FIFA 25</option>
+          <select class="modal-input" id="m-game" style="cursor:pointer;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-family:'Exo 2',sans-serif;width:100%;outline:none;">
+            <option ${user.game==='CS2'?'selected':''}> </option>
+            <option ${user.game==='Dota 2'?'selected':''}>Dota 2</option>
+            <option ${user.game==='Valorant'?'selected':''}>Valorant</option>
+            <option ${user.game==='FIFA 25'?'selected':''}>FIFA 25</option>
           </select>
         </div>
-        <div class="modal-field"><label>Университет</label><input class="modal-input" id="m-uni" value="${document.getElementById('display-uni').textContent}"></div>
-        <div class="modal-field"><label>О себе</label><textarea class="modal-input" id="m-bio" style="min-height:80px;resize:vertical;">${document.getElementById('display-bio').textContent}</textarea></div>
+        <div class="modal-field"><label>Университет</label><input class="modal-input" id="m-uni" value="${user.university || ''}"></div>
+        <div class="modal-field"><label>Faceit никнейм</label><input class="modal-input" id="m-faceit" value="${user.faceit_nick || ''}"></div>
+        <div class="modal-field"><label>О себе</label><textarea class="modal-input" id="m-bio" style="min-height:80px;resize:vertical;">${user.bio || ''}</textarea></div>
       `;
       document.querySelector('.modal-save').onclick = saveProfile;
     } else if (type === 'bio') {
       title.textContent = 'О себе';
-      body.innerHTML = `<div class="modal-field"><label>Описание</label><textarea class="modal-input" id="m-bio" style="min-height:120px;resize:vertical;">${document.getElementById('display-bio').textContent}</textarea></div>`;
-      document.querySelector('.modal-save').onclick = () => { document.getElementById('display-bio').textContent = document.getElementById('m-bio').value; closeModal(); };
+      body.innerHTML = `<div class="modal-field"><label>Описание</label><textarea class="modal-input" id="m-bio" style="min-height:120px;resize:vertical;">${user.bio || ''}</textarea></div>`;
+      document.querySelector('.modal-save').onclick = async () => {
+        const bio = document.getElementById('m-bio').value;
+        await saveField({ bio });
+        document.getElementById('display-bio').textContent = bio;
+        closeModal();
+      };
     } else if (type === 'clip') {
       title.textContent = 'Добавить нарезку';
       body.innerHTML = `
-        <div class="modal-field"><label>Название нарезки</label><input class="modal-input" id="m-clip-title" placeholder="Ace на Inferno..."></div>
+        <div class="modal-field"><label>Название</label><input class="modal-input" id="m-clip-title" placeholder="Ace на Inferno..."></div>
         <div class="modal-field"><label>Игра</label>
-          <select class="modal-input" id="m-clip-game" style="cursor:pointer;"><option>CS2</option><option>Dota 2</option><option>Valorant</option><option>FIFA 25</option></select>
+          <select class="modal-input" id="m-clip-game" style="cursor:pointer;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-family:'Exo 2',sans-serif;width:100%;outline:none;">
+            <option> </option><option>Dota 2</option><option>Valorant</option><option>FIFA 25</option>
+          </select>
         </div>
         <div class="modal-field"><label>Длительность</label><input class="modal-input" id="m-clip-dur" placeholder="1:23"></div>
       `;
@@ -950,12 +983,11 @@
     } else if (type === 'avatar' || type === 'cover') {
       title.textContent = type === 'avatar' ? 'Изменить аватар' : 'Изменить обложку';
       body.innerHTML = `
-        <div style="border:2px dashed var(--border);border-radius:10px;padding:30px;text-align:center;cursor:pointer;color:var(--text-dim);" onclick="alert('В MVP: загрузка файлов подключается к бэкенду')">
+        <div style="border:2px dashed var(--border);border-radius:10px;padding:30px;text-align:center;color:var(--text-dim);">
           <svg viewBox="0 0 24 24" style="width:32px;height:32px;stroke:currentColor;fill:none;stroke-width:1.5;margin:0 auto 10px;display:block"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
-          <div style="font-size:14px;font-weight:500;">Нажмите чтобы выбрать файл</div>
-          <div style="font-size:11px;margin-top:4px;opacity:.5;">PNG, JPG · Макс. 5MB</div>
-        </div>
-      `;
+          <div style="font-size:14px;font-weight:500;">Загрузка фото — в следующей версии</div>
+          <div style="font-size:11px;margin-top:4px;opacity:.5;">Пока аватар — инициалы имени</div>
+        </div>`;
       document.querySelector('.modal-save').onclick = closeModal;
     }
     modal.classList.add('open');
@@ -964,173 +996,71 @@
   function closeModal() { document.getElementById('modal-edit').classList.remove('open'); }
   document.getElementById('modal-edit').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
 
-  function saveProfile() {
-    const get = id => { const el = document.getElementById(id); return el ? el.value : ''; };
-    const uname = get('m-username') || document.getElementById('display-username').textContent;
-    const fname = get('m-fullname') || document.getElementById('display-fullname').textContent;
-    const email = get('m-email') || document.getElementById('display-email').textContent;
-    const phone = get('m-phone') || document.getElementById('display-phone').textContent;
-    const faceit = get('m-faceit') || document.getElementById('display-faceit').textContent;
-    const game = get('m-game') || document.getElementById('display-game').textContent;
-    const uni = get('m-uni') || document.getElementById('display-uni').textContent;
-    const bio = get('m-bio');
+  // ── СОХРАНИТЬ ПРОФИЛЬ в БД ──
+  async function saveField(fields) {
+    try {
+      const res = await fetch('/api/users/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + TOKEN },
+        body: JSON.stringify(fields)
+      });
+      if (!res.ok) throw new Error('error');
+      const updated = await res.json();
+      localStorage.setItem('gg_user', JSON.stringify({ ...CACHED_USER, ...updated }));
+      return updated;
+    } catch(e) {
+      console.error('Ошибка сохранения:', e);
+      return null;
+    }
+  }
 
-    document.getElementById('display-username').textContent = uname;
-    document.getElementById('display-fullname').textContent = fname;
-    document.getElementById('display-email').textContent = email;
-    document.getElementById('display-phone').textContent = phone;
-    document.getElementById('display-faceit').textContent = faceit;
-    document.getElementById('display-game').textContent = game;
-    document.getElementById('display-uni').textContent = uni;
-    if (bio) document.getElementById('display-bio').textContent = bio;
+  async function saveProfile() {
+    const fields = {
+      full_name: document.getElementById('m-fullname')?.value?.trim(),
+      phone:     document.getElementById('m-phone')?.value?.trim(),
+      game:      document.getElementById('m-game')?.value,
+      university:document.getElementById('m-uni')?.value?.trim(),
+      faceit_nick:document.getElementById('m-faceit')?.value?.trim(),
+      bio:       document.getElementById('m-bio')?.value?.trim(),
+    };
+    // Убираем пустые
+    Object.keys(fields).forEach(k => { if (!fields[k]) delete fields[k]; });
 
-    document.getElementById('info-username').textContent = uname;
-    document.getElementById('info-email').textContent = email;
-    document.getElementById('info-phone').textContent = phone;
-    document.getElementById('info-faceit').textContent = faceit;
-    document.getElementById('info-game').textContent = game;
-    document.getElementById('info-uni').textContent = uni;
+    const saveBtn = document.querySelector('.modal-save');
+    saveBtn.textContent = 'Сохраняем...';
+    saveBtn.disabled = true;
 
-    // Update avatar initials
-    const parts = fname.split(' ');
-    const initials = parts.map(p => p[0]).join('').toUpperCase().slice(0,2);
-    document.getElementById('avatar-initials').textContent = initials;
+    const updated = await saveField(fields);
+    if (updated) {
+      fillProfile({ ...CACHED_USER, ...updated });
+      closeModal();
+    } else {
+      // Сохраняем хотя бы локально
+      fillProfile({ ...CACHED_USER, ...fields });
+      closeModal();
+    }
+    saveBtn.textContent = 'Сохранить';
+    saveBtn.disabled = false;
+  }
 
+  // ── ДОБАВИТЬ НАРЕЗКУ ──
+  async function addClip() {
+    const title = document.getElementById('m-clip-title')?.value?.trim();
+    const game = document.getElementById('m-clip-game')?.value;
+    const duration = document.getElementById('m-clip-dur')?.value?.trim();
+    if (!title) return;
+    try {
+      await fetch('/api/users/clips', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + TOKEN },
+        body: JSON.stringify({ title, game, duration })
+      });
+    } catch(e) {}
     closeModal();
+    loadProfile(); // Перезагружаем
   }
 
-  function addClip() {
-    const title = document.getElementById('m-clip-title').value.trim() || 'Новая нарезка';
-    const game = document.getElementById('m-clip-game').value;
-    const dur = document.getElementById('m-clip-dur').value || '0:30';
-    const grid = document.getElementById('clips-grid');
-    const colors = ['#0f1e35,#1a0a1e','#0a1e10,#1e1a0a','#1a100a,#0a1015','#0a1020,#201020'];
-    const c = colors[Math.floor(Math.random()*colors.length)];
-    const card = document.createElement('div');
-    card.className = 'clip-card';
-    card.innerHTML = `
-      <div class="clip-thumb">
-        <div style="width:100%;height:100%;background:linear-gradient(135deg,${c});"></div>
-        <div class="clip-grad"></div>
-        <div class="clip-play"><div class="play-circle"><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3" fill="#080c12"/></svg></div></div>
-        <div class="clip-duration">${dur}</div>
-        <div class="clip-views"><svg viewBox="0 0 24 24" style="width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>0</div>
-      </div>
-      <div class="clip-body">
-        <div class="clip-title">${title}</div>
-        <div class="clip-meta"><span class="clip-game">${game}</span><span class="clip-date">Только что</span></div>
-      </div>`;
-    grid.insertBefore(card, grid.children[1]);
-    closeModal();
-  }
-
-  // ── FINANCE TOGGLE ──
-  function toggleFinance(tid) {
-    const el = document.getElementById(tid + '-finance');
-    const btn = document.getElementById('tf' + tid.replace('t','') + '-btn');
-    const isOpen = el.classList.contains('open');
-    el.classList.toggle('open', !isOpen);
-    btn.classList.toggle('open', !isOpen);
-  }
-
-  // ── TRANSACTIONS ──
-  function addTx(tid) {
-    const desc = document.getElementById(tid + '-tx-desc').value.trim();
-    const amount = parseFloat(document.getElementById(tid + '-tx-amount').value);
-    const type = document.getElementById(tid + '-tx-type').value;
-    if (!desc || !amount) return;
-
-    const list = document.getElementById(tid + '-txlist');
-    const item = document.createElement('div');
-    item.className = 'tx-item';
-    const sign = type === 'income' ? '+' : '−';
-    item.innerHTML = `
-      <div class="tx-dot ${type}"></div>
-      <div class="tx-desc">${desc}</div>
-      <div class="tx-amount ${type}">${sign}${amount.toLocaleString('ru-RU')} ₽</div>
-      <button class="tx-del" onclick="delTx(this)"><svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;display:block;"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></button>`;
-    list.appendChild(item);
-    document.getElementById(tid + '-tx-desc').value = '';
-    document.getElementById(tid + '-tx-amount').value = '';
-    updateTotals();
-  }
-
-  function delTx(btn) { btn.closest('.tx-item').remove(); updateTotals(); }
-
-  function updateTotals() {
-    let totalIncome = 0, totalExpense = 0;
-    document.querySelectorAll('.tx-item').forEach(item => {
-      const amtEl = item.querySelector('.tx-amount');
-      if (!amtEl) return;
-      const raw = amtEl.textContent.replace(/[^\d]/g,'');
-      const val = parseInt(raw) || 0;
-      if (amtEl.classList.contains('income')) totalIncome += val;
-      else totalExpense += val;
-    });
-    const platform = Math.round(totalIncome * 0.2);
-    const net = totalIncome - totalExpense - platform;
-    const fmt = v => v.toLocaleString('ru-RU') + ' ₽';
-
-    const el = id => document.getElementById(id);
-    if (el('total-income-mini')) el('total-income-mini').textContent = '+' + fmt(totalIncome);
-    if (el('total-expense-mini')) el('total-expense-mini').textContent = '−' + fmt(totalExpense);
-    if (el('total-net-mini')) el('total-net-mini').textContent = '= ' + fmt(net);
-    if (el('f-total-income')) el('f-total-income').textContent = '+' + fmt(totalIncome);
-    if (el('f-total-expense')) el('f-total-expense').textContent = '−' + fmt(totalExpense);
-    if (el('f-total-platform')) el('f-total-platform').textContent = '−' + fmt(platform);
-    if (el('f-total-net')) el('f-total-net').textContent = '= ' + fmt(net);
-  }
-
-  // ── CALCULATORS ──
-  function calcT(count, fee, extra, ids) {
-    const gross = count * fee;
-    const platform = Math.round(gross * 0.2);
-    const prize = Math.round(gross * 0.5);
-    const net = gross - extra - platform;
-    const fmt = v => v.toLocaleString('ru-RU') + ' ₽';
-    document.getElementById(ids.gross).textContent = fmt(gross);
-    document.getElementById(ids.prize).textContent = fmt(prize);
-    document.getElementById(ids.platform).textContent = fmt(platform);
-  }
-
-  function calcT1() {
-    calcT(
-      parseInt(document.getElementById('t1-count').value)||0,
-      parseInt(document.getElementById('t1-fee').value)||0,
-      parseInt(document.getElementById('t1-extra').value)||0,
-      { gross:'r1-gross', prize:'r1-prize', platform:'r1-platform' }
-    );
-  }
-  function calcT2() {
-    calcT(
-      parseInt(document.getElementById('t2-count').value)||0,
-      parseInt(document.getElementById('t2-fee').value)||0,
-      parseInt(document.getElementById('t2-extra').value)||0,
-      { gross:'r2-gross', prize:'r2-prize', platform:'r2-platform' }
-    );
-  }
-
-  function mainCalc() {
-    const slots = parseInt(document.getElementById('mc-slots').value)||0;
-    const fee = parseInt(document.getElementById('mc-fee').value)||0;
-    const pct = Math.min(80, Math.max(50, parseInt(document.getElementById('mc-pct').value)||50));
-    const exp = parseInt(document.getElementById('mc-exp').value)||0;
-    const gross = slots * fee;
-    const prize = Math.round(gross * pct / 100);
-    const platform = Math.round(gross * 0.2);
-    const organizer = gross - prize - platform;
-    const net = organizer - exp;
-    const fmt = v => v.toLocaleString('ru-RU') + ' ₽';
-    document.getElementById('mc-gross').textContent = fmt(gross);
-    document.getElementById('mc-prize').textContent = fmt(prize);
-    document.getElementById('mc-platform').textContent = fmt(platform);
-    document.getElementById('mc-organizer').textContent = fmt(Math.max(0, organizer));
-    document.getElementById('mc-exp-show').textContent = fmt(exp);
-    document.getElementById('mc-net').textContent = fmt(Math.max(0, net));
-    document.getElementById('mc-net').style.color = net >= 0 ? 'var(--success)' : 'var(--red)';
-  }
-
-  // ── FADE REVEAL ──
+  // ── FADE ──
   const observer = new IntersectionObserver(entries => {
     entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
   }, { threshold: 0.06 });
@@ -1142,7 +1072,6 @@
     });
   }
   triggerFade();
-  mainCalc();
 </script>
 </body>
 </html>
