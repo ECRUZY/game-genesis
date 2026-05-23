@@ -31,7 +31,7 @@ async function initDB() {
         faceit_nick VARCHAR(100),
         bio TEXT DEFAULT '',
         role VARCHAR(20) DEFAULT 'player',
-        rating INT DEFAULT 0,
+        rating INT DEFAULT 1000,
         wins INT DEFAULT 0,
         losses INT DEFAULT 0,
         verified BOOLEAN DEFAULT false,
@@ -67,6 +67,8 @@ async function initDB() {
         tournament_id INT REFERENCES tournaments(id) ON DELETE CASCADE,
         nickname VARCHAR(100),
         steam_url VARCHAR(300),
+        team_name VARCHAR(200),
+        team_data TEXT,
         registered_at TIMESTAMP DEFAULT NOW(),
         UNIQUE(user_id, tournament_id)
       );
@@ -90,7 +92,37 @@ async function initDB() {
         created_at TIMESTAMP DEFAULT NOW()
       );
 
-      CREATE TABLE IF NOT EXISTS matches (
+      CREATE TABLE IF NOT EXISTS teams (
+        id SERIAL PRIMARY KEY,
+        tournament_id INT REFERENCES tournaments(id) ON DELETE CASCADE,
+        name VARCHAR(200) NOT NULL,
+        captain_id INT REFERENCES users(id),
+        status VARCHAR(20) DEFAULT 'pending',
+        seed INT,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+
+      CREATE TABLE IF NOT EXISTS team_players (
+        id SERIAL PRIMARY KEY,
+        team_id INT REFERENCES teams(id) ON DELETE CASCADE,
+        full_name VARCHAR(200) NOT NULL,
+        nickname VARCHAR(100) NOT NULL,
+        steam_url VARCHAR(300),
+        is_captain BOOLEAN DEFAULT false
+      );
+
+      -- Добавляем поля если их нет (безопасно)
+      DO $$ BEGIN
+        BEGIN ALTER TABLE matches ADD COLUMN team1_id INT REFERENCES teams(id); EXCEPTION WHEN duplicate_column THEN NULL; END;
+        BEGIN ALTER TABLE matches ADD COLUMN team2_id INT REFERENCES teams(id); EXCEPTION WHEN duplicate_column THEN NULL; END;
+        BEGIN ALTER TABLE matches ADD COLUMN winner_team_id INT REFERENCES teams(id); EXCEPTION WHEN duplicate_column THEN NULL; END;
+        BEGIN ALTER TABLE matches ADD COLUMN bracket_type VARCHAR(10) DEFAULT 'upper'; EXCEPTION WHEN duplicate_column THEN NULL; END;
+        BEGIN ALTER TABLE matches ADD COLUMN match_number INT; EXCEPTION WHEN duplicate_column THEN NULL; END;
+        BEGIN ALTER TABLE tournaments ADD COLUMN bracket_generated BOOLEAN DEFAULT false; EXCEPTION WHEN duplicate_column THEN NULL; END;
+        BEGIN ALTER TABLE tournaments ADD COLUMN bracket_published BOOLEAN DEFAULT false; EXCEPTION WHEN duplicate_column THEN NULL; END;
+      END $$;
+
+    CREATE TABLE IF NOT EXISTS matches (
         id SERIAL PRIMARY KEY,
         tournament_id INT REFERENCES tournaments(id) ON DELETE CASCADE,
         round INT NOT NULL,
