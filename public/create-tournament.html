@@ -1,8 +1,6 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <script src="/nav.js"></script>
-  <script src="/api.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Создать турнир — Game Genesis</title>
@@ -69,7 +67,7 @@
     .sb-sep { width: 28px; height: 1px; background: var(--border); margin: 6px 0; }
 
     /* PAGE */
-    .page {   min-height: 100vh; position: relative; z-index: 1; }
+    .page { margin-left: 60px; padding-top: 64px; min-height: 100vh; position: relative; z-index: 1; }
 
     /* WIZARD LAYOUT */
     .wizard-wrap {
@@ -288,10 +286,34 @@
 <div class="grid-bg"></div>
 
 <!-- HEADER -->
-
+<header>
+  <a href="index.html" class="logo">
+    <div class="logo-hex"><svg viewBox="0 0 18 18" fill="none"><polygon points="9,1 16,4.5 16,13.5 9,17 2,13.5 2,4.5" stroke="#080c12" stroke-width="1.5"/><circle cx="9" cy="9" r="2.5" fill="#080c12"/></svg></div>
+    <span class="logo-name">GAME GENESIS</span>
+  </a>
+  <nav>
+    <a href="index.html" class="nav-a">Главная</a>
+    <a href="tournament.html" class="nav-a">Турниры</a>
+    <a href="#" class="nav-a active">Создать турнир</a>
+    <a href="#" class="nav-a">Рейтинг</a>
+  </nav>
+  <div style="display:flex;align-items:center;gap:8px;margin-left:auto;margin-right:12px;">
+    <button onclick="location.href='auth.html'" style="font-family:'Exo 2',sans-serif;font-size:13px;font-weight:500;padding:7px 18px;border-radius:7px;border:1px solid #253550;background:transparent;color:#5c7090;cursor:pointer;" onmouseover="this.style.borderColor='#f0c040';this.style.color='#f0c040'" onmouseout="this.style.borderColor='#253550';this.style.color='#5c7090'">Войти</button>
+  </div>
+  <button class="btn-back" onclick="location.href='index.html'">
+    <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+    Назад
+  </button>
+</header>
 
 <!-- SIDEBAR -->
-
+<aside class="sidebar">
+  <div class="sb-item" onclick="location.href='index.html'"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span class="tip">Главная</span></div>
+  <div class="sb-item"><svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/></svg><span class="tip">Турниры</span></div>
+  <div class="sb-item active"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg><span class="tip">Создать</span></div>
+  <div class="sb-sep"></div>
+  <div class="sb-item"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span class="tip">Профиль</span></div>
+</aside>
 
 <div class="page">
   <div class="wizard-wrap" id="wizard-wrap">
@@ -618,8 +640,8 @@
           <div class="sc-row"><span>Призовой фонд</span><span id="rv-prize" style="color:var(--gold);font-family:'Rajdhani',sans-serif;font-weight:700;font-size:15px;">—</span></div>
         </div>
 
-        <div style="background:rgba(240,192,64,.06);border:1px solid rgba(240,192,64,.18);border-radius:10px;padding:16px;margin-bottom:22px;font-size:13px;color:var(--text-dim);line-height:1.7;">
-          <b style="color:var(--gold);">Стоимость размещения: 3 000 ₽</b><br>
+        <div id="placement-cost-block" style="background:rgba(240,192,64,.06);border:1px solid rgba(240,192,64,.18);border-radius:10px;padding:16px;margin-bottom:22px;font-size:13px;color:var(--text-dim);line-height:1.7;">
+          <b style="color:var(--gold);" id="placement-cost-label">Стоимость размещения: 3 000 ₽</b><br>
           После публикации турнир станет виден на главной странице платформы. Организатор получит уведомление о каждой новой заявке.
         </div>
 
@@ -716,6 +738,25 @@
 </div>
 
 <script>
+  // ── ПРОВЕРКА РОЛИ ADMIN ──
+  (function() {
+    var user = null;
+    try { user = JSON.parse(localStorage.getItem('gg_user')); } catch(e) {}
+    var block = document.getElementById('placement-cost-block');
+    var label = document.getElementById('placement-cost-label');
+    if (user && (user.role === 'admin' || user.role === 'organizer')) {
+      if (block) {
+        block.style.background = 'rgba(74,222,128,0.06)';
+        block.style.borderColor = 'rgba(74,222,128,0.2)';
+      }
+      if (label) {
+        label.style.color = 'var(--success)';
+        label.textContent = '✓ Бесплатно для вас (роль: ' + user.role + ')';
+      }
+    }
+  })();
+
+
   let currentStep = 1;
   const totalSteps = 5;
   let selectedType = 'se';
@@ -899,7 +940,7 @@
   }
 
   // ── PUBLISH ──
-  function publish() {
+  async function publish() {
     if (!document.getElementById('agree-rules').checked) {
       alert('Пожалуйста, примите правила платформы'); return;
     }
@@ -907,24 +948,47 @@
     const game = document.getElementById('t-game').value;
     const slots = document.getElementById('t-slots').value;
     const start = document.getElementById('t-start').value;
-
     const btn = document.getElementById('publish-btn');
     btn.disabled = true;
     btn.textContent = '⏳ Публикуем...';
 
-    setTimeout(() => {
-      document.getElementById('wizard-wrap').style.display = 'none';
-      const ss = document.getElementById('success-screen');
-      ss.style.display = 'block';
+    const data = {
+      name, game,
+      description: (document.getElementById('t-desc') || {value:''}).value.trim(),
+      format: (typeof selectedType !== 'undefined' ? selectedType : 'single_elimination'),
+      team_size: (document.getElementById('t-team-size') || {value:'1x1'}).value,
+      max_slots: parseInt(slots) || 16,
+      entry_fee: (typeof payType !== 'undefined' && payType === 'paid')
+        ? (parseInt((document.getElementById('t-entry-fee')||{value:0}).value)||0) : 0,
+      prize_pct: parseInt((document.getElementById('prize-slider')||{value:50}).value) || 50,
+      region: (document.getElementById('t-region')||{value:'Чеченская Республика'}).value,
+      start_date: start,
+      reg_start: (document.getElementById('t-reg-start')||{value:''}).value,
+      reg_end: (document.getElementById('t-reg-end')||{value:''}).value,
+      start_time: (document.getElementById('t-start-time')||{value:'18:00'}).value,
+    };
 
-      set('s-name', name);
-      set('s-game', game);
+    try {
+      const token = localStorage.getItem('gg_token');
+      const res = await fetch('/api/tournaments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (token||'') },
+        body: JSON.stringify(data)
+      });
+      const resp = await res.json();
+      if (!res.ok) throw new Error(resp.error || 'Ошибка');
+
+      document.getElementById('wizard-wrap').style.display = 'none';
+      document.getElementById('success-screen').style.display = 'block';
+      set('s-name', name); set('s-game', game);
       set('s-slots', '0 / ' + slots);
       set('s-date', start ? formatDate(start) : '—');
-
-      const prize = document.getElementById('prev-prize').textContent;
-      set('s-prize', prize);
-    }, 1400);
+      set('s-prize', (document.getElementById('prev-prize')||{textContent:'—'}).textContent);
+    } catch(e) {
+      btn.disabled = false;
+      btn.textContent = '🚀 Опубликовать турнир';
+      alert('Ошибка: ' + e.message);
+    }
   }
 
   // Init free-section visibility
