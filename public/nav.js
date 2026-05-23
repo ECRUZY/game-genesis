@@ -456,6 +456,13 @@ const CSS = `
           <span class="gg-sb-text">Создать турнир</span>
         </a>
 
+        ${user ? `
+        <div class="gg-sb-sep"></div>
+        <button class="gg-sb-item" onclick="window._ggLogout()" data-tip="Выйти" style="color:var(--red);">
+          <span class="gg-sb-icon">${I.logout}</span>
+          <span class="gg-sb-text">Выйти</span>
+        </button>` : ''}
+
       </nav>
 
       <!-- BOTTOM: user / auth -->
