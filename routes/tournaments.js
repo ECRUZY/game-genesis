@@ -56,6 +56,15 @@ router.get('/:id', async (req, res) => {
 router.post('/', auth, async (req, res) => {
   const { name, description, game, format, team_size, max_slots, entry_fee, prize_pct, region, start_date, reg_start, reg_end, start_time } = req.body
   if (!name || !game) return res.status(400).json({ error: 'Укажите название и игру' })
+
+  // Проверяем роль — admin публикует бесплатно, остальные в будущем платят
+  const userRes = await db.query('SELECT role FROM users WHERE id=$1', [req.user.id])
+  const role = userRes.rows[0]?.role || 'player'
+  // TODO: для не-admin добавить проверку оплаты когда подключим платёжный шлюз
+  // if (role !== 'admin' && role !== 'organizer') {
+  //   return res.status(403).json({ error: 'Требуется оплата размещения' })
+  // }
+
   try {
     const result = await db.query(
       `INSERT INTO tournaments (organizer_id, name, description, game, format, team_size, max_slots, entry_fee, prize_pct, region, start_date, reg_start, reg_end, start_time)
@@ -64,6 +73,7 @@ router.post('/', auth, async (req, res) => {
        max_slots || 16, entry_fee || 0, prize_pct || 50, region || 'Чеченская Республика',
        start_date, reg_start, reg_end, start_time || '18:00']
     )
+    console.log(`✅ Турнир создан: "${name}" (${game}) от ${req.user.username} [${role}]`)
     res.status(201).json(result.rows[0])
   } catch (e) {
     console.error(e)
