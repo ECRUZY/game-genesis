@@ -365,10 +365,12 @@ const CSS = `
 
   // ── Активная страница ──
   function active(page) {
-    // Точное совпадение имени файла — никаких includes
-    const p = window.location.pathname.split('/').pop() || 'index.html';
+    // Берём имя файла из URL, нормализуем
+    let p = window.location.pathname.split('/').pop() || '';
+    // Корневой URL "/" или "/index.html" → home
+    if (p === '' || p === 'index.html') p = 'index.html';
     const map = {
-      home:        ['index.html', ''],
+      home:        ['index.html'],
       tournaments: ['tournaments.html', 'tournament.html', 'tournament-register.html'],
       create:      ['create-tournament.html'],
       organizer:   ['organizer.html'],
@@ -377,7 +379,7 @@ const CSS = `
       partners:    ['partners.html'],
       ratings:     ['ratings.html'],
     };
-    return (map[page] || []).some(f => f !== '' && p === f) ? ' active' : '';
+    return (map[page] || []).some(f => p === f) ? ' active' : '';
   }
 
   // ── Рендер ──
