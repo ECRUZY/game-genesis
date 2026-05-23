@@ -365,18 +365,19 @@ const CSS = `
 
   // ── Активная страница ──
   function active(page) {
+    // Точное совпадение имени файла — никаких includes
     const p = window.location.pathname.split('/').pop() || 'index.html';
     const map = {
-      home: ['index.html',''],
-      tournaments: ['tournaments.html','tournament.html','tournament-register.html'],
-      create: ['create-tournament.html'],
-      organizer: ['organizer.html'],
-      profile: ['profile.html'],
-      faq: ['faq.html'],
-      partners: ['partners.html'],
-      ratings: ['ratings.html'],
+      home:        ['index.html', ''],
+      tournaments: ['tournaments.html', 'tournament.html', 'tournament-register.html'],
+      create:      ['create-tournament.html'],
+      organizer:   ['organizer.html'],
+      profile:     ['profile.html'],
+      faq:         ['faq.html'],
+      partners:    ['partners.html'],
+      ratings:     ['ratings.html'],
     };
-    return (map[page] || []).some(f => p.includes(f.replace('.html',''))) ? ' active' : '';
+    return (map[page] || []).some(f => f !== '' && p === f) ? ' active' : '';
   }
 
   // ── Рендер ──
