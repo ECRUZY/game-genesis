@@ -5,930 +5,695 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Панель организатора — Game Genesis</title>
   <script src="/nav.js"></script>
+  <script src="/api.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Exo+2:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --gold: #f0c040; --gold-dim: rgba(240,192,64,0.1);
-      --bg: #080c12; --bg-card: #0d1420; --bg-card2: #111928; --bg-input: #0a1018;
-      --border: #1a2436; --border-hi: #253550;
-      --text: #dde4ef; --text-dim: #5c7090; --text-muted: #2e3f58;
-      --success: #4ade80; --red: #f87171; --blue: #60a5fa; --purple: #a78bfa;
-    }
-    ::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-track { background: var(--bg); } ::-webkit-scrollbar-thumb { background: #1e2d42; border-radius: 3px; }
-    body { background: var(--bg); color: var(--text); font-family: 'Exo 2', sans-serif; }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--gold:#f0c040;--gold-dim:rgba(240,192,64,0.1);--bg:#080c12;--bg-card:#0d1420;--bg-card2:#111928;--bg-input:#0a1018;--border:#1a2436;--border-hi:#253550;--text:#dde4ef;--text-dim:#5c7090;--text-muted:#2e3f58;--success:#4ade80;--red:#f87171;--blue:#60a5fa}
+    ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:#1e2d42;border-radius:3px}
+    body{background:var(--bg);color:var(--text);font-family:'Exo 2',sans-serif}
+    .grid-bg{position:fixed;inset:0;z-index:0;pointer-events:none;background-image:linear-gradient(rgba(240,192,64,.02) 1px,transparent 1px),linear-gradient(90deg,rgba(240,192,64,.02) 1px,transparent 1px);background-size:50px 50px}
+    .page{position:relative;z-index:1;min-height:100vh}
 
-    .grid-bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; background-image: linear-gradient(rgba(240,192,64,0.018) 1px,transparent 1px),linear-gradient(90deg,rgba(240,192,64,0.018) 1px,transparent 1px); background-size: 50px 50px; }
+    /* TOP */
+    .top{padding:24px 40px 0;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+    .top h1{font-family:'Rajdhani',sans-serif;font-size:26px;font-weight:700;color:#fff}
+    .top p{font-size:13px;color:var(--text-dim);margin-top:2px}
+    .t-sel{background:var(--bg-card);border:1px solid var(--border-hi);border-radius:10px;padding:8px 32px 8px 14px;font-size:13px;color:var(--text);font-family:'Exo 2',sans-serif;outline:none;cursor:pointer;min-width:280px;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%235c7090' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+    .t-sel:focus{border-color:var(--gold)}
+    .t-sel option{background:#0d1420}
 
-    .page { position: relative; z-index: 1; min-height: 100vh; }
+    /* STATS */
+    .stats-row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;padding:20px 40px 0}
+    .sc{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:14px 18px}
+    .sc-val{font-family:'Rajdhani',sans-serif;font-size:24px;font-weight:700}
+    .sc-key{font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+    .sc.gold .sc-val{color:var(--gold)}.sc.green .sc-val{color:var(--success)}.sc.red .sc-val{color:var(--red)}.sc.blue .sc-val{color:var(--blue)}
 
-    /* ── PAGE HEADER ── */
-    .page-header {
-      padding: 32px 40px 0;
-      display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap;
-    }
-    .page-header-left h1 { font-family: 'Rajdhani',sans-serif; font-size: 28px; font-weight: 700; color: #fff; margin-bottom: 4px; }
-    .page-header-left p { font-size: 13px; color: var(--text-dim); }
-    .page-header-right { display: flex; gap: 10px; flex-wrap: wrap; }
+    /* TABS */
+    .tabs{display:flex;gap:2px;padding:16px 40px 0;border-bottom:1px solid var(--border)}
+    .tab{font-family:'Exo 2',sans-serif;font-size:13px;font-weight:500;color:var(--text-dim);padding:12px 16px;cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-1px;transition:.2s;display:flex;align-items:center;gap:7px;white-space:nowrap}
+    .tab svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    .tab:hover{color:var(--text)}.tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+    .tb{display:inline-flex;align-items:center;justify-content:center;background:var(--gold);color:#080c12;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;font-family:'Rajdhani',sans-serif;margin-left:2px}
 
-    /* Tournament selector */
-    .t-selector {
-      display: flex; align-items: center; gap: 10px;
-      background: var(--bg-card); border: 1px solid var(--border);
-      border-radius: 10px; padding: 8px 14px 8px 12px;
-      cursor: pointer; transition: .2s;
-    }
-    .t-selector:hover { border-color: var(--border-hi); }
-    .t-sel-icon { width: 28px; height: 28px; border-radius: 7px; background: var(--gold-dim); display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
-    .t-sel-name { font-family: 'Rajdhani',sans-serif; font-size: 15px; font-weight: 700; color: #fff; max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .t-sel-status { font-size: 10px; color: var(--text-dim); margin-top: 1px; }
-    .t-sel-arr { width: 14px; height: 14px; stroke: var(--text-dim); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+    /* PANEL */
+    .panel{display:none;padding:28px 40px 80px}.panel.active{display:block}
 
-    /* Dropdown selector */
-    .t-sel-wrap { position: relative; }
-    .t-sel-dd {
-      position: absolute; top: calc(100% + 8px); left: 0; min-width: 100%; z-index: 200;
-      background: var(--bg-card); border: 1px solid var(--border-hi); border-radius: 12px;
-      overflow: hidden; box-shadow: 0 12px 40px rgba(0,0,0,.5);
-      opacity: 0; pointer-events: none; transform: translateY(-6px); transition: .2s;
-    }
-    .t-sel-dd.open { opacity: 1; pointer-events: all; transform: translateY(0); }
-    .t-sel-dd-item { display: flex; align-items: center; gap: 10px; padding: 11px 14px; cursor: pointer; transition: background .2s; }
-    .t-sel-dd-item:hover { background: rgba(255,255,255,.04); }
-    .t-sel-dd-item.active { background: var(--gold-dim); }
-    .t-sel-dd-name { font-family: 'Rajdhani',sans-serif; font-size: 14px; font-weight: 700; color: #fff; }
-    .t-sel-dd-meta { font-size: 11px; color: var(--text-dim); }
+    /* BLOCK */
+    .blk{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;margin-bottom:18px;overflow:hidden}
+    .blk-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:10px}
+    .blk-title{font-family:'Rajdhani',sans-serif;font-size:17px;font-weight:700;color:#fff;display:flex;align-items:center;gap:9px}
+    .blk-title svg{width:16px;height:16px;stroke:var(--gold);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    .blk-actions{display:flex;gap:8px;flex-wrap:wrap}
 
-    /* ── STATS STRIP ── */
-    .stats-strip { display: grid; grid-template-columns: repeat(5,1fr); gap: 12px; padding: 24px 40px 0; }
-    .stat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; }
-    .stat-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }
-    .stat-icon svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-    .stat-icon.gold { background: rgba(240,192,64,.12); color: var(--gold); }
-    .stat-icon.green { background: rgba(74,222,128,.1); color: var(--success); }
-    .stat-icon.red { background: rgba(248,113,113,.1); color: var(--red); }
-    .stat-icon.blue { background: rgba(96,165,250,.1); color: var(--blue); }
-    .stat-icon.purple { background: rgba(167,139,250,.1); color: var(--purple); }
-    .stat-val { font-family: 'Rajdhani',sans-serif; font-size: 26px; font-weight: 700; color: #fff; line-height: 1; }
-    .stat-key { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: .5px; margin-top: 4px; }
-    .stat-delta { font-size: 11px; margin-top: 3px; }
-    .stat-delta.up { color: var(--success); } .stat-delta.down { color: var(--red); }
+    /* BUTTONS */
+    .btn-gold{font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;letter-spacing:1px;padding:9px 20px;border-radius:8px;background:var(--gold);color:#080c12;border:none;cursor:pointer;transition:.2s;display:flex;align-items:center;gap:7px;white-space:nowrap}
+    .btn-gold:hover{background:#ffd055;box-shadow:0 0 14px rgba(240,192,64,.3)}
+    .btn-gold:disabled{background:var(--border-hi);color:var(--text-muted);cursor:not-allowed;box-shadow:none}
+    .btn-gold svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+    .btn-outline{font-family:'Exo 2',sans-serif;font-size:13px;padding:9px 18px;border-radius:8px;border:1px solid var(--border-hi);background:transparent;color:var(--text-dim);cursor:pointer;transition:.2s;display:flex;align-items:center;gap:7px;white-space:nowrap}
+    .btn-outline:hover{border-color:var(--gold);color:var(--gold)}
+    .btn-outline svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    .btn-red{font-family:'Exo 2',sans-serif;font-size:13px;padding:7px 14px;border-radius:7px;border:1px solid rgba(248,113,113,.3);background:transparent;color:var(--red);cursor:pointer;transition:.2s;white-space:nowrap}
+    .btn-red:hover{background:rgba(248,113,113,.08)}
+    .btn-green{font-family:'Exo 2',sans-serif;font-size:13px;padding:7px 14px;border-radius:7px;border:1px solid rgba(74,222,128,.3);background:transparent;color:var(--success);cursor:pointer;transition:.2s;white-space:nowrap}
+    .btn-green:hover{background:rgba(74,222,128,.08)}
 
-    /* ── TABS ── */
-    .tabs-bar { display: flex; gap: 2px; padding: 20px 40px 0; border-bottom: 1px solid var(--border); }
-    .tab { font-family: 'Exo 2',sans-serif; font-size: 13px; font-weight: 500; color: var(--text-dim); padding: 10px 16px; cursor: pointer; border: none; background: none; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: .2s; display: flex; align-items: center; gap: 7px; white-space: nowrap; }
-    .tab svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-    .tab:hover { color: var(--text); }
-    .tab.active { color: var(--gold); border-bottom-color: var(--gold); }
-    .tab .badge { background: var(--red); color: #fff; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 10px; }
+    /* TABLE */
+    .tbl{width:100%;border-collapse:collapse}
+    .tbl th{padding:10px 16px;text-align:left;font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--text-dim);background:rgba(0,0,0,.2);border-bottom:1px solid var(--border)}
+    .tbl td{padding:12px 16px;font-size:13px;color:var(--text);border-bottom:1px solid rgba(26,36,54,.5);vertical-align:middle}
+    .tbl tr:last-child td{border-bottom:none}.tbl tr:hover td{background:rgba(255,255,255,.02)}
+    .pill{display:inline-flex;align-items:center;gap:4px;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600}
+    .pill-pending{background:rgba(240,192,64,.1);color:var(--gold);border:1px solid rgba(240,192,64,.2)}
+    .pill-accepted{background:rgba(74,222,128,.1);color:var(--success);border:1px solid rgba(74,222,128,.2)}
+    .pill-rejected{background:rgba(248,113,113,.1);color:var(--red);border:1px solid rgba(248,113,113,.2)}
+    .act-btns{display:flex;gap:6px}
+    .av{display:flex;align-items:center;gap:10px}
+    .av-ic{width:32px;height:32px;border-radius:8px;background:var(--bg-card2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;color:var(--gold);flex-shrink:0}
+    .av-name{font-weight:500}.av-sub{font-size:11px;color:var(--text-dim)}
 
-    /* ── TAB PANELS ── */
-    .tab-panel { display: none; padding: 28px 40px 80px; }
-    .tab-panel.active { display: block; }
+    /* TEAM EXPAND */
+    .team-players{display:none;background:rgba(0,0,0,.2);padding:12px 16px;border-top:1px solid var(--border)}
+    .team-players.open{display:block}
+    .player-row{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(26,36,54,.3);font-size:12px}
+    .player-row:last-child{border-bottom:none}
+    .cap-badge{background:var(--gold);color:#080c12;font-size:9px;font-weight:700;padding:1px 6px;border-radius:4px;font-family:'Rajdhani',sans-serif}
+    .expand-btn{background:none;border:none;color:var(--text-dim);cursor:pointer;padding:4px;transition:.2s;display:flex;align-items:center}
+    .expand-btn:hover{color:var(--gold)}
+    .expand-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s}
+    .expand-btn.open svg{transform:rotate(180deg)}
 
-    /* ── PARTICIPANTS PANEL ── */
-    .panel-toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-    .search-box { display: flex; align-items: center; gap: 0; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 0 12px; flex: 1; max-width: 300px; }
-    .search-box svg { width: 15px; height: 15px; stroke: var(--text-muted); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
-    .search-box input { flex: 1; background: none; border: none; outline: none; padding: 9px 10px; font-size: 13px; color: var(--text); font-family: 'Exo 2',sans-serif; }
-    .search-box input::placeholder { color: var(--text-muted); }
-    .filter-btn { padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--text-dim); font-size: 12px; font-family: 'Exo 2',sans-serif; cursor: pointer; transition: .2s; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
-    .filter-btn svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-    .filter-btn:hover { border-color: var(--gold); color: var(--gold); }
-    .filter-btn.active { border-color: var(--gold); color: var(--gold); background: var(--gold-dim); }
-    .bulk-actions { display: flex; gap: 8px; margin-left: auto; }
-    .btn-action { padding: 8px 16px; border-radius: 8px; font-family: 'Rajdhani',sans-serif; font-size: 13px; font-weight: 700; letter-spacing: .5px; cursor: pointer; transition: .2s; display: flex; align-items: center; gap: 6px; border: none; white-space: nowrap; }
-    .btn-action svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
-    .btn-action.accept { background: rgba(74,222,128,.12); color: var(--success); border: 1px solid rgba(74,222,128,.25); }
-    .btn-action.accept:hover { background: rgba(74,222,128,.2); }
-    .btn-action.reject { background: rgba(248,113,113,.1); color: var(--red); border: 1px solid rgba(248,113,113,.2); }
-    .btn-action.reject:hover { background: rgba(248,113,113,.18); }
-    .btn-action.primary { background: var(--gold); color: #080c12; }
-    .btn-action.primary:hover { background: #ffd055; }
-    .btn-action.ghost { background: transparent; color: var(--text-dim); border: 1px solid var(--border-hi); }
-    .btn-action.ghost:hover { border-color: var(--gold); color: var(--gold); }
+    /* BRACKET */
+    .bracket-wrap{overflow-x:auto;padding:20px}
+    .bracket{display:flex;gap:0;min-width:900px}
+    .b-section{margin-bottom:24px}
+    .b-section-title{font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:1.5px;padding:10px 0;border-bottom:1px solid var(--border);margin-bottom:16px}
+    .b-section-title.upper{color:var(--gold)}.b-section-title.lower{color:var(--blue)}
+    .b-round{flex:1;padding:0 10px}
+    .b-round-label{font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;text-align:center;padding-bottom:10px;border-bottom:1px solid var(--border);margin-bottom:14px}
+    .b-match{background:var(--bg-card2);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin:8px 0;cursor:pointer;transition:.2s}
+    .b-match:hover{border-color:var(--border-hi)}
+    .b-match.done{opacity:.7}.b-match.grand{border-color:rgba(240,192,64,.35)}
+    .b-match-hdr{padding:4px 10px;font-size:10px;color:var(--text-muted);background:rgba(0,0,0,.2);display:flex;justify-content:space-between}
+    .b-match-hdr.upper-hdr{color:rgba(240,192,64,.6)}.b-match-hdr.lower-hdr{color:rgba(96,165,250,.6)}
+    .b-team{display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--border);transition:background .2s}
+    .b-team:last-child{border-bottom:none}.b-team:hover{background:rgba(255,255,255,.02)}
+    .b-team.winner{background:rgba(240,192,64,.05)}.b-team.tbd .b-tname{color:var(--text-muted);font-style:italic}
+    .b-seed{width:18px;height:18px;border-radius:4px;background:var(--bg-card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--text-dim);flex-shrink:0}
+    .b-team.winner .b-seed{background:var(--gold-dim);border-color:rgba(240,192,64,.3);color:var(--gold)}
+    .b-tname{font-size:13px;font-weight:500;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .b-score{font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;color:var(--text-dim)}
+    .b-team.winner .b-score{color:var(--gold)}
 
-    /* Participants table */
-    .p-table { width: 100%; border-collapse: collapse; }
-    .p-table th { padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: .7px; background: rgba(0,0,0,.3); border-bottom: 1px solid var(--border); white-space: nowrap; }
-    .p-table th:first-child { padding-left: 16px; border-radius: 10px 0 0 0; }
-    .p-table th:last-child { border-radius: 0 10px 0 0; padding-right: 16px; }
-    .p-table td { padding: 12px 14px; font-size: 13px; color: var(--text); border-bottom: 1px solid rgba(26,36,54,.5); vertical-align: middle; }
-    .p-table td:first-child { padding-left: 16px; }
-    .p-table td:last-child { padding-right: 16px; }
-    .p-table tr:last-child td { border-bottom: none; }
-    .p-table tr:hover td { background: rgba(255,255,255,.02); }
-    .p-table-wrap { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    /* MATCH MODAL */
+    .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:600;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .2s}
+    .modal-bg.open{opacity:1;pointer-events:all}
+    .modal{background:var(--bg-card);border:1px solid var(--border-hi);border-radius:16px;width:100%;max-width:500px;transform:scale(.95);transition:transform .2s}
+    .modal-bg.open .modal{transform:scale(1)}
+    .modal-head{display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid var(--border)}
+    .modal-title{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;color:#fff}
+    .modal-close{width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text-dim);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s}
+    .modal-close:hover{border-color:var(--red);color:var(--red)}
+    .modal-close svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+    .modal-body{padding:24px}
+    .score-row{display:flex;align-items:center;gap:16px;margin-bottom:20px}
+    .score-team{flex:1;text-align:center}
+    .score-tname{font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;color:#fff;margin-bottom:8px}
+    .score-input{width:80px;height:56px;background:var(--bg-input);border:2px solid var(--border);border-radius:10px;font-family:'Rajdhani',sans-serif;font-size:32px;font-weight:700;color:var(--gold);text-align:center;outline:none;transition:border-color .2s;-moz-appearance:textfield}
+    .score-input::-webkit-outer-spin-button,.score-input::-webkit-inner-spin-button{-webkit-appearance:none}
+    .score-input:focus{border-color:var(--gold)}
+    .score-vs{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;color:var(--text-muted)}
+    .winner-btns{display:flex;gap:8px;justify-content:center;margin-top:8px}
+    .wb{padding:5px 16px;border-radius:20px;border:1px solid var(--border);background:transparent;font-size:12px;font-weight:600;color:var(--text-dim);cursor:pointer;transition:.2s;font-family:'Exo 2',sans-serif}
+    .wb.sel{border-color:var(--success);color:var(--success);background:rgba(74,222,128,.08)}
 
-    .p-check { width: 16px; height: 16px; accent-color: var(--gold); cursor: pointer; }
-    .p-num { font-family: 'Rajdhani',sans-serif; font-size: 14px; font-weight: 700; color: var(--text-muted); }
-    .p-avatar { width: 34px; height: 34px; border-radius: 8px; background: var(--bg-card2); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-family: 'Rajdhani',sans-serif; font-size: 13px; font-weight: 700; color: var(--gold); flex-shrink: 0; }
-    .p-cell { display: flex; align-items: center; gap: 10px; }
-    .p-name { font-weight: 500; color: var(--text); }
-    .p-nick { font-size: 11px; color: var(--text-dim); }
-    .p-game-tag { font-size: 10px; font-weight: 700; background: rgba(96,165,250,.1); color: var(--blue); border: 1px solid rgba(96,165,250,.18); border-radius: 4px; padding: 2px 8px; letter-spacing: .3px; }
+    /* CONFIRM */
+    .conf-bg{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:700;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .2s}
+    .conf-bg.open{opacity:1;pointer-events:all}
+    .conf-box{background:var(--bg-card);border:1px solid rgba(248,113,113,.3);border-radius:14px;padding:28px;max-width:380px;width:100%;text-align:center}
+    .conf-icon{font-size:36px;margin-bottom:14px}
+    .conf-title{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;color:#fff;margin-bottom:8px}
+    .conf-text{font-size:13px;color:var(--text-dim);line-height:1.6;margin-bottom:20px}
+    .conf-btns{display:flex;gap:10px}
+    .conf-cancel{flex:1;padding:11px;border:1px solid var(--border-hi);border-radius:8px;background:transparent;color:var(--text-dim);cursor:pointer;font-family:'Exo 2',sans-serif;font-size:13px;transition:.2s}
+    .conf-cancel:hover{border-color:var(--text-dim);color:var(--text)}
+    .conf-ok{flex:1;padding:11px;border:none;border-radius:8px;background:var(--red);color:#fff;cursor:pointer;font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;transition:.2s}
+    .conf-ok:hover{background:#ef4444}
 
-    /* Status badge */
-    .s-badge { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
-    .s-badge .sd { width: 5px; height: 5px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
-    .s-badge.confirmed { background: rgba(74,222,128,.1); color: var(--success); border: 1px solid rgba(74,222,128,.2); }
-    .s-badge.pending { background: rgba(240,192,64,.1); color: var(--gold); border: 1px solid rgba(240,192,64,.2); }
-    .s-badge.rejected { background: rgba(248,113,113,.1); color: var(--red); border: 1px solid rgba(248,113,113,.2); }
+    /* TOAST */
+    #toast{position:fixed;bottom:24px;right:24px;z-index:800;border-radius:10px;padding:12px 20px;font-size:14px;font-weight:500;opacity:0;transition:opacity .3s;pointer-events:none;max-width:320px}
+    #toast.show{opacity:1}
+    #toast.ok{background:#0d2010;border:1px solid rgba(74,222,128,.3);color:var(--success)}
+    #toast.err{background:#200d0d;border:1px solid rgba(248,113,113,.3);color:var(--red)}
 
-    /* Row actions */
-    .row-actions { display: flex; gap: 6px; }
-    .ra-btn { width: 30px; height: 30px; border-radius: 7px; border: 1px solid var(--border); background: transparent; cursor: pointer; transition: .2s; display: flex; align-items: center; justify-content: center; color: var(--text-muted); }
-    .ra-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-    .ra-btn.ok:hover { border-color: var(--success); color: var(--success); background: rgba(74,222,128,.08); }
-    .ra-btn.del:hover { border-color: var(--red); color: var(--red); background: rgba(248,113,113,.08); }
-    .ra-btn.view:hover { border-color: var(--gold); color: var(--gold); background: var(--gold-dim); }
-    .ra-btn.msg:hover { border-color: var(--blue); color: var(--blue); background: rgba(96,165,250,.08); }
+    /* EMPTY */
+    .empty{text-align:center;padding:48px 20px;color:var(--text-dim)}
+    .empty-icon{font-size:40px;margin-bottom:12px}
+    .empty h3{font-family:'Rajdhani',sans-serif;font-size:18px;margin-bottom:6px}
+    .empty p{font-size:13px;color:var(--text-muted)}
 
-    /* ── MATCHES PANEL ── */
-    .bracket-round-label { font-family: 'Rajdhani',sans-serif; font-size: 13px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 12px; margin-top: 8px; display: flex; align-items: center; gap: 8px; }
-    .bracket-round-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
-    .matches-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 12px; margin-bottom: 24px; }
-    .match-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; transition: border-color .2s; }
-    .match-card:hover { border-color: var(--border-hi); }
-    .match-card.live { border-color: rgba(248,113,113,.3); }
-    .match-header { padding: 8px 14px; background: rgba(0,0,0,.25); display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); }
-    .match-id { font-size: 11px; color: var(--text-muted); font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
-    .match-status { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 4px; }
-    .match-status.live { background: rgba(248,113,113,.15); color: var(--red); }
-    .match-status.done { background: rgba(74,222,128,.1); color: var(--success); }
-    .match-status.pending { background: rgba(240,192,64,.1); color: var(--gold); }
-    .match-body { padding: 14px; }
-    .match-player { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; transition: background .15s; }
-    .match-player:hover { background: rgba(255,255,255,.03); }
-    .match-player.winner { background: rgba(240,192,64,.05); }
-    .mp-avatar { width: 30px; height: 30px; border-radius: 7px; background: var(--bg-card2); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-family: 'Rajdhani',sans-serif; font-size: 12px; font-weight: 700; color: var(--gold); flex-shrink: 0; }
-    .mp-name { flex: 1; font-size: 13px; font-weight: 500; color: var(--text); }
-    .match-player.winner .mp-name { color: #fff; font-weight: 600; }
-    .mp-score { font-family: 'Rajdhani',sans-serif; font-size: 20px; font-weight: 700; color: var(--text-muted); min-width: 24px; text-align: right; }
-    .match-player.winner .mp-score { color: var(--gold); }
-    .match-vs { text-align: center; font-size: 10px; color: var(--text-muted); letter-spacing: 2px; padding: 2px 0; }
-    .match-footer { padding: 8px 14px 12px; display: flex; gap: 8px; }
-    .match-footer .btn-action { flex: 1; justify-content: center; font-size: 12px; padding: 7px 10px; }
+    /* BRACKET STATUS BANNER */
+    .bracket-banner{padding:20px;border-radius:12px;margin-bottom:16px;font-size:14px;line-height:1.6}
+    .bracket-banner.waiting{background:rgba(240,192,64,.06);border:1px solid rgba(240,192,64,.2);color:var(--gold)}
+    .bracket-banner.ready{background:rgba(74,222,128,.06);border:1px solid rgba(74,222,128,.2);color:var(--success)}
 
-    /* Score editor */
-    .score-editor { display: none; padding: 12px 14px; background: rgba(240,192,64,.04); border-top: 1px solid var(--border); }
-    .score-editor.open { display: block; }
-    .score-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-    .score-label { font-size: 12px; color: var(--text-dim); width: 100px; flex-shrink: 0; }
-    .score-input { width: 60px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; font-size: 14px; font-family: 'Rajdhani',sans-serif; font-weight: 700; color: var(--gold); text-align: center; outline: none; }
-    .score-input:focus { border-color: var(--gold); }
-    .score-btns { display: flex; gap: 8px; margin-top: 4px; }
-    .score-save { flex: 1; background: var(--gold); color: #080c12; border: none; border-radius: 7px; padding: 8px; font-family: 'Rajdhani',sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 1px; cursor: pointer; transition: .2s; }
-    .score-save:hover { background: #ffd055; }
-    .score-cancel { background: transparent; color: var(--text-dim); border: 1px solid var(--border); border-radius: 7px; padding: 8px 14px; font-size: 12px; cursor: pointer; transition: .2s; font-family: 'Exo 2',sans-serif; }
-    .score-cancel:hover { border-color: var(--red); color: var(--red); }
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .spin{width:16px;height:16px;border:2px solid rgba(8,12,18,.3);border-top-color:#080c12;border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
 
-    /* ── FINANCE ── */
-    .finance-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-    .f-block { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 22px; }
-    .f-block-title { font-family: 'Rajdhani',sans-serif; font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
-    .f-block-title svg { width: 16px; height: 16px; stroke: var(--gold); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-    .f-sum-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(26,36,54,.6); font-size: 13px; }
-    .f-sum-row:last-child { border-bottom: none; }
-    .f-sum-key { color: var(--text-dim); }
-    .f-sum-val { font-family: 'Rajdhani',sans-serif; font-size: 16px; font-weight: 700; }
-    .f-sum-val.green { color: var(--success); } .f-sum-val.red { color: var(--red); } .f-sum-val.gold { color: var(--gold); }
-    .tx-list { display: flex; flex-direction: column; gap: 6px; max-height: 260px; overflow-y: auto; margin-bottom: 12px; }
-    .tx-item { display: flex; align-items: center; gap: 10px; background: var(--bg-card2); border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; }
-    .tx-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-    .tx-dot.income { background: var(--success); } .tx-dot.expense { background: var(--red); }
-    .tx-desc { flex: 1; font-size: 13px; color: var(--text); }
-    .tx-date { font-size: 10px; color: var(--text-muted); }
-    .tx-amount { font-family: 'Rajdhani',sans-serif; font-size: 15px; font-weight: 700; }
-    .tx-amount.income { color: var(--success); } .tx-amount.expense { color: var(--red); }
-    .tx-del { background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 2px; }
-    .tx-del:hover { color: var(--red); }
-    .tx-del svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; display: block; }
-    .tx-add-row { display: flex; gap: 8px; }
-    .tx-inp { flex: 1; background: var(--bg-input); border: 1px solid var(--border); border-radius: 7px; padding: 9px 12px; font-size: 13px; color: var(--text); font-family: 'Exo 2',sans-serif; outline: none; transition: border-color .2s; }
-    .tx-inp:focus { border-color: var(--gold); }
-    .tx-type-sel { background: var(--bg-input); border: 1px solid var(--border); border-radius: 7px; padding: 9px 10px; font-size: 12px; color: var(--text-dim); font-family: 'Exo 2',sans-serif; outline: none; cursor: pointer; }
-    .tx-add-btn { background: var(--gold); border: none; border-radius: 7px; padding: 9px 16px; font-family: 'Rajdhani',sans-serif; font-size: 13px; font-weight: 700; color: #080c12; cursor: pointer; white-space: nowrap; }
-    .tx-add-btn:hover { background: #ffd055; }
-
-    /* ── SETTINGS ── */
-    .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-    .s-block { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 22px; }
-    .s-block-title { font-family: 'Rajdhani',sans-serif; font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
-    .s-block-title svg { width: 16px; height: 16px; stroke: var(--gold); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-    .s-field { margin-bottom: 14px; }
-    .s-field label { display: block; font-size: 11px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: .7px; margin-bottom: 6px; }
-    .s-input { width: 100%; background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; font-size: 14px; color: var(--text); font-family: 'Exo 2',sans-serif; outline: none; transition: border-color .2s; }
-    .s-input:focus { border-color: var(--gold); }
-    .s-input[type=number] { max-width: 140px; }
-    .s-select { width: 100%; background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; font-size: 14px; color: var(--text); font-family: 'Exo 2',sans-serif; outline: none; cursor: pointer; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%235c7090' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px; }
-    .s-select option { background: #0d1420; }
-    .s-save { font-family: 'Rajdhani',sans-serif; font-size: 15px; font-weight: 700; letter-spacing: 1px; padding: 10px 24px; border-radius: 8px; background: var(--gold); color: #080c12; border: none; cursor: pointer; transition: .2s; }
-    .s-save:hover { background: #ffd055; box-shadow: 0 0 16px rgba(240,192,64,.3); }
-
-    /* Danger zone */
-    .danger-zone { background: rgba(248,113,113,.05); border: 1px solid rgba(248,113,113,.15); border-radius: 10px; padding: 16px; margin-top: 8px; }
-    .dz-title { font-size: 12px; font-weight: 700; color: var(--red); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
-    .dz-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 8px 0; border-bottom: 1px solid rgba(248,113,113,.1); }
-    .dz-row:last-child { border-bottom: none; }
-    .dz-label { font-size: 13px; color: var(--text-dim); }
-    .dz-btn { font-family: 'Exo 2',sans-serif; font-size: 12px; padding: 7px 14px; border-radius: 7px; border: 1px solid rgba(248,113,113,.3); background: transparent; color: var(--red); cursor: pointer; transition: .2s; }
-    .dz-btn:hover { background: rgba(248,113,113,.1); border-color: var(--red); }
-
-    /* ── MODAL ── */
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.75); z-index: 800; display: flex; align-items: center; justify-content: center; padding: 20px; opacity: 0; pointer-events: none; transition: opacity .2s; }
-    .modal-overlay.open { opacity: 1; pointer-events: all; }
-    .modal { background: var(--bg-card); border: 1px solid var(--border-hi); border-radius: 16px; padding: 28px; width: 100%; max-width: 440px; transform: scale(.95); transition: transform .2s; }
-    .modal-overlay.open .modal { transform: scale(1); }
-    .modal-title { font-family: 'Rajdhani',sans-serif; font-size: 22px; font-weight: 700; color: #fff; margin-bottom: 6px; }
-    .modal-sub { font-size: 13px; color: var(--text-dim); margin-bottom: 20px; line-height: 1.6; }
-    .modal-btns { display: flex; gap: 10px; margin-top: 20px; }
-    .modal-ok { flex: 1; background: var(--gold); border: none; border-radius: 8px; padding: 11px; font-family: 'Rajdhani',sans-serif; font-size: 15px; font-weight: 700; color: #080c12; cursor: pointer; transition: .2s; }
-    .modal-ok:hover { background: #ffd055; }
-    .modal-ok.red { background: var(--red); color: #fff; }
-    .modal-ok.red:hover { background: #ef4444; }
-    .modal-cancel { background: transparent; border: 1px solid var(--border-hi); border-radius: 8px; padding: 11px 20px; font-family: 'Exo 2',sans-serif; font-size: 13px; color: var(--text-dim); cursor: pointer; transition: .2s; }
-    .modal-cancel:hover { border-color: var(--text-dim); color: var(--text); }
-
-    /* Toast */
-    #gg-toast { position: fixed; bottom: 24px; right: 24px; z-index: 9999; padding: 12px 20px; border-radius: 10px; font-family: 'Exo 2',sans-serif; font-size: 14px; font-weight: 500; transition: opacity .3s; opacity: 0; pointer-events: none; max-width: 320px; }
-    #gg-toast.show { opacity: 1; }
-
-    @media(max-width:1100px) { .finance-grid, .settings-grid { grid-template-columns: 1fr; } .stats-strip { grid-template-columns: repeat(3,1fr); } }
-    @media(max-width:768px) { .page-header, .tabs-bar, .tab-panel { padding-left: 20px; padding-right: 20px; } .stats-strip { padding: 16px 20px 0; grid-template-columns: 1fr 1fr; } .matches-grid { grid-template-columns: 1fr; } }
+    @media(max-width:900px){.stats-row{grid-template-columns:repeat(2,1fr)}.top,.stats-row,.tabs,.panel{padding-left:20px;padding-right:20px}}
   </style>
 </head>
 <body>
 <div class="grid-bg"></div>
 <div class="page">
 
-  <!-- PAGE HEADER -->
-  <div class="page-header">
-    <div class="page-header-left">
+  <!-- TOP -->
+  <div class="top">
+    <div>
       <h1>Панель организатора</h1>
-      <p>Управление участниками, матчами и финансами турниров</p>
+      <p id="sub-text">Выберите турнир</p>
     </div>
-    <div class="page-header-right">
-      <!-- Tournament selector -->
-      <div class="t-sel-wrap">
-        <div class="t-selector" id="t-selector" onclick="toggleTournamentDD()">
-          <div class="t-sel-icon">🏆</div>
-          <div>
-            <div class="t-sel-name" id="sel-name">Открытый ЧР 2025</div>
-            <div class="t-sel-status" id="sel-status">● Live · 64/128 участников</div>
-          </div>
-          <svg class="t-sel-arr" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-        </div>
-        <div class="t-sel-dd" id="t-sel-dd">
-          <div class="t-sel-dd-item active" onclick="selectTournament(0)">
-            <div class="t-sel-icon" style="background:rgba(248,113,113,.1)">🏆</div>
-            <div><div class="t-sel-dd-name">Открытый ЧР 2025</div><div class="t-sel-dd-meta">CS2 · Live · 64/128</div></div>
-          </div>
-          <div class="t-sel-dd-item" onclick="selectTournament(1)">
-            <div class="t-sel-icon" style="background:rgba(74,222,128,.1)">🎮</div>
-            <div><div class="t-sel-dd-name">Valorant City Cup</div><div class="t-sel-dd-meta">Valorant · Открыт · 12/64</div></div>
-          </div>
-        </div>
-      </div>
-
-      <button class="btn-action primary" onclick="location.href='create-tournament.html'">
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+      <select class="t-sel" id="t-sel" onchange="loadTournament(this.value)">
+        <option value="">— Выберите турнир —</option>
+      </select>
+      <button class="btn-gold" onclick="location.href='/create-tournament.html'">
         <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Новый турнир
       </button>
     </div>
   </div>
 
-  <!-- STATS STRIP -->
-  <div class="stats-strip" id="stats-strip">
-    <div class="stat-card">
-      <div class="stat-icon gold"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
-      <div class="stat-val" id="s-total">64</div>
-      <div class="stat-key">Участников</div>
-      <div class="stat-delta up" id="s-delta">+8 за сегодня</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-icon green"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
-      <div class="stat-val" id="s-confirmed">58</div>
-      <div class="stat-key">Подтверждено</div>
-      <div class="stat-delta up">91%</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-icon" style="background:rgba(240,192,64,.1);color:var(--gold)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
-      <div class="stat-val" id="s-pending" style="color:var(--gold)">6</div>
-      <div class="stat-key">Ожидают</div>
-      <div class="stat-delta" style="color:var(--gold)">Нужно проверить</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-icon" style="background:rgba(74,222,128,.1);color:var(--success)"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
-      <div class="stat-val" id="s-income" style="color:var(--success)">64 000 ₽</div>
-      <div class="stat-key">Собрано взносов</div>
-      <div class="stat-delta up">100%</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-icon blue"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></div>
-      <div class="stat-val" id="s-round">1/2 фин.</div>
-      <div class="stat-key">Текущий раунд</div>
-      <div class="stat-delta up">Идёт</div>
-    </div>
+  <!-- STATS -->
+  <div class="stats-row">
+    <div class="sc gold"><div class="sc-val" id="st-status">—</div><div class="sc-key">Статус</div></div>
+    <div class="sc blue"><div class="sc-val" id="st-teams">0</div><div class="sc-key">Команд</div></div>
+    <div class="sc green"><div class="sc-val" id="st-accepted">0</div><div class="sc-key">Принято</div></div>
+    <div class="sc"><div class="sc-val" id="st-pending">0</div><div class="sc-key">Ожидает</div></div>
+    <div class="sc"><div class="sc-val" id="st-matches">0</div><div class="sc-key">Матчей</div></div>
   </div>
 
   <!-- TABS -->
-  <div class="tabs-bar">
-    <button class="tab active" onclick="switchTab('participants',this)">
-      <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-      Участники
-      <span class="badge" id="pending-badge">6</span>
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('teams',this)">
+      <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Заявки команд <span class="tb" id="tb-teams">0</span>
     </button>
-    <button class="tab" onclick="switchTab('matches',this)">
-      <svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/></svg>
-      Матчи / Сетка
-    </button>
-    <button class="tab" onclick="switchTab('finance',this)">
-      <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-      Финансы
-    </button>
-    <button class="tab" onclick="switchTab('settings',this)">
-      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-      Настройки
+    <button class="tab" onclick="switchTab('bracket',this)">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Сетка и матчи
     </button>
   </div>
 
-  <!-- ═══ PARTICIPANTS TAB ═══ -->
-  <div id="tab-participants" class="tab-panel active">
-    <div class="panel-toolbar">
-      <div class="search-box">
-        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="text" id="p-search" placeholder="Поиск по имени или нику..." oninput="filterParticipants()">
-      </div>
-      <button class="filter-btn active" id="f-all" onclick="filterByStatus('all',this)">Все <span id="cnt-all">64</span></button>
-      <button class="filter-btn" id="f-pending" onclick="filterByStatus('pending',this)" style="color:var(--gold);border-color:rgba(240,192,64,.3);">
-        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        Ожидают <span id="cnt-pending">6</span>
-      </button>
-      <button class="filter-btn" id="f-confirmed" onclick="filterByStatus('confirmed',this)">Подтверждены <span id="cnt-confirmed">58</span></button>
-      <button class="filter-btn" id="f-rejected" onclick="filterByStatus('rejected',this)">Отклонены <span id="cnt-rejected">0</span></button>
-      <div class="bulk-actions">
-        <button class="btn-action accept" onclick="bulkAction('accept')" id="bulk-accept" style="display:none">
-          <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-          Принять
-        </button>
-        <button class="btn-action reject" onclick="bulkAction('reject')" id="bulk-reject" style="display:none">
-          <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          Отклонить
-        </button>
-        <button class="btn-action ghost" onclick="exportCSV()">
-          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          CSV
-        </button>
-      </div>
-    </div>
-
-    <div class="p-table-wrap">
-      <table class="p-table">
-        <thead>
-          <tr>
-            <th><input type="checkbox" class="p-check" id="check-all" onchange="toggleAll(this)"></th>
-            <th>#</th>
-            <th>Участник</th>
-            <th>Игра</th>
-            <th>Steam</th>
-            <th>Email</th>
-            <th>Дата заявки</th>
-            <th>Статус</th>
-            <th>Действия</th>
-          </tr>
-        </thead>
-        <tbody id="p-tbody"></tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- ═══ MATCHES TAB ═══ -->
-  <div id="tab-matches" class="tab-panel">
-    <div class="panel-toolbar" style="margin-bottom:24px;">
-      <button class="btn-action primary" onclick="generateBracket()">
-        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-        Сгенерировать сетку
-      </button>
-      <button class="btn-action ghost">
-        <svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.12"/></svg>
-        Перегенерировать
-      </button>
-      <span style="font-size:12px;color:var(--text-muted);margin-left:8px;">Нажмите на матч чтобы внести результат</span>
-    </div>
-
-    <div id="matches-container"></div>
-  </div>
-
-  <!-- ═══ FINANCE TAB ═══ -->
-  <div id="tab-finance" class="tab-panel">
-    <div class="finance-grid">
-      <div class="f-block">
-        <div class="f-block-title">
-          <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-          Сводка
+  <!-- TEAMS PANEL -->
+  <div id="panel-teams" class="panel active">
+    <div class="blk">
+      <div class="blk-head">
+        <div class="blk-title">
+          <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+          Заявки команд
         </div>
-        <div class="f-sum-row"><span class="f-sum-key">Взносы участников</span><span class="f-sum-val green" id="f-gross">+64 000 ₽</span></div>
-        <div class="f-sum-row"><span class="f-sum-key">Прочие расходы</span><span class="f-sum-val red" id="f-expenses">−16 000 ₽</span></div>
-        <div class="f-sum-row"><span class="f-sum-key">Комиссия платформы (20%)</span><span class="f-sum-val red" id="f-platform">−12 800 ₽</span></div>
-        <div class="f-sum-row"><span class="f-sum-key">Призовой фонд (50%)</span><span class="f-sum-val" style="color:var(--blue)" id="f-prize">32 000 ₽</span></div>
-        <div class="f-sum-row" style="border-bottom:none;padding-top:14px;margin-top:4px;border-top:1px solid var(--border)">
-          <span class="f-sum-key" style="font-weight:600;color:var(--text);">Чистая прибыль организатора</span>
-          <span class="f-sum-val gold" id="f-net">= 3 200 ₽</span>
+        <div class="blk-actions">
+          <button class="btn-outline" onclick="acceptAll()">
+            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            Принять все
+          </button>
+          <button class="btn-gold" id="gen-btn" onclick="confirmGenerate()" disabled>
+            <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            Сгенерировать сетку
+          </button>
         </div>
       </div>
-
-      <div class="f-block">
-        <div class="f-block-title">
-          <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-          Транзакции
-        </div>
-        <div class="tx-list" id="tx-list"></div>
-        <div class="tx-add-row">
-          <input type="text" class="tx-inp" id="tx-desc" placeholder="Описание...">
-          <input type="number" class="tx-inp" id="tx-amount" placeholder="Сумма" style="max-width:110px;">
-          <select class="tx-type-sel" id="tx-type">
-            <option value="income">Доход +</option>
-            <option value="expense">Расход −</option>
-          </select>
-          <button class="tx-add-btn" onclick="addTransaction()">+ Добавить</button>
-        </div>
+      <div id="teams-table-wrap" style="overflow-x:auto;">
+        <div class="empty"><div class="empty-icon">📋</div><h3>Выберите турнир</h3><p>Заявки команд появятся здесь</p></div>
       </div>
     </div>
   </div>
 
-  <!-- ═══ SETTINGS TAB ═══ -->
-  <div id="tab-settings" class="tab-panel">
-    <div class="settings-grid">
-      <div class="s-block">
-        <div class="s-block-title"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Основное</div>
-        <div class="s-field"><label>Название турнира</label><input type="text" class="s-input" id="s-name" value="Открытый Чемпионат Чеченской Республики 2025"></div>
-        <div class="s-field"><label>Игра</label>
-          <select class="s-select" id="s-game">
-            <option selected>CS2</option><option>Dota 2</option><option>Valorant</option><option>FIFA 25</option>
-          </select>
+  <!-- BRACKET PANEL -->
+  <div id="panel-bracket" class="panel">
+    <div id="bracket-banner" class="bracket-banner waiting" style="display:none;"></div>
+    <div class="blk">
+      <div class="blk-head">
+        <div class="blk-title">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          Double Elimination — <span id="bracket-teams-count">?</span> команд
         </div>
-        <div class="s-field"><label>Максимум участников</label><input type="number" class="s-input" id="s-slots" value="128"></div>
-        <div class="s-field"><label>Дата начала</label><input type="date" class="s-input" id="s-date" value="2025-06-15"></div>
-        <div class="s-field"><label>Статус турнира</label>
-          <select class="s-select" id="s-status">
-            <option value="open">Регистрация открыта</option>
-            <option value="live" selected>Идёт</option>
-            <option value="done">Завершён</option>
-            <option value="cancelled">Отменён</option>
-          </select>
-        </div>
-        <button class="s-save" onclick="saveSettings()">Сохранить изменения</button>
+        <div class="blk-actions" id="bracket-actions"></div>
       </div>
-
-      <div>
-        <div class="s-block" style="margin-bottom:16px;">
-          <div class="s-block-title"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> Финансы</div>
-          <div class="s-field"><label>Взнос с участника (₽)</label><input type="number" class="s-input" id="s-fee" value="1000"></div>
-          <div class="s-field"><label>Доля призового фонда (%)</label><input type="number" class="s-input" id="s-prize-pct" value="50" min="50" max="80"></div>
-          <div style="font-size:11px;color:var(--text-muted);margin-top:-8px;margin-bottom:14px;">Мин. 50% · 20% уходит платформе</div>
-          <button class="s-save" onclick="saveSettings()">Сохранить</button>
-        </div>
-
-        <div class="s-block">
-          <div class="s-block-title" style="color:var(--red)"><svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Опасная зона</div>
-          <div class="danger-zone">
-            <div class="dz-row">
-              <div><div style="font-size:13px;color:var(--text);">Закрыть регистрацию</div><div class="dz-label" style="font-size:11px;margin-top:2px;">Новые заявки не принимаются</div></div>
-              <button class="dz-btn" onclick="confirmAction('close_reg','Закрыть регистрацию?','Новые заявки больше не будут приниматься.')">Закрыть</button>
-            </div>
-            <div class="dz-row">
-              <div><div style="font-size:13px;color:var(--text);">Завершить турнир</div><div class="dz-label" style="font-size:11px;margin-top:2px;">Сетка закрывается, итоги фиксируются</div></div>
-              <button class="dz-btn" onclick="confirmAction('finish','Завершить турнир?','Это действие нельзя отменить. Все результаты зафиксируются.')">Завершить</button>
-            </div>
-            <div class="dz-row">
-              <div><div style="font-size:13px;color:var(--red);">Удалить турнир</div><div class="dz-label" style="font-size:11px;margin-top:2px;">Навсегда, без возможности восстановления</div></div>
-              <button class="dz-btn" onclick="confirmAction('delete','Удалить турнир?','Турнир и все данные будут удалены НАВСЕГДА.')">Удалить</button>
-            </div>
-          </div>
-        </div>
+      <div id="bracket-content">
+        <div class="empty"><div class="empty-icon">⚙️</div><h3>Сетка не сгенерирована</h3><p>Примите заявки команд и нажмите «Сгенерировать сетку»</p></div>
       </div>
     </div>
   </div>
 
 </div>
 
-<!-- CONFIRM MODAL -->
-<div class="modal-overlay" id="confirm-modal">
+<!-- MATCH MODAL -->
+<div class="modal-bg" id="match-modal">
   <div class="modal">
-    <div class="modal-title" id="modal-title">Подтвердите действие</div>
-    <div class="modal-sub" id="modal-sub">Это действие нельзя отменить.</div>
-    <div class="modal-btns">
-      <button class="modal-cancel" onclick="closeModal()">Отмена</button>
-      <button class="modal-ok" id="modal-ok-btn" onclick="executeAction()">Подтвердить</button>
+    <div class="modal-head">
+      <div class="modal-title" id="modal-title">Результат матча</div>
+      <button class="modal-close" onclick="closeModal()"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="score-row">
+        <div class="score-team">
+          <div class="score-tname" id="mt1">Команда 1</div>
+          <input type="number" class="score-input" id="ms1" value="0" min="0">
+          <div class="winner-btns"><button class="wb" id="wb1" onclick="selWinner(1)">Победитель</button></div>
+        </div>
+        <div class="score-vs">VS</div>
+        <div class="score-team">
+          <div class="score-tname" id="mt2">Команда 2</div>
+          <input type="number" class="score-input" id="ms2" value="0" min="0">
+          <div class="winner-btns"><button class="wb" id="wb2" onclick="selWinner(2)">Победитель</button></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn-outline" style="flex:1;" onclick="closeModal()">Отмена</button>
+        <button class="btn-gold" style="flex:2;" onclick="saveMatch()">
+          <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          Сохранить результат
+        </button>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- PARTICIPANT DETAIL MODAL -->
-<div class="modal-overlay" id="detail-modal">
-  <div class="modal" style="max-width:500px;">
-    <div class="modal-title" id="dm-name">Участник</div>
-    <div id="dm-body"></div>
-    <div class="modal-btns">
-      <button class="modal-cancel" onclick="closeDetailModal()">Закрыть</button>
-      <button class="modal-ok" id="dm-accept" onclick="acceptFromModal()">Принять</button>
-      <button class="modal-ok red" id="dm-reject" onclick="rejectFromModal()">Отклонить</button>
+<!-- CONFIRM -->
+<div class="conf-bg" id="conf">
+  <div class="conf-box">
+    <div class="conf-icon">⚡</div>
+    <div class="conf-title" id="conf-title">Сгенерировать сетку?</div>
+    <div class="conf-text" id="conf-text">Все принятые команды будут расставлены случайно. Действие нельзя отменить.</div>
+    <div class="conf-btns">
+      <button class="conf-cancel" onclick="closeConf()">Отмена</button>
+      <button class="conf-ok" id="conf-ok" onclick="doGenerate()">Сгенерировать</button>
     </div>
   </div>
 </div>
 
-<div id="gg-toast"></div>
+<div id="toast"></div>
 
 <script>
-// ── DATA ──
-let currentFilter = 'all';
-let selectedRows = new Set();
-let currentModalAction = '';
-let currentDetailId = null;
+var TOKEN = localStorage.getItem('gg_token');
+var USER = null;
+try { USER = JSON.parse(localStorage.getItem('gg_user')); } catch(e) {}
 
-const PARTICIPANTS = [
-  { id:1, name:'Зайналбек Мусаев', nick:'ZayTop', game:'CS2', email:'zaytop@mail.ru', steam:'steamcommunity.com/id/zaytop', date:'10 мая', status:'confirmed', initials:'ЗМ' },
-  { id:2, name:'Нажмудин Садулаев', nick:'NazSniperX', game:'CS2', email:'naz@mail.ru', steam:'steamcommunity.com/id/naz', date:'10 мая', status:'confirmed', initials:'НС' },
-  { id:3, name:'Адам Умаров', nick:'AdamGhost', game:'CS2', email:'adam@mail.ru', steam:'steamcommunity.com/id/adam', date:'11 мая', status:'confirmed', initials:'АУ' },
-  { id:4, name:'Магомед Дудаев', nick:'MagForce', game:'CS2', email:'mag@mail.ru', steam:'steamcommunity.com/id/mag', date:'11 мая', status:'confirmed', initials:'МД' },
-  { id:5, name:'Ислам Яхъяев', nick:'IslamPRO', game:'Dota 2', email:'islam@mail.ru', steam:'steamcommunity.com/id/islam', date:'12 мая', status:'confirmed', initials:'ИЯ' },
-  { id:6, name:'Арби Магомадов', nick:'ArbiFire', game:'CS2', email:'arbi@mail.ru', steam:'—', date:'12 мая', status:'confirmed', initials:'АМ' },
-  { id:7, name:'Руслан Алиев', nick:'RusKnight', game:'Valorant', email:'rus@mail.ru', steam:'steamcommunity.com/id/rus', date:'13 мая', status:'confirmed', initials:'РА' },
-  { id:8, name:'Хасан Ибрагимов', nick:'XHasan', game:'CS2', email:'hasan@mail.ru', steam:'steamcommunity.com/id/xhasan', date:'13 мая', status:'confirmed', initials:'ХИ' },
-  { id:9, name:'Шамиль Кадыров', nick:'ShamGun', game:'CS2', email:'sham@mail.ru', steam:'—', date:'14 мая', status:'pending', initials:'ШК' },
-  { id:10, name:'Дени Хусаинов', nick:'DeniBolt', game:'CS2', email:'deni@mail.ru', steam:'steamcommunity.com/id/deni', date:'14 мая', status:'pending', initials:'ДХ' },
-  { id:11, name:'Асламбек Нурудинов', nick:'AslPRO', game:'Dota 2', email:'asl@mail.ru', steam:'—', date:'15 мая', status:'pending', initials:'АН' },
-  { id:12, name:'Тимур Закриев', nick:'TimurX', game:'Valorant', email:'tim@mail.ru', steam:'steamcommunity.com/id/tim', date:'15 мая', status:'pending', initials:'ТЗ' },
-  { id:13, name:'Ваха Сулейманов', nick:'VahaCool', game:'CS2', email:'vaha@mail.ru', steam:'—', date:'16 мая', status:'pending', initials:'ВС' },
-  { id:14, name:'Мовсар Лорсанов', nick:'MovShadow', game:'CS2', email:'movs@mail.ru', steam:'steamcommunity.com/id/movs', date:'16 мая', status:'pending', initials:'МЛ' },
-];
-
-let TRANSACTIONS = [
-  { id:1, desc:'Взносы участников (64 чел. × 1000 ₽)', amount:64000, type:'income', date:'10 мая' },
-  { id:2, desc:'Аренда зала (2 дня)', amount:8000, type:'expense', date:'14 мая' },
-  { id:3, desc:'Призы победителям (выплачено)', amount:8000, type:'expense', date:'—' },
-];
-
-const MATCHES = [
-  { id:1, round:1, label:'Квалификация', p1:'ZayTop', p2:'DarkPulse', s1:16, s2:9, winner:'ZayTop', status:'done' },
-  { id:2, round:1, label:'Квалификация', p1:'NazSniperX', p2:'GrozTeam', s1:16, s2:12, winner:'NazSniperX', status:'done' },
-  { id:3, round:1, label:'Квалификация', p1:'AdamGhost', p2:'ShadowRift', s1:16, s2:7, winner:'AdamGhost', status:'done' },
-  { id:4, round:1, label:'Квалификация', p1:'MagForce', p2:'NovaBears', s1:16, s2:14, winner:'MagForce', status:'done' },
-  { id:5, round:2, label:'1/4 Финала', p1:'ZayTop', p2:'NazSniperX', s1:16, s2:11, winner:'ZayTop', status:'done' },
-  { id:6, round:2, label:'1/4 Финала', p1:'AdamGhost', p2:'MagForce', s1:16, s2:13, winner:'AdamGhost', status:'done' },
-  { id:7, round:3, label:'1/2 Финала', p1:'ZayTop', p2:'AdamGhost', s1:0, s2:0, winner:null, status:'live' },
-  { id:8, round:4, label:'Финал 🏆', p1:'TBD', p2:'TBD', s1:0, s2:0, winner:null, status:'pending' },
-];
-
-// ── RENDER PARTICIPANTS ──
-function renderParticipants(filter = 'all', search = '') {
-  const tbody = document.getElementById('p-tbody');
-  let list = PARTICIPANTS.filter(p => {
-    if (filter !== 'all' && p.status !== filter) return false;
-    if (search && !p.name.toLowerCase().includes(search) && !p.nick.toLowerCase().includes(search)) return false;
-    return true;
-  });
-
-  tbody.innerHTML = list.map((p, i) => `
-    <tr id="row-${p.id}">
-      <td><input type="checkbox" class="p-check row-check" data-id="${p.id}" onchange="rowCheck(this)"></td>
-      <td><span class="p-num">${p.id}</span></td>
-      <td>
-        <div class="p-cell">
-          <div class="p-avatar">${p.initials}</div>
-          <div><div class="p-name">${p.name}</div><div class="p-nick">${p.nick}</div></div>
-        </div>
-      </td>
-      <td><span class="p-game-tag">${p.game}</span></td>
-      <td style="font-size:12px;color:var(--text-dim);">${p.steam !== '—' ? '<a href="https://'+p.steam+'" target="_blank" style="color:var(--blue);text-decoration:none;">Профиль</a>' : '—'}</td>
-      <td style="font-size:12px;color:var(--text-dim);">${p.email}</td>
-      <td style="font-size:12px;color:var(--text-muted);">${p.date}</td>
-      <td>
-        <span class="s-badge ${p.status}">
-          <span class="sd"></span>
-          ${{confirmed:'Принят',pending:'Ожидает',rejected:'Отклонён'}[p.status]}
-        </span>
-      </td>
-      <td>
-        <div class="row-actions">
-          <button class="ra-btn view" onclick="viewParticipant(${p.id})" title="Подробнее">
-            <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-          </button>
-          ${p.status !== 'confirmed' ? `<button class="ra-btn ok" onclick="changeStatus(${p.id},'confirmed')" title="Принять"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></button>` : ''}
-          ${p.status !== 'rejected' ? `<button class="ra-btn del" onclick="changeStatus(${p.id},'rejected')" title="Отклонить"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>` : ''}
-          <button class="ra-btn msg" title="Написать"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 0 2 2z"/></svg></button>
-        </div>
-      </td>
-    </tr>
-  `).join('');
-
-  updateCounts();
+if (!USER || USER.role !== 'admin') {
+  document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center;padding:40px;font-family:Exo 2,sans-serif;color:#5c7090;"><div><div style="font-size:48px;margin-bottom:16px;">🔒</div><div style="font-family:Rajdhani,sans-serif;font-size:26px;font-weight:700;color:#fff;margin-bottom:8px;">Только для администратора</div><p style="margin-bottom:20px;">Эта страница доступна только организаторам.</p><a href="/auth.html" style="display:inline-flex;padding:11px 24px;background:#f0c040;color:#080c12;border-radius:8px;font-family:Rajdhani,sans-serif;font-weight:700;text-decoration:none;">Войти</a></div></div>';
 }
 
-function filterParticipants() {
-  const search = document.getElementById('p-search').value.toLowerCase();
-  renderParticipants(currentFilter, search);
+var currentTid = null;
+var currentTeams = [];
+var currentMatches = [];
+var currentWinner = null;
+var currentMatchId = null;
+var currentMatchData = null;
+
+// ── ЗАГРУЗКА СПИСКА ТУРНИРОВ ──
+async function loadMyTournaments() {
+  try {
+    var res = await fetch('/api/tournaments?limit=50', { headers: { 'Authorization': 'Bearer ' + TOKEN } });
+    var list = await res.json();
+    var myT = list.filter(function(t) { return t.organizer_id == USER.id || USER.role === 'admin'; });
+    var sel = document.getElementById('t-sel');
+    sel.innerHTML = '<option value="">— Выберите турнир —</option>';
+    myT.forEach(function(t) {
+      var opt = document.createElement('option');
+      opt.value = t.id;
+      opt.textContent = t.name + ' (' + t.game + ')';
+      sel.appendChild(opt);
+    });
+    if (myT.length === 1) {
+      sel.value = myT[0].id;
+      loadTournament(myT[0].id);
+    }
+  } catch(e) { console.error(e); }
 }
 
-function filterByStatus(status, btn) {
-  currentFilter = status;
-  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  renderParticipants(status, document.getElementById('p-search').value.toLowerCase());
+// ── ЗАГРУЗКА ДАННЫХ ТУРНИРА ──
+async function loadTournament(tid) {
+  if (!tid) return;
+  currentTid = tid;
+
+  // Загружаем команды
+  await loadTeams();
+  // Загружаем сетку
+  await loadBracket();
 }
 
-function changeStatus(id, status) {
-  const p = PARTICIPANTS.find(x => x.id === id);
-  if (p) {
-    p.status = status;
-    renderParticipants(currentFilter, document.getElementById('p-search').value.toLowerCase());
+async function loadTeams() {
+  try {
+    var res = await fetch('/api/tournaments/' + currentTid + '/teams', {
+      headers: { 'Authorization': 'Bearer ' + TOKEN }
+    });
+    currentTeams = await res.json();
+    renderTeams();
     updateStats();
-    toast(status === 'confirmed' ? `✓ ${p.nick} принят` : `✗ ${p.nick} отклонён`, status === 'confirmed' ? 'success' : 'error');
-  }
+  } catch(e) { toast('Ошибка загрузки команд', 'err'); }
 }
 
-function updateCounts() {
-  const counts = PARTICIPANTS.reduce((a, p) => { a[p.status] = (a[p.status]||0)+1; return a; }, {});
-  document.getElementById('cnt-all').textContent = PARTICIPANTS.length;
-  document.getElementById('cnt-pending').textContent = counts.pending||0;
-  document.getElementById('cnt-confirmed').textContent = counts.confirmed||0;
-  document.getElementById('cnt-rejected').textContent = counts.rejected||0;
-  document.getElementById('pending-badge').textContent = counts.pending||0;
+async function loadBracket() {
+  try {
+    var res = await fetch('/api/tournaments/' + currentTid + '/bracket', {
+      headers: { 'Authorization': 'Bearer ' + TOKEN }
+    });
+    var data = await res.json();
+    currentMatches = data.matches || [];
+    renderBracket(data);
+  } catch(e) { console.error('Bracket error:', e); }
+}
+
+// ── РЕНДЕР КОМАНД ──
+function renderTeams() {
+  var wrap = document.getElementById('teams-table-wrap');
+  var tb = document.getElementById('tb-teams');
+  tb.textContent = currentTeams.length;
+
+  if (!currentTeams.length) {
+    wrap.innerHTML = '<div class="empty"><div class="empty-icon">📋</div><h3>Нет заявок</h3><p>Команды ещё не зарегистрировались</p></div>';
+    return;
+  }
+
+  var html = '<table class="tbl"><thead><tr><th>#</th><th>Команда</th><th>Игроков</th><th>Статус</th><th>Дата</th><th>Действия</th></tr></thead><tbody>';
+  currentTeams.forEach(function(t, i) {
+    var ini = t.name.split(' ').map(function(w){return w[0];}).join('').toUpperCase().slice(0,2);
+    var players = t.players ? t.players.filter(function(p){return p && p.nickname;}) : [];
+    html += '<tr>' +
+      '<td style="color:var(--text-muted);font-family:Rajdhani,sans-serif;font-size:15px;font-weight:700;">' + (i+1) + '</td>' +
+      '<td><div class="av"><div class="av-ic">' + ini + '</div><div><div class="av-name">' + t.name + '</div>' +
+        '<div class="av-sub">' + players.length + ' игроков</div></div></div></td>' +
+      '<td>' +
+        '<button class="expand-btn" id="eb-' + t.id + '" onclick="togglePlayers(' + t.id + ')">' +
+          '<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>' +
+        '</button>' +
+      '</td>' +
+      '<td><span class="pill pill-' + t.status + '">' + {pending:'Ожидает',accepted:'Принята',rejected:'Отклонена'}[t.status] + '</span></td>' +
+      '<td style="font-size:12px;color:var(--text-dim);">' + new Date(t.created_at).toLocaleDateString('ru-RU') + '</td>' +
+      '<td><div class="act-btns">' +
+        (t.status !== 'accepted' ? '<button class="btn-green" onclick="setTeamStatus(' + t.id + ',\'accepted\')">Принять</button>' : '') +
+        (t.status !== 'rejected' ? '<button class="btn-red" onclick="setTeamStatus(' + t.id + ',\'rejected\')">Отклонить</button>' : '') +
+        '<button class="btn-red" onclick="deleteTeam(' + t.id + ')" style="padding:7px 10px;">' +
+          '<svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;display:block"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>' +
+        '</button>' +
+      '</div></td>' +
+    '</tr>' +
+    '<tr id="pr-' + t.id + '" style="display:none;"><td colspan="6"><div class="team-players open" id="players-' + t.id + '">' +
+      (players.map(function(p) {
+        return '<div class="player-row">' +
+          (p.is_captain ? '<span class="cap-badge">КАП</span>' : '<span style="width:30px;display:inline-block;"></span>') +
+          '<span style="font-weight:500;min-width:160px;">' + (p.full_name || '—') + '</span>' +
+          '<span style="color:var(--text-dim);min-width:120px;">' + (p.nickname || '—') + '</span>' +
+          (p.steam_url ? '<a href="' + p.steam_url + '" target="_blank" style="color:var(--blue);font-size:11px;">Steam →</a>' : '') +
+        '</div>';
+      }).join('') || '<div style="color:var(--text-muted);font-size:12px;padding:8px 0;">Нет данных об игроках</div>') +
+    '</div></td></tr>';
+  });
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+}
+
+function togglePlayers(tid) {
+  var row = document.getElementById('pr-' + tid);
+  var btn = document.getElementById('eb-' + tid);
+  var isOpen = row.style.display !== 'none';
+  row.style.display = isOpen ? 'none' : 'table-row';
+  btn.classList.toggle('open', !isOpen);
 }
 
 function updateStats() {
-  const confirmed = PARTICIPANTS.filter(p=>p.status==='confirmed').length;
-  const pending = PARTICIPANTS.filter(p=>p.status==='pending').length;
-  document.getElementById('s-total').textContent = PARTICIPANTS.length;
-  document.getElementById('s-confirmed').textContent = confirmed;
-  document.getElementById('s-pending').textContent = pending;
-  document.getElementById('s-income').textContent = (PARTICIPANTS.length * 1000).toLocaleString('ru-RU') + ' ₽';
-  updateCounts();
+  var accepted = currentTeams.filter(function(t){return t.status==='accepted';}).length;
+  var pending = currentTeams.filter(function(t){return t.status==='pending';}).length;
+  document.getElementById('st-teams').textContent = currentTeams.length;
+  document.getElementById('st-accepted').textContent = accepted;
+  document.getElementById('st-pending').textContent = pending;
+  document.getElementById('st-matches').textContent = currentMatches.filter(function(m){return m.status==='done';}).length;
+  // Кнопка генерации — активна если есть >= 2 принятых команды
+  var genBtn = document.getElementById('gen-btn');
+  genBtn.disabled = accepted < 2;
+  genBtn.title = accepted < 2 ? 'Нужно минимум 2 принятые команды' : '';
 }
 
-// ── SELECT ALL ──
-function toggleAll(cb) {
-  document.querySelectorAll('.row-check').forEach(c => {
-    c.checked = cb.checked;
-    const id = parseInt(c.dataset.id);
-    cb.checked ? selectedRows.add(id) : selectedRows.delete(id);
+// ── ДЕЙСТВИЯ С КОМАНДАМИ ──
+async function setTeamStatus(teamId, status) {
+  try {
+    await fetch('/api/tournaments/' + currentTid + '/teams/' + teamId, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + TOKEN },
+      body: JSON.stringify({ status })
+    });
+    await loadTeams();
+    toast(status === 'accepted' ? '✓ Команда принята' : 'Команда отклонена');
+  } catch(e) { toast('Ошибка', 'err'); }
+}
+
+async function acceptAll() {
+  var pending = currentTeams.filter(function(t){return t.status==='pending';});
+  if (!pending.length) { toast('Нет заявок для принятия'); return; }
+  for (var i = 0; i < pending.length; i++) {
+    await setTeamStatus(pending[i].id, 'accepted');
+  }
+  toast('✓ Все заявки приняты (' + pending.length + ')');
+}
+
+async function deleteTeam(teamId) {
+  if (!confirm('Удалить эту команду?')) return;
+  try {
+    await fetch('/api/tournaments/' + currentTid + '/teams/' + teamId, {
+      method: 'DELETE',
+      headers: { 'Authorization': 'Bearer ' + TOKEN }
+    });
+    await loadTeams();
+    toast('Команда удалена');
+  } catch(e) { toast('Ошибка удаления', 'err'); }
+}
+
+// ── ГЕНЕРАЦИЯ СЕТКИ ──
+function confirmGenerate() {
+  var accepted = currentTeams.filter(function(t){return t.status==='accepted';}).length;
+  document.getElementById('conf-text').textContent =
+    accepted + ' принятых команд будут расставлены случайно. После генерации состав зафиксируется.';
+  document.getElementById('conf').classList.add('open');
+}
+function closeConf() { document.getElementById('conf').classList.remove('open'); }
+
+async function doGenerate() {
+  closeConf();
+  var btn = document.getElementById('gen-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spin"></div> Генерируем...';
+  try {
+    var res = await fetch('/api/tournaments/' + currentTid + '/generate-bracket', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + TOKEN }
+    });
+    var data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    toast('✓ ' + data.message);
+    await loadTeams();
+    await loadBracket();
+    switchTab('bracket', document.querySelector('.tab:nth-child(2)'));
+  } catch(e) {
+    toast('Ошибка: ' + e.message, 'err');
+    btn.disabled = false;
+    btn.innerHTML = '<svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Сгенерировать сетку';
+  }
+}
+
+// ── РЕНДЕР СЕТКИ ──
+function renderBracket(data) {
+  var content = document.getElementById('bracket-content');
+  var banner = document.getElementById('bracket-banner');
+  var actions = document.getElementById('bracket-actions');
+
+  if (!data.generated) {
+    banner.style.display = 'none';
+    content.innerHTML = '<div class="empty"><div class="empty-icon">⚙️</div><h3>Сетка не сгенерирована</h3><p>Примите заявки и нажмите «Сгенерировать сетку»</p></div>';
+    actions.innerHTML = '';
+    return;
+  }
+
+  var teams = data.teams || [];
+  document.getElementById('bracket-teams-count').textContent = teams.length;
+  document.getElementById('st-matches').textContent = (data.matches||[]).filter(function(m){return m.status==='done';}).length;
+
+  // Actions
+  if (!data.published) {
+    banner.style.display = 'block';
+    banner.className = 'bracket-banner waiting';
+    banner.innerHTML = '⚡ <b>Сетка сгенерирована</b> — но ещё не опубликована. Участники её не видят. Проверьте и нажмите «Опубликовать».';
+    actions.innerHTML = '<button class="btn-gold" onclick="publishBracket()"><svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Опубликовать сетку</button>';
+  } else {
+    banner.style.display = 'block';
+    banner.className = 'bracket-banner ready';
+    banner.innerHTML = '✅ <b>Сетка опубликована</b> — участники видят свои матчи.';
+    actions.innerHTML = '';
+  }
+
+  if (!data.matches || !data.matches.length) {
+    content.innerHTML = '<div class="empty"><div class="empty-icon">📊</div><h3>Матчи будут здесь</h3></div>';
+    return;
+  }
+
+  // Разделяем на Upper, Lower, Grand Final
+  var upper = data.matches.filter(function(m){return m.bracket_type==='upper';});
+  var lower = data.matches.filter(function(m){return m.bracket_type==='lower';});
+  var grand = data.matches.filter(function(m){return m.bracket_type==='grand_final';});
+
+  var upperRounds = groupByRound(upper);
+  var lowerRounds = groupByRound(lower);
+
+  var html = '<div class="bracket-wrap">';
+
+  // Upper Bracket
+  html += '<div class="b-section"><div class="b-section-title upper">⬆️ Верхняя сетка (Upper Bracket)</div><div style="display:flex;gap:0;">';
+  Object.keys(upperRounds).sort().forEach(function(r) {
+    var rLabel = ['Раунд 1','Четвертьфинал','Полуфинал','Финал'][parseInt(r)-1] || ('Раунд ' + r);
+    html += '<div class="b-round"><div class="b-round-label">' + rLabel + '</div><div>';
+    upperRounds[r].forEach(function(m) { html += renderMatch(m, 'upper'); });
+    html += '</div></div>';
   });
-  updateBulkButtons();
+  html += '</div></div>';
+
+  // Lower Bracket
+  if (lowerRounds && Object.keys(lowerRounds).length) {
+    html += '<div class="b-section"><div class="b-section-title lower">⬇️ Нижняя сетка (Lower Bracket)</div><div style="display:flex;gap:0;">';
+    Object.keys(lowerRounds).sort().forEach(function(r) {
+      var rLabel = ['Раунд L1','Раунд L2','Раунд L3'][parseInt(r)-1] || ('Раунд L' + r);
+      html += '<div class="b-round"><div class="b-round-label">' + rLabel + '</div><div>';
+      lowerRounds[r].forEach(function(m) { html += renderMatch(m, 'lower'); });
+      html += '</div></div>';
+    });
+    html += '</div></div>';
+  }
+
+  // Grand Final
+  if (grand.length) {
+    html += '<div class="b-section"><div class="b-section-title" style="color:#fff;">🏆 Гранд-Финал</div><div style="display:flex;justify-content:center;">' +
+      '<div style="max-width:280px;width:100%;">';
+    grand.forEach(function(m) { html += renderMatch(m, 'grand'); });
+    html += '</div></div></div>';
+  }
+
+  html += '</div>';
+  content.innerHTML = html;
 }
 
-function rowCheck(cb) {
-  const id = parseInt(cb.dataset.id);
-  cb.checked ? selectedRows.add(id) : selectedRows.delete(id);
-  updateBulkButtons();
-}
-
-function updateBulkButtons() {
-  const show = selectedRows.size > 0;
-  document.getElementById('bulk-accept').style.display = show ? 'flex' : 'none';
-  document.getElementById('bulk-reject').style.display = show ? 'flex' : 'none';
-}
-
-function bulkAction(action) {
-  const status = action === 'accept' ? 'confirmed' : 'rejected';
-  selectedRows.forEach(id => {
-    const p = PARTICIPANTS.find(x => x.id === id);
-    if (p) p.status = status;
+function groupByRound(matches) {
+  var rounds = {};
+  matches.forEach(function(m) {
+    if (!rounds[m.round]) rounds[m.round] = [];
+    rounds[m.round].push(m);
   });
-  selectedRows.clear();
-  document.getElementById('check-all').checked = false;
-  renderParticipants(currentFilter);
-  updateStats();
-  updateBulkButtons();
-  toast(`Обновлено ${selectedRows.size || 'несколько'} участников`, 'success');
+  return rounds;
 }
 
-// ── DETAIL MODAL ──
-function viewParticipant(id) {
-  const p = PARTICIPANTS.find(x => x.id === id);
-  currentDetailId = id;
-  document.getElementById('dm-name').textContent = p.name + ' · ' + p.nick;
-  document.getElementById('dm-body').innerHTML = `
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
-      <div style="background:var(--bg-card2);border:1px solid var(--border);border-radius:8px;padding:12px;">
-        <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Контакты</div>
-        <div style="font-size:13px;color:var(--text-dim);margin-bottom:4px;">📧 ${p.email}</div>
-        <div style="font-size:13px;color:var(--text-dim);">🎮 ${p.game}</div>
-      </div>
-      <div style="background:var(--bg-card2);border:1px solid var(--border);border-radius:8px;padding:12px;">
-        <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Аккаунт</div>
-        <div style="font-size:13px;color:var(--text-dim);margin-bottom:4px;">Steam: ${p.steam}</div>
-        <div style="font-size:13px;color:var(--text-dim);">Заявка: ${p.date}</div>
-      </div>
-    </div>
-    <div style="font-size:12px;color:var(--text-dim);">Текущий статус: <span class="s-badge ${p.status}" style="display:inline-flex;">${{confirmed:'Принят',pending:'Ожидает',rejected:'Отклонён'}[p.status]}</span></div>
-  `;
-  const modal = document.getElementById('detail-modal');
-  modal.classList.add('open');
-  document.getElementById('dm-accept').style.display = p.status !== 'confirmed' ? 'block' : 'none';
-  document.getElementById('dm-reject').style.display = p.status !== 'rejected' ? 'block' : 'none';
-}
-function acceptFromModal() { changeStatus(currentDetailId,'confirmed'); closeDetailModal(); }
-function rejectFromModal() { changeStatus(currentDetailId,'rejected'); closeDetailModal(); }
-function closeDetailModal() { document.getElementById('detail-modal').classList.remove('open'); }
+function renderMatch(m, type) {
+  var hdrClass = type === 'upper' ? 'upper-hdr' : type === 'lower' ? 'lower-hdr' : '';
+  var matchClass = m.status === 'done' ? 'done' : type === 'grand' ? 'grand' : '';
+  var statusText = {done:'✓ Сыгран', pending:'Ожидает'}[m.status] || m.status;
 
-// ── MATCHES ──
-function renderMatches() {
-  const rounds = {};
-  MATCHES.forEach(m => {
-    if (!rounds[m.round]) rounds[m.round] = { label: m.label, matches: [] };
-    rounds[m.round].matches.push(m);
-  });
+  var t1 = m.team1_name || 'TBD';
+  var t2 = m.team2_name || 'TBD';
+  var t1tbd = !m.team1_name;
+  var t2tbd = !m.team2_name;
+  var w1 = m.winner_team_id && m.winner_team_id === m.team1_id;
+  var w2 = m.winner_team_id && m.winner_team_id === m.team2_id;
 
-  const container = document.getElementById('matches-container');
-  container.innerHTML = Object.values(rounds).map(r => `
-    <div class="bracket-round-label">${r.label}</div>
-    <div class="matches-grid">
-      ${r.matches.map(m => `
-        <div class="match-card${m.status==='live'?' live':''}">
-          <div class="match-header">
-            <span class="match-id">Матч #${m.id}</span>
-            <span class="match-status ${m.status}">${{done:'Завершён',live:'● Live',pending:'Ожидает'}[m.status]}</span>
-          </div>
-          <div class="match-body">
-            <div class="match-player${m.winner===m.p1?' winner':''}">
-              <div class="mp-avatar">${m.p1.slice(0,2).toUpperCase()}</div>
-              <div class="mp-name">${m.p1}</div>
-              <div class="mp-score">${m.status!=='pending'?m.s1:'—'}</div>
-            </div>
-            <div class="match-vs">VS</div>
-            <div class="match-player${m.winner===m.p2?' winner':''}">
-              <div class="mp-avatar">${m.p2.slice(0,2).toUpperCase()}</div>
-              <div class="mp-name">${m.p2}</div>
-              <div class="mp-score">${m.status!=='pending'?m.s2:'—'}</div>
-            </div>
-          </div>
-          <div class="score-editor" id="score-${m.id}">
-            <div class="score-row">
-              <span class="score-label">${m.p1}</span>
-              <input type="number" class="score-input" id="s1-${m.id}" min="0" max="30" value="${m.s1}">
-            </div>
-            <div class="score-row">
-              <span class="score-label">${m.p2}</span>
-              <input type="number" class="score-input" id="s2-${m.id}" min="0" max="30" value="${m.s2}">
-            </div>
-            <div class="score-btns">
-              <button class="score-save" onclick="saveScore(${m.id})">Сохранить результат</button>
-              <button class="score-cancel" onclick="toggleScore(${m.id})">Отмена</button>
-            </div>
-          </div>
-          <div class="match-footer">
-            ${m.status!=='done' ? `<button class="btn-action primary" onclick="toggleScore(${m.id})"><svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round"><polyline points="20 6 9 17 4 12"/></svg>Внести счёт</button>` : ''}
-            <button class="btn-action ghost" onclick="toggleScore(${m.id})"><svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Изменить</button>
-          </div>
-        </div>
-      `).join('')}
-    </div>
-  `).join('');
+  return '<div class="b-match ' + matchClass + '" onclick="' + (m.status !== 'done' && !t1tbd && !t2tbd ? 'openMatch(' + JSON.stringify(m).replace(/"/g,"'") + ')' : '') + '">' +
+    '<div class="b-match-hdr ' + hdrClass + '">Матч #' + m.match_number + '<span>' + statusText + '</span></div>' +
+    '<div class="b-team ' + (w1?'winner':'') + ' ' + (t1tbd?'tbd':'') + '">' +
+      '<div class="b-seed">' + (m.team1_seed||'?') + '</div>' +
+      '<div class="b-tname">' + t1 + '</div>' +
+      '<div class="b-score">' + (m.status==='done'?m.score1:'—') + '</div>' +
+    '</div>' +
+    '<div class="b-team ' + (w2?'winner':'') + ' ' + (t2tbd?'tbd':'') + '">' +
+      '<div class="b-seed">' + (m.team2_seed||'?') + '</div>' +
+      '<div class="b-tname">' + t2 + '</div>' +
+      '<div class="b-score">' + (m.status==='done'?m.score2:'—') + '</div>' +
+    '</div>' +
+  '</div>';
 }
 
-function toggleScore(id) {
-  const el = document.getElementById('score-' + id);
-  el.classList.toggle('open');
+// ── МАТЧ МОДАЛ ──
+function openMatch(m) {
+  currentMatchId = m.id;
+  currentMatchData = m;
+  currentWinner = null;
+  document.getElementById('modal-title').textContent = 'Матч #' + m.match_number;
+  document.getElementById('mt1').textContent = m.team1_name;
+  document.getElementById('mt2').textContent = m.team2_name;
+  document.getElementById('ms1').value = m.score1 || 0;
+  document.getElementById('ms2').value = m.score2 || 0;
+  document.getElementById('wb1').classList.remove('sel');
+  document.getElementById('wb2').classList.remove('sel');
+  document.getElementById('match-modal').classList.add('open');
 }
 
-function saveScore(id) {
-  const m = MATCHES.find(x => x.id === id);
-  const s1 = parseInt(document.getElementById('s1-' + id).value) || 0;
-  const s2 = parseInt(document.getElementById('s2-' + id).value) || 0;
-  m.s1 = s1; m.s2 = s2;
-  m.winner = s1 > s2 ? m.p1 : m.p2;
-  m.status = 'done';
-  renderMatches();
-  toast(`Результат матча #${id} сохранён`, 'success');
+function closeModal() { document.getElementById('match-modal').classList.remove('open'); }
+
+function selWinner(n) {
+  currentWinner = currentWinner === n ? null : n;
+  document.getElementById('wb1').classList.toggle('sel', currentWinner===1);
+  document.getElementById('wb2').classList.toggle('sel', currentWinner===2);
 }
 
-function generateBracket() {
-  toast('Сетка уже сгенерирована', 'success');
+async function saveMatch() {
+  if (!currentWinner) { toast('Выберите победителя', 'err'); return; }
+  var s1 = parseInt(document.getElementById('ms1').value) || 0;
+  var s2 = parseInt(document.getElementById('ms2').value) || 0;
+  var winnerId = currentWinner === 1 ? currentMatchData.team1_id : currentMatchData.team2_id;
+  try {
+    var res = await fetch('/api/tournaments/' + currentTid + '/matches/' + currentMatchId, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + TOKEN },
+      body: JSON.stringify({ score1: s1, score2: s2, winner_team_id: winnerId })
+    });
+    var data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    closeModal();
+    toast('✓ Результат сохранён');
+    await loadBracket();
+    await loadTeams();
+  } catch(e) { toast('Ошибка: ' + e.message, 'err'); }
 }
 
-// ── FINANCE ──
-function renderTransactions() {
-  const list = document.getElementById('tx-list');
-  list.innerHTML = TRANSACTIONS.map(tx => `
-    <div class="tx-item">
-      <div class="tx-dot ${tx.type}"></div>
-      <div class="tx-desc">${tx.desc}</div>
-      <div class="tx-date">${tx.date}</div>
-      <div class="tx-amount ${tx.type}">${tx.type==='income'?'+':'−'}${tx.amount.toLocaleString('ru-RU')} ₽</div>
-      <button class="tx-del" onclick="delTx(${tx.id})"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></button>
-    </div>
-  `).join('');
-  recalcFinance();
+async function publishBracket() {
+  try {
+    await fetch('/api/tournaments/' + currentTid + '/publish-bracket', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + TOKEN }
+    });
+    toast('✓ Сетка опубликована! Участники её видят.');
+    await loadBracket();
+  } catch(e) { toast('Ошибка', 'err'); }
 }
 
-function addTransaction() {
-  const desc = document.getElementById('tx-desc').value.trim();
-  const amount = parseInt(document.getElementById('tx-amount').value) || 0;
-  const type = document.getElementById('tx-type').value;
-  if (!desc || !amount) { toast('Заполните описание и сумму', 'error'); return; }
-  TRANSACTIONS.push({ id: Date.now(), desc, amount, type, date: 'Сейчас' });
-  document.getElementById('tx-desc').value = '';
-  document.getElementById('tx-amount').value = '';
-  renderTransactions();
-  toast('Транзакция добавлена', 'success');
-}
-
-function delTx(id) {
-  TRANSACTIONS = TRANSACTIONS.filter(t => t.id !== id);
-  renderTransactions();
-}
-
-function recalcFinance() {
-  let income = 0, expense = 0;
-  TRANSACTIONS.forEach(t => { t.type === 'income' ? income += t.amount : expense += t.amount; });
-  const platform = Math.round(income * 0.2);
-  const prize = Math.round(income * 0.5);
-  const net = income - expense - platform;
-  const fmt = v => v.toLocaleString('ru-RU') + ' ₽';
-  document.getElementById('f-gross').textContent = '+' + fmt(income);
-  document.getElementById('f-expenses').textContent = '−' + fmt(expense);
-  document.getElementById('f-platform').textContent = '−' + fmt(platform);
-  document.getElementById('f-prize').textContent = fmt(prize);
-  document.getElementById('f-net').textContent = '= ' + fmt(net);
-  document.getElementById('f-net').style.color = net >= 0 ? 'var(--gold)' : 'var(--red)';
-}
-
-// ── TABS ──
+// ── УТИЛИТЫ ──
 function switchTab(id, btn) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById('tab-' + id).classList.add('active');
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
+  if (btn) btn.classList.add('active');
+  document.getElementById('panel-' + id).classList.add('active');
 }
 
-// ── TOURNAMENT SELECTOR ──
-function toggleTournamentDD() {
-  document.getElementById('t-sel-dd').classList.toggle('open');
-}
-function selectTournament(idx) {
-  const names = ['Открытый ЧР 2025','Valorant City Cup'];
-  const statuses = ['● Live · 64/128 участников','● Открыт · 12/64 участников'];
-  document.getElementById('sel-name').textContent = names[idx];
-  document.getElementById('sel-status').textContent = statuses[idx];
-  document.getElementById('t-sel-dd').classList.remove('open');
-  toast('Турнир выбран: ' + names[idx], 'success');
-}
-document.addEventListener('click', e => {
-  const wrap = document.querySelector('.t-sel-wrap');
-  if (wrap && !wrap.contains(e.target)) document.getElementById('t-sel-dd').classList.remove('open');
-});
-
-// ── SETTINGS ──
-function saveSettings() { toast('Изменения сохранены', 'success'); }
-
-// ── CONFIRM MODAL ──
-function confirmAction(action, title, sub) {
-  currentModalAction = action;
-  document.getElementById('modal-title').textContent = title;
-  document.getElementById('modal-sub').textContent = sub;
-  const btn = document.getElementById('modal-ok-btn');
-  btn.className = action === 'delete' ? 'modal-ok red' : 'modal-ok';
-  btn.textContent = action === 'delete' ? 'Удалить навсегда' : 'Подтвердить';
-  document.getElementById('confirm-modal').classList.add('open');
-}
-function closeModal() { document.getElementById('confirm-modal').classList.remove('open'); }
-function executeAction() {
-  const msgs = { close_reg:'Регистрация закрыта', finish:'Турнир завершён', delete:'Турнир удалён' };
-  closeModal();
-  toast(msgs[currentModalAction] || 'Выполнено', currentModalAction === 'delete' ? 'error' : 'success');
-  if (currentModalAction === 'delete') setTimeout(() => location.href='organizer.html', 1500);
-}
-
-// ── EXPORT CSV ──
-function exportCSV() {
-  const rows = [['#','Имя','Ник','Игра','Email','Steam','Дата','Статус']];
-  PARTICIPANTS.forEach(p => rows.push([p.id,p.name,p.nick,p.game,p.email,p.steam,p.date,p.status]));
-  const csv = rows.map(r => r.join(',')).join('\n');
-  const a = document.createElement('a');
-  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
-  a.download = 'participants.csv';
-  a.click();
-  toast('CSV скачан', 'success');
-}
-
-// ── TOAST ──
 function toast(msg, type) {
-  const el = document.getElementById('gg-toast');
-  el.textContent = (type === 'success' ? '✓ ' : '✗ ') + msg;
-  el.style.background = type === 'success' ? '#0d2010' : '#200d0d';
-  el.style.border = type === 'success' ? '1px solid rgba(74,222,128,.3)' : '1px solid rgba(248,113,113,.3)';
-  el.style.color = type === 'success' ? '#4ade80' : '#f87171';
-  el.classList.add('show');
+  var el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show ' + (type === 'err' ? 'err' : 'ok');
   clearTimeout(el._t);
-  el._t = setTimeout(() => el.classList.remove('show'), 3000);
+  el._t = setTimeout(function(){ el.classList.remove('show'); }, 3500);
 }
 
-// ── INIT ──
-renderParticipants();
-renderMatches();
-renderTransactions();
-updateStats();
+document.getElementById('match-modal').addEventListener('click', function(e){ if(e.target===this) closeModal(); });
+document.getElementById('conf').addEventListener('click', function(e){ if(e.target===this) closeConf(); });
+
+// Загрузка
+loadMyTournaments();
 </script>
 </body>
 </html>
