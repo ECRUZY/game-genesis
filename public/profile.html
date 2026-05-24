@@ -1,1077 +1,750 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <script src="/nav.js"></script>
-  <script src="/api.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Профиль — Game Genesis</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <script src="/nav.js"></script>
+  <script src="/api.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Exo+2:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --gold: #f0c040;
-      --gold-dim: rgba(240,192,64,0.12);
-      --gold-glow: rgba(240,192,64,0.07);
-      --bg: #080c12;
-      --bg-card: #0d1420;
-      --bg-card2: #111928;
-      --bg-input: #0a1018;
-      --border: #1a2436;
-      --border-hi: #253550;
-      --text: #dde4ef;
-      --text-dim: #5c7090;
-      --text-muted: #2e3f58;
-      --success: #4ade80;
-      --red: #f87171;
-      --blue: #60a5fa;
-      --purple: #a78bfa;
-    }
-    html { scroll-behavior: smooth; }
-    ::-webkit-scrollbar { width: 5px; }
-    ::-webkit-scrollbar-track { background: var(--bg); }
-    ::-webkit-scrollbar-thumb { background: #1e2d42; border-radius: 3px; }
-    body { background: var(--bg); color: var(--text); font-family: 'Exo 2', sans-serif; overflow-x: hidden; }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--gold:#f0c040;--gold-dim:rgba(240,192,64,0.1);--bg:#080c12;--bg-card:#0d1420;--bg-card2:#111928;--bg-input:#0a1018;--border:#1a2436;--border-hi:#253550;--text:#dde4ef;--text-dim:#5c7090;--text-muted:#2e3f58;--success:#4ade80;--red:#f87171;--blue:#60a5fa}
+    ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:#1e2d42;border-radius:3px}
+    body{background:var(--bg);color:var(--text);font-family:'Exo 2',sans-serif;min-height:100vh}
+    .grid-bg{position:fixed;inset:0;z-index:0;pointer-events:none;background-image:linear-gradient(rgba(240,192,64,.02) 1px,transparent 1px),linear-gradient(90deg,rgba(240,192,64,.02) 1px,transparent 1px);background-size:50px 50px}
+    .page{position:relative;z-index:1}
 
-    .grid-bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; background-image: linear-gradient(rgba(240,192,64,0.022) 1px,transparent 1px),linear-gradient(90deg,rgba(240,192,64,0.022) 1px,transparent 1px); background-size: 50px 50px; }
+    /* COVER */
+    .cover{height:200px;position:relative;background:linear-gradient(135deg,#0f1e35,#1a0a2e,#0a1020);overflow:hidden}
+    .cover-edit{position:absolute;bottom:12px;right:16px;background:rgba(0,0,0,.6);border:1px solid var(--border-hi);border-radius:8px;padding:6px 14px;font-size:12px;color:var(--text-dim);cursor:pointer;transition:.2s;display:none}
+    .cover-edit:hover{border-color:var(--gold);color:var(--gold)}
 
-    /* HEADER */
-    header { position: fixed; top: 0; left: 0; right: 0; z-index: 200; height: 64px; display: flex; align-items: center; padding: 0 32px; background: rgba(8,12,18,0.92); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); }
-    .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; margin-right: 40px; }
-    .logo-hex { width: 36px; height: 36px; background: var(--gold); clip-path: polygon(50% 0%,93% 25%,93% 75%,50% 100%,7% 75%,7% 25%); display: flex; align-items: center; justify-content: center; }
-    .logo-hex svg { width: 18px; height: 18px; }
-    .logo-name { font-family: 'Rajdhani',sans-serif; font-size: 18px; font-weight: 700; color: var(--gold); letter-spacing: 2px; }
-    nav { display: flex; align-items: center; gap: 2px; flex: 1; }
-    .nav-a { font-size: 13px; font-weight: 500; color: var(--text-dim); text-decoration: none; padding: 6px 14px; border-radius: 6px; transition: .2s; }
-    .nav-a:hover { color: var(--text); background: rgba(255,255,255,.04); }
-    .nav-a.active { color: var(--gold); background: var(--gold-glow); }
-    .header-right { display: flex; align-items: center; gap: 10px; margin-left: auto; }
-    .btn-sm { font-family: 'Exo 2',sans-serif; font-size: 13px; padding: 7px 16px; border-radius: 7px; border: 1px solid var(--border-hi); background: transparent; color: var(--text-dim); cursor: pointer; transition: .2s; }
-    .btn-sm:hover { border-color: var(--gold); color: var(--gold); }
-    .btn-sm-gold { font-family: 'Rajdhani',sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 1px; padding: 8px 18px; border-radius: 7px; border: none; background: var(--gold); color: #080c12; cursor: pointer; transition: .2s; }
-    .btn-sm-gold:hover { background: #ffd055; }
-
-    /* SIDEBAR */
-    .sidebar { position: fixed; left: 0; top: 64px; bottom: 0; width: 60px; z-index: 100; display: flex; flex-direction: column; align-items: center; padding: 20px 0; gap: 4px; background: rgba(8,12,18,.9); border-right: 1px solid var(--border); backdrop-filter: blur(10px); }
-    .sb-item { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); cursor: pointer; transition: .2s; position: relative; }
-    .sb-item:hover { color: var(--text); background: rgba(255,255,255,.05); }
-    .sb-item.active { color: var(--gold); background: var(--gold-glow); }
-    .sb-item svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-    .sb-item .tip { position: absolute; left: 52px; top: 50%; transform: translateY(-50%); background: #1a2436; color: var(--text); font-size: 12px; padding: 4px 10px; border-radius: 5px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 200; }
-    .sb-item:hover .tip { opacity: 1; }
-    .sb-sep { width: 28px; height: 1px; background: var(--border); margin: 6px 0; }
-
-    /* PAGE */
-    .page { margin-left: 60px; padding-top: 64px; position: relative; z-index: 1; }
-
-    /* ── HERO COVER ── */
-    .profile-cover {
-      height: 220px; position: relative; overflow: hidden;
-      background: linear-gradient(135deg, #0a1628 0%, #0f1e35 40%, #1a0a2e 100%);
-    }
-    .cover-pattern {
-      position: absolute; inset: 0;
-      background-image: repeating-linear-gradient(45deg, rgba(240,192,64,0.03) 0px, rgba(240,192,64,0.03) 1px, transparent 1px, transparent 40px), repeating-linear-gradient(-45deg, rgba(96,165,250,0.02) 0px, rgba(96,165,250,0.02) 1px, transparent 1px, transparent 40px);
-    }
-    .cover-glow { position: absolute; bottom: -60px; left: 40%; width: 400px; height: 200px; background: radial-gradient(ellipse, rgba(240,192,64,0.08), transparent 70%); }
-    .cover-edit-btn {
-      position: absolute; top: 16px; right: 20px;
-      background: rgba(13,20,32,.7); border: 1px solid var(--border-hi); color: var(--text-dim);
-      border-radius: 8px; padding: 7px 14px; font-size: 12px; font-weight: 500;
-      cursor: pointer; transition: .2s; backdrop-filter: blur(8px);
-      display: flex; align-items: center; gap: 6px;
-    }
-    .cover-edit-btn svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-    .cover-edit-btn:hover { border-color: var(--gold); color: var(--gold); }
-
-    /* PROFILE INFO BAND */
-    .profile-band {
-      padding: 0 48px 0;
-      position: relative;
-    }
-    .profile-main {
-      display: flex; align-items: flex-end; gap: 24px;
-      margin-top: -54px; margin-bottom: 20px;
-    }
-    .avatar-wrap { position: relative; flex-shrink: 0; }
-    .avatar {
-      width: 108px; height: 108px; border-radius: 16px;
-      background: linear-gradient(135deg, #1a2a4a, #2a1a4a);
-      border: 3px solid var(--bg); overflow: hidden;
-      display: flex; align-items: center; justify-content: center;
-      font-family: 'Rajdhani',sans-serif; font-size: 42px; font-weight: 700;
-      color: var(--gold); position: relative;
-    }
-    .avatar-online {
-      position: absolute; bottom: 6px; right: 6px;
-      width: 14px; height: 14px; border-radius: 50%;
-      background: var(--success); border: 2px solid var(--bg);
-    }
-    .avatar-edit {
-      position: absolute; bottom: -4px; right: -4px;
-      width: 28px; height: 28px; border-radius: 8px;
-      background: var(--gold); border: 2px solid var(--bg);
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer; transition: .2s;
-    }
-    .avatar-edit svg { width: 13px; height: 13px; stroke: #080c12; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
-    .avatar-edit:hover { background: #ffd055; }
-
-    .profile-identity { flex: 1; padding-bottom: 6px; }
-    .profile-username {
-      font-family: 'Rajdhani',sans-serif; font-size: 32px; font-weight: 700; color: #fff; line-height: 1;
-      display: flex; align-items: center; gap: 10px; margin-bottom: 4px;
-    }
-    .verified-badge {
-      width: 22px; height: 22px; background: var(--blue); border-radius: 50%;
-      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-    }
-    .verified-badge svg { width: 12px; height: 12px; stroke: #fff; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
-    .profile-fullname { font-size: 14px; color: var(--text-dim); margin-bottom: 8px; }
-    .profile-tags { display: flex; gap: 6px; flex-wrap: wrap; }
-    .ptag { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; letter-spacing: .4px; }
-    .ptag-game { background: rgba(96,165,250,.1); color: var(--blue); border: 1px solid rgba(96,165,250,.2); }
-    .ptag-role { background: rgba(240,192,64,.1); color: var(--gold); border: 1px solid rgba(240,192,64,.2); }
-    .ptag-uni { background: rgba(167,139,250,.1); color: var(--purple); border: 1px solid rgba(167,139,250,.2); }
-
-    .profile-actions { display: flex; gap: 10px; padding-bottom: 6px; }
-    .btn-edit { font-family: 'Exo 2',sans-serif; font-size: 13px; font-weight: 500; padding: 9px 20px; border-radius: 8px; border: 1px solid var(--border-hi); background: transparent; color: var(--text-dim); cursor: pointer; transition: .2s; display: flex; align-items: center; gap: 7px; }
-    .btn-edit svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-    .btn-edit:hover { border-color: var(--gold); color: var(--gold); }
-    .btn-create-t { font-family: 'Rajdhani',sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 1px; padding: 9px 20px; border-radius: 8px; border: none; background: var(--gold); color: #080c12; cursor: pointer; transition: .2s; display: flex; align-items: center; gap: 7px; }
-    .btn-create-t svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
-    .btn-create-t:hover { background: #ffd055; box-shadow: 0 0 18px rgba(240,192,64,.3); }
+    /* PROFILE HEADER */
+    .profile-header{padding:0 40px 0;position:relative}
+    .avatar-wrap{display:flex;align-items:flex-end;gap:20px;margin-top:-50px;margin-bottom:16px}
+    .avatar{width:100px;height:100px;border-radius:16px;background:linear-gradient(135deg,#1a2a4a,#2a1a4a);border:3px solid var(--bg);display:flex;align-items:center;justify-content:center;font-family:'Rajdhani',sans-serif;font-size:32px;font-weight:700;color:var(--gold);flex-shrink:0;position:relative;overflow:hidden}
+    .avatar img{width:100%;height:100%;object-fit:cover}
+    .avatar-overlay{position:absolute;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;cursor:pointer;font-size:11px;color:#fff;text-align:center}
+    .avatar:hover .avatar-overlay{display:flex}
+    .profile-names{flex:1;padding-bottom:8px}
+    .profile-displayname{font-family:'Rajdhani',sans-serif;font-size:26px;font-weight:700;color:#fff;display:flex;align-items:center;gap:10px}
+    .private-badge{background:rgba(92,112,144,.15);border:1px solid rgba(92,112,144,.3);color:var(--text-dim);font-size:11px;padding:2px 8px;border-radius:4px;font-family:'Exo 2',sans-serif}
+    .profile-username{font-size:14px;color:var(--text-dim);margin-top:3px}
+    .profile-actions{display:flex;gap:10px;margin-left:auto;padding-bottom:8px;flex-wrap:wrap}
 
     /* STATS ROW */
-    .profile-stats {
-      display: flex; gap: 0;
-      background: var(--bg-card); border: 1px solid var(--border);
-      border-radius: 12px; overflow: hidden; margin-bottom: 2px;
-    }
-    .pstat { flex: 1; padding: 14px 20px; text-align: center; border-right: 1px solid var(--border); }
-    .pstat:last-child { border-right: none; }
-    .pstat-val { font-family: 'Rajdhani',sans-serif; font-size: 22px; font-weight: 700; color: var(--gold); }
-    .pstat-key { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: .5px; margin-top: 2px; }
+    .stats-row{display:flex;gap:24px;padding:0 40px;margin-bottom:20px;flex-wrap:wrap}
+    .stat{text-align:center}
+    .stat-val{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;color:var(--gold)}
+    .stat-key{font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;margin-top:1px}
 
-    /* FACEIT CARD */
-    .faceit-card {
-      background: linear-gradient(135deg, rgba(255,85,0,.08), rgba(255,85,0,.03));
-      border: 1px solid rgba(255,85,0,.2); border-radius: 10px;
-      padding: 12px 16px; display: flex; align-items: center; gap: 14px;
-      margin-bottom: 2px;
-    }
-    .faceit-logo {
-      width: 36px; height: 36px; border-radius: 8px;
-      background: #ff5500; display: flex; align-items: center; justify-content: center;
-      font-family: 'Rajdhani',sans-serif; font-size: 11px; font-weight: 700; color: #fff; letter-spacing: 1px;
-      flex-shrink: 0;
-    }
-    .faceit-info { flex: 1; }
-    .faceit-label { font-size: 11px; color: rgba(255,85,0,.7); font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
-    .faceit-nick { font-family: 'Rajdhani',sans-serif; font-size: 16px; font-weight: 700; color: #fff; }
-    .faceit-stats { display: flex; gap: 16px; }
-    .faceit-stat { text-align: center; }
-    .faceit-stat-val { font-family: 'Rajdhani',sans-serif; font-size: 18px; font-weight: 700; }
-    .faceit-stat-val.lvl { color: #ff5500; }
-    .faceit-stat-val.elo { color: #fff; }
-    .faceit-stat-key { font-size: 10px; color: rgba(255,85,0,.6); text-transform: uppercase; letter-spacing: .5px; }
-
-    /* CONTACT ROW */
-    .contact-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
-    .contact-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-dim); }
-    .contact-item svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+    /* BUTTONS */
+    .btn-gold{font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;letter-spacing:1px;padding:9px 20px;border-radius:8px;background:var(--gold);color:#080c12;border:none;cursor:pointer;transition:.2s;white-space:nowrap;display:flex;align-items:center;gap:7px}
+    .btn-gold:hover{background:#ffd055;box-shadow:0 0 14px rgba(240,192,64,.3)}
+    .btn-outline{font-family:'Exo 2',sans-serif;font-size:13px;padding:9px 18px;border-radius:8px;border:1px solid var(--border-hi);background:transparent;color:var(--text-dim);cursor:pointer;transition:.2s;white-space:nowrap;display:flex;align-items:center;gap:7px}
+    .btn-outline:hover{border-color:var(--gold);color:var(--gold)}
+    .btn-outline svg,.btn-gold svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    .btn-sm{font-family:'Exo 2',sans-serif;font-size:12px;padding:6px 14px;border-radius:7px;border:1px solid var(--border-hi);background:transparent;color:var(--text-dim);cursor:pointer;transition:.2s}
+    .btn-sm:hover{border-color:var(--gold);color:var(--gold)}
+    .btn-danger{font-family:'Exo 2',sans-serif;font-size:12px;padding:6px 14px;border-radius:7px;border:1px solid rgba(248,113,113,.3);background:transparent;color:var(--red);cursor:pointer;transition:.2s}
+    .btn-danger:hover{background:rgba(248,113,113,.08)}
 
     /* TABS */
-    .tabs-bar { display: flex; gap: 2px; padding: 16px 48px 0; border-bottom: 1px solid var(--border); background: rgba(8,12,18,.8); backdrop-filter: blur(10px); position: sticky; top: 64px; z-index: 50; }
-    .tab { font-family: 'Exo 2',sans-serif; font-size: 13px; font-weight: 500; color: var(--text-dim); padding: 12px 16px; cursor: pointer; border: none; background: none; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: .2s; display: flex; align-items: center; gap: 7px; }
-    .tab svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-    .tab:hover { color: var(--text); }
-    .tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+    .tabs{display:flex;gap:2px;padding:0 40px;border-bottom:1px solid var(--border)}
+    .tab{font-family:'Exo 2',sans-serif;font-size:13px;font-weight:500;color:var(--text-dim);padding:12px 16px;cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-1px;transition:.2s;white-space:nowrap}
+    .tab:hover{color:var(--text)}.tab.active{color:var(--gold);border-bottom-color:var(--gold)}
 
-    /* CONTENT */
-    .tab-panel { display: none; padding: 36px 48px 80px; }
-    .tab-panel.active { display: block; }
+    /* PANELS */
+    .panel{display:none;padding:28px 40px 80px}.panel.active{display:block}
 
-    /* ── OVERVIEW ── */
-    .overview-grid { display: grid; grid-template-columns: 1fr 360px; gap: 24px; }
+    /* OVERVIEW GRID */
+    .overview-grid{display:grid;grid-template-columns:1fr 320px;gap:20px;align-items:start}
+    .block{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:16px}
+    .block-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:8px}
+    .block-title{font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;color:#fff}
+    .info-row{display:flex;justify-content:space-between;align-items:center;padding:10px 20px;border-bottom:1px solid rgba(26,36,54,.5);font-size:13px}
+    .info-row:last-child{border-bottom:none}
+    .info-key{color:var(--text-dim)}.info-val{color:var(--text);font-weight:500;text-align:right}
+    .info-val.hidden-val{color:var(--text-muted);font-style:italic}
+    .info-val a{color:var(--blue);text-decoration:none}.info-val a:hover{text-decoration:underline}
 
-    .section-block { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 22px; margin-bottom: 20px; }
-    .block-title { font-family: 'Rajdhani',sans-serif; font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; }
-    .block-title-left { display: flex; align-items: center; gap: 8px; }
-    .block-title-left svg { width: 16px; height: 16px; stroke: var(--gold); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-    .see-all { font-size: 11px; color: var(--text-dim); cursor: pointer; text-decoration: none; transition: color .2s; }
-    .see-all:hover { color: var(--gold); }
+    /* BIO */
+    .bio-text{padding:16px 20px;font-size:14px;color:var(--text-dim);line-height:1.7}
 
-    /* Bio */
-    .bio-text { font-size: 14px; color: var(--text-dim); line-height: 1.7; }
+    /* CLIPS */
+    .clips-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+    .clip-card{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:.2s}
+    .clip-card:hover{border-color:var(--border-hi)}
+    .clip-thumb{position:relative;padding-bottom:56.25%;background:#111928}
+    .clip-thumb iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:none}
+    .clip-body{padding:12px 14px}
+    .clip-title{font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;color:#fff;margin-bottom:4px}
+    .clip-meta{display:flex;gap:10px;font-size:11px;color:var(--text-dim)}
+    .clip-actions{display:flex;gap:6px;margin-top:8px}
 
-    /* Recent activity */
-    .activity-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid rgba(26,36,54,.5); }
-    .activity-item:last-child { border-bottom: none; }
-    .act-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-    .act-icon svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-    .act-icon.win { background: rgba(74,222,128,.1); color: var(--success); }
-    .act-icon.loss { background: rgba(248,113,113,.1); color: var(--red); }
-    .act-icon.trn { background: rgba(240,192,64,.1); color: var(--gold); }
-    .act-info { flex: 1; }
-    .act-title { font-size: 13px; font-weight: 500; color: var(--text); }
-    .act-sub { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
-    .act-time { font-size: 11px; color: var(--text-muted); }
+    /* ADD CLIP FORM */
+    .add-clip-form{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:20px}
+    .add-clip-form h3{font-family:'Rajdhani',sans-serif;font-size:17px;font-weight:700;color:#fff;margin-bottom:14px}
+    .field{margin-bottom:12px}
+    .field label{display:block;font-size:11px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px}
+    .field input{width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text);font-family:'Exo 2',sans-serif;outline:none;transition:border-color .2s}
+    .field input:focus{border-color:var(--gold)}
+    .field input::placeholder{color:var(--text-muted);font-size:13px}
+    .yt-preview{background:var(--bg-card2);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-top:10px;display:none}
+    .yt-preview iframe{width:100%;aspect-ratio:16/9;border:none;display:block}
 
-    /* ── CLIPS / VIDEOS ── */
-    .clips-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
-    .clip-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; cursor: pointer; transition: .2s; }
-    .clip-card:hover { border-color: var(--border-hi); transform: translateY(-2px); }
-    .clip-thumb { height: 160px; position: relative; background: #0a1220; }
-    .clip-thumb-bg { width: 100%; height: 100%; object-fit: cover; opacity: .6; }
-    .clip-grad { position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 40%, rgba(13,20,32,1)); }
-    .clip-play { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
-    .play-circle { width: 52px; height: 52px; border-radius: 50%; background: rgba(240,192,64,.9); display: flex; align-items: center; justify-content: center; transition: .2s; }
-    .clip-card:hover .play-circle { transform: scale(1.1); background: var(--gold); }
-    .play-circle svg { width: 20px; height: 20px; fill: #080c12; margin-left: 3px; }
-    .clip-duration { position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,.7); font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; color: #fff; }
-    .clip-views { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,.5); font-size: 11px; padding: 2px 8px; border-radius: 4px; color: rgba(255,255,255,.7); display: flex; align-items: center; gap: 4px; }
-    .clip-body { padding: 14px; }
-    .clip-title { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 6px; line-height: 1.4; }
-    .clip-meta { display: flex; align-items: center; justify-content: space-between; }
-    .clip-game { font-size: 10px; font-weight: 700; background: var(--gold-dim); color: var(--gold); padding: 2px 8px; border-radius: 4px; letter-spacing: .5px; }
-    .clip-date { font-size: 11px; color: var(--text-muted); }
+    /* TOURNAMENTS */
+    .t-item{background:var(--bg-card2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+    .t-item-name{font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;color:#fff}
+    .t-item-meta{font-size:12px;color:var(--text-dim);margin-top:2px}
+    .t-item-actions{display:flex;gap:8px}
 
-    /* Upload clip */
-    .upload-clip {
-      border: 2px dashed var(--border); border-radius: 12px; height: 160px;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      gap: 8px; cursor: pointer; transition: .2s; color: var(--text-muted);
-    }
-    .upload-clip:hover { border-color: var(--gold); color: var(--gold); background: var(--gold-glow); }
-    .upload-clip svg { width: 28px; height: 28px; stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
-    .upload-clip-text { font-size: 13px; font-weight: 500; }
-    .upload-clip-sub { font-size: 11px; opacity: .6; }
+    /* EDIT MODAL */
+    .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:600;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .2s}
+    .modal-bg.open{opacity:1;pointer-events:all}
+    .modal{background:var(--bg-card);border:1px solid var(--border-hi);border-radius:16px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;transform:scale(.95);transition:transform .2s}
+    .modal-bg.open .modal{transform:scale(1)}
+    .modal-head{display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg-card);z-index:2}
+    .modal-title{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;color:#fff}
+    .modal-close{width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text-dim);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s}
+    .modal-close:hover{border-color:var(--red);color:var(--red)}
+    .modal-close svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+    .modal-body{padding:24px}
+    .m-field{margin-bottom:14px}
+    .m-field label{display:block;font-size:11px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px}
+    .m-field input,.m-field select,.m-field textarea{width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text);font-family:'Exo 2',sans-serif;outline:none;transition:border-color .2s;-webkit-appearance:none}
+    .m-field input:focus,.m-field select:focus,.m-field textarea:focus{border-color:var(--gold)}
+    .m-field textarea{resize:vertical;min-height:80px}
+    .m-field select{cursor:pointer}
+    .m-field select option{background:#0d1420}
+    .toggle-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(26,36,54,.5)}
+    .toggle-row:last-child{border-bottom:none}
+    .toggle-info h4{font-size:14px;color:var(--text);margin-bottom:2px}
+    .toggle-info p{font-size:12px;color:var(--text-dim)}
+    .toggle{width:44px;height:24px;border-radius:12px;background:var(--border-hi);cursor:pointer;position:relative;transition:.2s;border:none;flex-shrink:0}
+    .toggle.on{background:var(--gold)}
+    .toggle::after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:.2s}
+    .toggle.on::after{left:23px}
 
-    /* ── TOURNAMENTS ── */
-    .t-list { display: flex; flex-direction: column; gap: 14px; }
-    .t-item {
-      background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
-      padding: 20px; transition: .2s; cursor: pointer;
-    }
-    .t-item:hover { border-color: var(--border-hi); }
-    .t-item.featured { border-color: rgba(240,192,64,.25); }
-    .t-item-top { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 14px; }
-    .t-item-icon { width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 20px; }
-    .t-item-icon.gold { background: rgba(240,192,64,.1); }
-    .t-item-icon.blue { background: rgba(96,165,250,.1); }
-    .t-item-info { flex: 1; }
-    .t-item-name { font-family: 'Rajdhani',sans-serif; font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 4px; }
-    .t-item-meta { display: flex; gap: 14px; flex-wrap: wrap; }
-    .t-meta-pill { font-size: 11px; color: var(--text-dim); display: flex; align-items: center; gap: 4px; }
-    .t-meta-pill svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-    .t-item-status { flex-shrink: 0; }
-    .status-pill { font-size: 11px; font-weight: 600; padding: 4px 12px; border-radius: 20px; }
-    .status-live { background: rgba(248,113,113,.12); color: var(--red); border: 1px solid rgba(248,113,113,.25); }
-    .status-open { background: rgba(74,222,128,.1); color: var(--success); border: 1px solid rgba(74,222,128,.2); }
-    .status-done { background: rgba(92,112,144,.1); color: var(--text-dim); border: 1px solid rgba(92,112,144,.2); }
+    /* PILL */
+    .pill{display:inline-flex;align-items:center;gap:4px;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600}
+    .pill-game{background:rgba(96,165,250,.1);color:var(--blue);border:1px solid rgba(96,165,250,.18)}
+    .pill-open{background:rgba(74,222,128,.1);color:var(--success);border:1px solid rgba(74,222,128,.2)}
+    .pill-live{background:rgba(248,113,113,.1);color:var(--red);border:1px solid rgba(248,113,113,.2)}
+    .pill-done{background:rgba(92,112,144,.1);color:var(--text-dim);border:1px solid rgba(92,112,144,.2)}
 
-    /* Finance section inside tournament */
-    .finance-expand { display: none; border-top: 1px solid var(--border); margin-top: 14px; padding-top: 16px; }
-    .finance-expand.open { display: block; }
+    /* TOAST */
+    #toast{position:fixed;bottom:24px;right:24px;z-index:800;border-radius:10px;padding:12px 20px;font-size:14px;font-weight:500;opacity:0;transition:opacity .3s;pointer-events:none}
+    #toast.show.ok{opacity:1;background:#0d2010;border:1px solid rgba(74,222,128,.3);color:var(--success)}
+    #toast.show.err{opacity:1;background:#200d0d;border:1px solid rgba(248,113,113,.3);color:var(--red)}
 
-    .finance-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
-    .finance-title { font-family: 'Rajdhani',sans-serif; font-size: 15px; font-weight: 700; color: var(--gold); display: flex; align-items: center; gap: 6px; }
-    .finance-title svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    /* EMPTY */
+    .empty{text-align:center;padding:48px 20px;color:var(--text-dim)}
+    .empty-icon{font-size:40px;margin-bottom:12px}
+    .empty h3{font-family:'Rajdhani',sans-serif;font-size:18px;margin-bottom:6px}
+    .empty p{font-size:13px;color:var(--text-muted)}
 
-    .finance-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px; margin-bottom: 16px; }
-    .f-card { background: var(--bg-card2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; }
-    .f-card-val { font-family: 'Rajdhani',sans-serif; font-size: 20px; font-weight: 700; }
-    .f-card-val.green { color: var(--success); }
-    .f-card-val.red { color: var(--red); }
-    .f-card-val.gold { color: var(--gold); }
-    .f-card-val.blue { color: var(--blue); }
-    .f-card-key { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; margin-top: 3px; }
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .spin{width:16px;height:16px;border:2px solid rgba(8,12,18,.3);border-top-color:#080c12;border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
 
-    /* Calculator */
-    .calc-section { background: var(--bg-card2); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
-    .calc-section-title { font-size: 12px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
-    .calc-row-input { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-    .calc-row-input label { font-size: 12px; color: var(--text-dim); width: 180px; flex-shrink: 0; }
-    .calc-row-input input { flex: 1; background: var(--bg-input); border: 1px solid var(--border); border-radius: 6px; padding: 7px 12px; font-size: 13px; color: var(--text); font-family: 'Exo 2',sans-serif; outline: none; transition: border-color .2s; }
-    .calc-row-input input:focus { border-color: var(--gold); }
-    .calc-row-input span { font-size: 13px; color: var(--text-dim); flex-shrink: 0; }
-    .calc-results { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 12px; }
-    .cr { background: var(--bg-input); border: 1px solid var(--border); border-radius: 7px; padding: 10px 12px; }
-    .cr-val { font-family: 'Rajdhani',sans-serif; font-size: 17px; font-weight: 700; }
-    .cr-val.green { color: var(--success); }
-    .cr-val.red { color: var(--red); }
-    .cr-val.gold { color: var(--gold); }
-    .cr-key { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; margin-top: 2px; }
-
-    /* Transactions */
-    .transactions { margin-top: 14px; }
-    .tx-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-    .tx-title { font-size: 12px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
-    .tx-add { font-size: 12px; color: var(--gold); cursor: pointer; background: none; border: none; font-family: 'Exo 2',sans-serif; display: flex; align-items: center; gap: 4px; transition: opacity .2s; }
-    .tx-add:hover { opacity: .7; }
-    .tx-add svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
-    .tx-list { display: flex; flex-direction: column; gap: 6px; max-height: 220px; overflow-y: auto; }
-    .tx-item { display: flex; align-items: center; gap: 10px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 7px; padding: 9px 12px; }
-    .tx-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-    .tx-dot.income { background: var(--success); }
-    .tx-dot.expense { background: var(--red); }
-    .tx-desc { flex: 1; font-size: 13px; color: var(--text); }
-    .tx-amount { font-family: 'Rajdhani',sans-serif; font-size: 15px; font-weight: 700; }
-    .tx-amount.income { color: var(--success); }
-    .tx-amount.expense { color: var(--red); }
-    .tx-del { background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 2px; transition: color .2s; }
-    .tx-del:hover { color: var(--red); }
-    .tx-del svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; display: block; }
-
-    .tx-input-row { display: flex; gap: 8px; margin-top: 8px; }
-    .tx-input { flex: 1; background: var(--bg-input); border: 1px solid var(--border); border-radius: 6px; padding: 7px 10px; font-size: 13px; color: var(--text); font-family: 'Exo 2',sans-serif; outline: none; transition: border-color .2s; }
-    .tx-input:focus { border-color: var(--gold); }
-    .tx-select { background: var(--bg-input); border: 1px solid var(--border); border-radius: 6px; padding: 7px 10px; font-size: 12px; color: var(--text); font-family: 'Exo 2',sans-serif; outline: none; cursor: pointer; }
-    .tx-btn-add { background: var(--gold); border: none; border-radius: 6px; padding: 7px 14px; font-family: 'Rajdhani',sans-serif; font-size: 14px; font-weight: 700; color: #080c12; cursor: pointer; transition: .2s; white-space: nowrap; }
-    .tx-btn-add:hover { background: #ffd055; }
-
-    /* toggle expand btn */
-    .toggle-finance { background: none; border: 1px solid var(--border); border-radius: 7px; padding: 6px 14px; font-size: 12px; color: var(--text-dim); cursor: pointer; transition: .2s; display: flex; align-items: center; gap: 5px; font-family: 'Exo 2',sans-serif; }
-    .toggle-finance svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: transform .2s; }
-    .toggle-finance:hover { border-color: var(--gold); color: var(--gold); }
-    .toggle-finance.open svg { transform: rotate(180deg); }
-
-    /* Right sidebar in overview */
-    .right-col .section-block { margin-bottom: 16px; }
-    .info-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(26,36,54,.5); font-size: 13px; }
-    .info-row:last-child { border-bottom: none; }
-    .ir-key { color: var(--text-dim); }
-    .ir-val { color: var(--text); font-weight: 500; }
-    .ir-val.gold { color: var(--gold); }
-    .ir-val.green { color: var(--success); }
-
-    /* TOTAL FINANCE TAB */
-    .total-finance-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 28px; }
-    .tf-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; text-align: center; }
-    .tf-val { font-family: 'Rajdhani',sans-serif; font-size: 28px; font-weight: 700; margin-bottom: 4px; }
-    .tf-key { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: .5px; }
-
-    /* ANIMATIONS */
-    .fade-up { opacity: 0; transform: translateY(14px); transition: opacity .4s ease, transform .4s ease; }
-    .fade-up.visible { opacity: 1; transform: translateY(0); }
-
-    /* MODAL */
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 500; display: flex; align-items: center; justify-content: center; padding: 20px; opacity: 0; pointer-events: none; transition: opacity .2s; }
-    .modal-overlay.open { opacity: 1; pointer-events: all; }
-    .modal { background: var(--bg-card); border: 1px solid var(--border-hi); border-radius: 16px; padding: 28px; width: 100%; max-width: 420px; transform: scale(.95); transition: transform .2s; }
-    .modal-overlay.open .modal { transform: scale(1); }
-    .modal-title { font-family: 'Rajdhani',sans-serif; font-size: 22px; font-weight: 700; color: #fff; margin-bottom: 20px; }
-    .modal-field { margin-bottom: 14px; }
-    .modal-field label { display: block; font-size: 11px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 6px; }
-    .modal-input { width: 100%; background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; font-size: 14px; color: var(--text); font-family: 'Exo 2',sans-serif; outline: none; transition: border-color .2s; }
-    .modal-input:focus { border-color: var(--gold); }
-    .modal-btns { display: flex; gap: 10px; margin-top: 20px; }
-    .modal-save { flex: 1; background: var(--gold); border: none; border-radius: 8px; padding: 11px; font-family: 'Rajdhani',sans-serif; font-size: 15px; font-weight: 700; color: #080c12; cursor: pointer; transition: .2s; }
-    .modal-save:hover { background: #ffd055; }
-    .modal-cancel { background: transparent; border: 1px solid var(--border-hi); border-radius: 8px; padding: 11px 20px; font-family: 'Exo 2',sans-serif; font-size: 13px; color: var(--text-dim); cursor: pointer; transition: .2s; }
-    .modal-cancel:hover { border-color: var(--red); color: var(--red); }
-
-    /* FOOTER */
-    footer { border-top: 1px solid var(--border); padding: 22px 48px; display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: var(--text-muted); flex-wrap: wrap; gap: 10px; }
-    footer a { color: var(--text-dim); text-decoration: none; transition: color .2s; }
-    footer a:hover { color: var(--gold); }
-
-    @media(max-width:1100px) { .overview-grid { grid-template-columns: 1fr; } .finance-grid { grid-template-columns: 1fr 1fr; } .total-finance-grid { grid-template-columns: 1fr 1fr; } }
-    @media(max-width:768px) { .page { margin-left: 0; } .sidebar { display: none; } .profile-band { padding: 0 20px; } .tabs-bar { padding: 0 20px; overflow-x: auto; } .tab-panel { padding: 24px 20px 60px; } .profile-main { flex-direction: column; align-items: flex-start; gap: 14px; } .profile-actions { flex-wrap: wrap; } .clips-grid { grid-template-columns: 1fr; } footer { padding: 20px; } }
+    @media(max-width:900px){.overview-grid{grid-template-columns:1fr}.profile-header{padding:0 20px}.stats-row{padding:0 20px}.tabs{padding:0 20px}.panel{padding:20px 20px 60px}.clips-grid{grid-template-columns:1fr}}
+    @media(max-width:600px){.avatar-wrap{flex-wrap:wrap}.profile-actions{width:100%}}
   </style>
 </head>
 <body>
 <div class="grid-bg"></div>
-
-<!-- HEADER -->
-<header>
-  <a href="index.html" class="logo">
-    <div class="logo-hex"><svg viewBox="0 0 18 18" fill="none"><polygon points="9,1 16,4.5 16,13.5 9,17 2,13.5 2,4.5" stroke="#080c12" stroke-width="1.5"/><circle cx="9" cy="9" r="2.5" fill="#080c12"/></svg></div>
-    <span class="logo-name">GAME GENESIS</span>
-  </a>
-  <nav>
-    <a href="index.html" class="nav-a">Главная</a>
-    <a href="tournament.html" class="nav-a">Турниры</a>
-    <a href="create-tournament.html" class="nav-a">Создать турнир</a>
-    <a href="#" class="nav-a">Рейтинг</a>
-    <a href="#" class="nav-a">Лиги</a>
-  </nav>
-  <div class="header-right">
-    <button class="btn-sm active" onclick="location.href='profile.html'" style="border-color:var(--gold);color:var(--gold);">
-      ZayTop
-    </button>
-    <button class="btn-sm" onclick="location.href='auth.html'">Выйти</button>
-  </div>
-</header>
-
-<!-- SIDEBAR -->
-<aside class="sidebar">
-  <div class="sb-item" onclick="location.href='index.html'"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span class="tip">Главная</span></div>
-  <div class="sb-item" onclick="location.href='tournament.html'"><svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/></svg><span class="tip">Турниры</span></div>
-  <div class="sb-item" onclick="location.href='create-tournament.html'"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg><span class="tip">Создать турнир</span></div>
-  <div class="sb-sep"></div>
-  <div class="sb-item active"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span class="tip">Профиль</span></div>
-  <div class="sb-item"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="tip">Уведомления</span></div>
-  <div class="sb-sep"></div>
-  <div class="sb-item" onclick="location.href='auth.html'"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg><span class="tip">Выйти</span></div>
-</aside>
-
 <div class="page">
 
   <!-- COVER -->
-  <div class="profile-cover">
-    <div class="cover-pattern"></div>
-    <div class="cover-glow"></div>
-    <button class="cover-edit-btn" onclick="openModal('cover')">
-      <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-      Изменить обложку
-    </button>
+  <div class="cover" id="cover-bg">
+    <button class="cover-edit" id="cover-edit-btn" onclick="openModal('cover')">✏️ Изменить обложку</button>
   </div>
 
-  <!-- PROFILE BAND -->
-  <div class="profile-band">
-    <div class="profile-main">
-      <div class="avatar-wrap">
-        <div class="avatar">
-          <span id="avatar-initials">ЗМ</span>
-          <div class="avatar-online"></div>
-        </div>
-        <div class="avatar-edit" onclick="openModal('avatar')">
-          <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-        </div>
+  <!-- HEADER -->
+  <div class="profile-header">
+    <div class="avatar-wrap">
+      <div class="avatar" id="avatar-el">
+        <span id="avatar-initials">?</span>
+        <div class="avatar-overlay" onclick="openModal('avatar')">📷<br>Изменить</div>
       </div>
-      <div class="profile-identity">
-        <div class="profile-username">
-          <span id="display-username"> </span>
-          <div class="verified-badge"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+      <div class="profile-names">
+        <div class="profile-displayname">
+          <span id="display-name">Загружаем...</span>
+          <span class="private-badge" id="private-badge" style="display:none;">🔒 Приватный</span>
         </div>
-        <div class="profile-fullname" id="display-fullname"> </div>
-        <div class="profile-tags">
-          <span class="ptag ptag-game" id="display-game"> </span>
-          <span class="ptag ptag-role">Организатор</span>
-          <span class="ptag ptag-uni" id="display-uni"> </span>
-        </div>
+        <div class="profile-username" id="display-username">@username</div>
+        <div style="margin-top:6px;display:flex;gap:8px;flex-wrap:wrap;" id="profile-tags"></div>
       </div>
-      <div class="profile-actions">
-        <button class="btn-edit" onclick="openModal('edit')">
-          <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-          Редактировать
-        </button>
-        <button class="btn-create-t" onclick="location.href='create-tournament.html'">
-          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Создать турнир
-        </button>
-      </div>
+      <div class="profile-actions" id="profile-actions"></div>
     </div>
+  </div>
 
-    <!-- STATS -->
-    <div class="profile-stats fade-up">
-      <div class="pstat"><div class="pstat-val" id="stat-rank">—</div><div class="pstat-key">Рейтинг</div></div>
-      <div class="pstat"><div class="pstat-val" id="stat-rating">0</div><div class="pstat-key">Очки</div></div>
-      <div class="pstat"><div class="pstat-val" id="stat-wins">0</div><div class="pstat-key">Победы</div></div>
-      <div class="pstat"><div class="pstat-val" id="stat-losses">0</div><div class="pstat-key">Поражения</div></div>
-      <div class="pstat"><div class="pstat-val">2</div><div class="pstat-key">Турниры</div></div>
-      
-    </div>
-
-    
-    </div>
-
-    <!-- CONTACT -->
-    <div class="contact-row fade-up" style="margin-top:10px;margin-bottom:14px;">
-      <div class="contact-item"><svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg><span id="display-email"> </span></div>
-      <div class="contact-item"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 12 18.7a19.5 19.5 0 0 1-7-7 19.79 19.79 0 0 1-3.07-8.63A2 2 0 0 1 3.77 1h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 8.62a16 16 0 0 0 6 6l.92-.92a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg><span id="display-phone"> </span></div>
-      <div class="contact-item"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg><span>Грозный, ЧР</span></div>
-    </div>
+  <!-- STATS -->
+  <div class="stats-row">
+    <div class="stat"><div class="stat-val" id="stat-rating">—</div><div class="stat-key">Рейтинг</div></div>
+    <div class="stat"><div class="stat-val" id="stat-wins">—</div><div class="stat-key">Победы</div></div>
+    <div class="stat"><div class="stat-val" id="stat-losses">—</div><div class="stat-key">Поражения</div></div>
+    <div class="stat"><div class="stat-val" id="stat-tournaments">—</div><div class="stat-key">Турниров</div></div>
+    <div class="stat"><div class="stat-val" id="stat-clips">—</div><div class="stat-key">Клипов</div></div>
   </div>
 
   <!-- TABS -->
-  <div class="tabs-bar">
-    <button class="tab active" onclick="switchTab('overview',this)">
-      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-      Обзор
-    </button>
-    <button class="tab" onclick="switchTab('clips',this)">
-      <svg viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
-      Нарезки
-    </button>
-    <button class="tab" onclick="switchTab('tournaments',this)">
-      <svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/></svg>
-      Мои турниры
-    </button>
-    <button class="tab" onclick="switchTab('finance',this)">
-      <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-      Финансы
-    </button>
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('overview',this)">Обзор</button>
+    <button class="tab" onclick="switchTab('clips',this)">Нарезки</button>
+    <button class="tab" id="tab-tournaments-btn" onclick="switchTab('tournaments',this)">Мои турниры</button>
+    <button class="tab" id="tab-settings-btn" style="display:none;" onclick="switchTab('settings',this)">Настройки</button>
   </div>
 
-  <!-- ── OVERVIEW ── -->
-  <div id="tab-overview" class="tab-panel active">
+  <!-- OVERVIEW -->
+  <div id="panel-overview" class="panel active">
     <div class="overview-grid">
-      <div class="left-col">
-        <!-- Bio -->
-        <div class="section-block fade-up">
-          <div class="block-title">
-            <div class="block-title-left"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> О себе</div>
-            <a class="see-all" onclick="openModal('bio')">Изменить</a>
-          </div>
-          <p class="bio-text" id="display-bio">Профессиональный игрок в CS2, организатор киберспортивных турниров в Чеченской Республике. Студент ЧГУ. Участвую в Game Genesis с момента запуска платформы.</p>
-        </div>
-
-        <!-- Recent activity -->
-        <div class="section-block fade-up">
-          <div class="block-title">
-            <div class="block-title-left"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> Последняя активность</div>
-          </div>
-          
-      </div>
-
-      <div class="right-col">
-        <!-- Account info -->
-        <div class="section-block fade-up">
-          <div class="block-title">
-            <div class="block-title-left"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Аккаунт</div>
-            <a class="see-all" onclick="openModal('edit')">Изменить</a>
-          </div>
-          <div class="info-row"><span class="ir-key">Логин</span><span class="ir-val" id="info-username"> </span></div>
-          <div class="info-row"><span class="ir-key">Email</span><span class="ir-val" id="info-email"> </span></div>
-          <div class="info-row"><span class="ir-key">Телефон</span><span class="ir-val" id="info-phone"> </span></div>
-          <div class="info-row"><span class="ir-key">Faceit</span><span class="ir-val" id="info-faceit"> </span></div>
-          <div class="info-row"><span class="ir-key">Основная игра</span><span class="ir-val" id="info-game"> </span></div>
-          <div class="info-row"><span class="ir-key">Университет</span><span class="ir-val" id="info-uni"> </span></div>
-          <div class="info-row"><span class="ir-key">Роль</span><span class="ir-val gold" id="info-role">—</span></div>
-          <div class="info-row"><span class="ir-key">Верификация</span><span class="ir-val green">✓ Подтверждён</span></div>
-          <div class="info-row"><span class="ir-key">На платформе с</span><span class="ir-val" id="info-created">—</span></div>
-        </div>
-
-        <!-- Quick finance summary -->
-        <div class="section-block fade-up">
-          <div class="block-title">
-            <div class="block-title-left"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> Финансы (итого)</div>
-            <a class="see-all" onclick="switchTab('finance', document.querySelector('.tab:nth-child(4)'))">Подробнее</a>
-          </div>
-          <div class="info-row"><span class="ir-key">Доходы (турниры)</span><span class="ir-val green" id="total-income-mini">+73 000 ₽</span></div>
-          <div class="info-row"><span class="ir-key">Расходы</span><span class="ir-val" style="color:var(--red)" id="total-expense-mini">−16 000 ₽</span></div>
-          <div class="info-row"><span class="ir-key">Комиссия платформы</span><span class="ir-val" style="color:var(--text-dim)">−9 600 ₽</span></div>
-          <div class="info-row"><span class="ir-key">Чистая прибыль</span><span class="ir-val gold" id="total-net-mini">= 47 400 ₽</span></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── CLIPS ── -->
-  <div id="tab-clips" class="tab-panel">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;" class="fade-up">
       <div>
-        <div style="font-family:'Rajdhani',sans-serif;font-size:26px;font-weight:700;color:#fff;margin-bottom:4px;">Мои нарезки</div>
-        <div style="font-size:13px;color:var(--text-dim);">Лучшие моменты из матчей</div>
-      </div>
-      <button class="btn-create-t" onclick="openModal('clip')">
-        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        Добавить нарезку
-      </button>
-    </div>
-    <div class="clips-grid fade-up" id="clips-grid">
-
-      <!-- Add clip placeholder -->
-      <div class="clip-card" style="cursor:pointer;" onclick="openModal('clip')">
-        <div class="upload-clip">
-          <svg viewBox="0 0 24 24"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
-          <div class="upload-clip-text">Загрузить нарезку</div>
-          <div class="upload-clip-sub">MP4, максимум 500MB</div>
+        <!-- Описание -->
+        <div class="block">
+          <div class="block-head">
+            <div class="block-title">О себе</div>
+            <button class="btn-sm" id="bio-edit-btn" style="display:none;" onclick="openModal('bio')">Изменить</button>
+          </div>
+          <div class="bio-text" id="bio-text">Загружаем...</div>
         </div>
-        <div class="clip-body">
-          <div class="clip-title" style="color:var(--text-muted);">Нажмите чтобы добавить</div>
+
+        <!-- Последние клипы (3 шт) -->
+        <div class="block">
+          <div class="block-head">
+            <div class="block-title">Последние нарезки</div>
+            <button class="btn-sm" onclick="switchTab('clips', document.querySelector('.tab:nth-child(2)'))">Все →</button>
+          </div>
+          <div id="recent-clips" style="padding:16px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+            <div style="text-align:center;padding:20px;color:var(--text-muted);grid-column:1/-1;font-size:13px;">Нарезок пока нет</div>
+          </div>
         </div>
       </div>
 
-      
-
-      
-
-      
-
-    </div>
-  </div>
-
-  <!-- ── TOURNAMENTS ── -->
-  <div id="tab-tournaments" class="tab-panel">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;" class="fade-up">
+      <!-- Правая колонка -->
       <div>
-        <div style="font-family:'Rajdhani',sans-serif;font-size:26px;font-weight:700;color:#fff;margin-bottom:4px;">Организованные турниры</div>
-        <div style="font-size:13px;color:var(--text-dim);">Управление и финансовый учёт по каждому турниру</div>
-      </div>
-      <button class="btn-create-t" onclick="location.href='create-tournament.html'">
-        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        Новый турнир
-      </button>
-    </div>
-
-    <div class="t-list fade-up" id="my-tournaments-list">
-
-      </div>
-          <div class="t-item-status"><span class="status-pill status-open">● Регистрация</span></div>
-        </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;">
-          <div style="display:flex;gap:10px;">
-            <button onclick="location.href='tournament-register.html'" style="background:var(--bg-card2);border:1px solid var(--border-hi);border-radius:7px;padding:7px 16px;font-size:12px;color:var(--text-dim);cursor:pointer;font-family:'Exo 2',sans-serif;" onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--border-hi)';this.style.color='var(--text-dim)'">Страница турнира</button>
-          </div>
-          <button class="toggle-finance" id="tf2-btn" onclick="toggleFinance('t2')">
-            Финансы
-            <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-          </button>
-        </div>
-        <div class="finance-expand" id="t2-finance">
-          <div class="finance-header">
-            <div class="finance-title"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> Финансовый учёт — Valorant City Cup</div>
-          </div>
-          <div class="finance-grid">
-            <div class="f-card"><div class="f-card-val green" id="t2-income">+9 000 ₽</div><div class="f-card-key">Взносы (12 × 750)</div></div>
-            <div class="f-card"><div class="f-card-val red" id="t2-expenses">−0 ₽</div><div class="f-card-key">Расходы</div></div>
-            <div class="f-card"><div class="f-card-val" style="color:var(--text-dim)">−1 800 ₽</div><div class="f-card-key">Платформе (20%)</div></div>
-            <div class="f-card"><div class="f-card-val gold" id="t2-net">= 7 200 ₽</div><div class="f-card-key">Чистая прибыль (пока)</div></div>
-          </div>
-          <div class="calc-section" style="margin-bottom:14px;">
-            <div class="calc-section-title">Калькулятор (прогноз при полном наборе)</div>
-            <div class="calc-row-input">
-              <label>Участников зарегистрировалось</label>
-              <input type="number" id="t2-count" value="12" min="0" max="64" oninput="calcT2()">
-              <span>чел.</span>
-            </div>
-            <div class="calc-row-input">
-              <label>Взнос с участника</label>
-              <input type="number" id="t2-fee" value="750" min="0" oninput="calcT2()">
-              <span>₽</span>
-            </div>
-            <div class="calc-row-input">
-              <label>Прочие расходы</label>
-              <input type="number" id="t2-extra" value="0" min="0" oninput="calcT2()">
-              <span>₽</span>
-            </div>
-            <div class="calc-results">
-              <div class="cr"><div class="cr-val green" id="r2-gross">9 000 ₽</div><div class="cr-key">Валовой сбор</div></div>
-              <div class="cr"><div class="cr-val gold" id="r2-prize">4 500 ₽</div><div class="cr-key">Призовой фонд (50%)</div></div>
-              <div class="cr"><div class="cr-val red" id="r2-platform">1 800 ₽</div><div class="cr-key">Платформе (20%)</div></div>
-            </div>
-          </div>
-          <div class="transactions">
-            <div class="tx-header"><div class="tx-title">Транзакции</div></div>
-            <div class="tx-list" id="t2-txlist">
-              <div class="tx-item"><div class="tx-dot income"></div><div class="tx-desc">Взносы участников (12 чел.)</div><div class="tx-amount income">+9 000 ₽</div><button class="tx-del" onclick="delTx(this)"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></button></div>
-            </div>
-            <div class="tx-input-row">
-              <input type="text" class="tx-input" id="t2-tx-desc" placeholder="Описание...">
-              <input type="number" class="tx-input" id="t2-tx-amount" placeholder="Сумма" style="max-width:110px;">
-              <select class="tx-select" id="t2-tx-type">
-                <option value="income">Доход +</option>
-                <option value="expense">Расход −</option>
-              </select>
-              <button class="tx-btn-add" onclick="addTx('t2')">+ Добавить</button>
-            </div>
+        <!-- Игровая инфо -->
+        <div class="block">
+          <div class="block-head"><div class="block-title">Игровой профиль</div></div>
+          <div id="game-info">
+            <div class="info-row"><span class="info-key">Игра</span><span class="info-val" id="info-game">—</span></div>
+            <div class="info-row"><span class="info-key">Faceit</span><span class="info-val" id="info-faceit">—</span></div>
+            <div class="info-row"><span class="info-key">Steam</span><span class="info-val" id="info-steam">—</span></div>
+            <div class="info-row"><span class="info-key">Университет</span><span class="info-val" id="info-uni">—</span></div>
+            <div class="info-row"><span class="info-key">На платформе с</span><span class="info-val" id="info-since">—</span></div>
           </div>
         </div>
-      </div>
 
+        <!-- Контакты (только для себя) -->
+        <div class="block" id="contacts-block" style="display:none;">
+          <div class="block-head"><div class="block-title">🔒 Личные данные</div></div>
+          <div class="info-row"><span class="info-key">Email</span><span class="info-val" id="info-email">—</span></div>
+          <div class="info-row"><span class="info-key">Телефон</span><span class="info-val" id="info-phone">—</span></div>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- ── FINANCE TOTAL ── -->
-  <div id="tab-finance" class="tab-panel">
-    <div style="font-family:'Rajdhani',sans-serif;font-size:26px;font-weight:700;color:#fff;margin-bottom:6px;" class="fade-up">Сводная финансовая отчётность</div>
-    <div style="font-size:13px;color:var(--text-dim);margin-bottom:24px;" class="fade-up">Все турниры · автоматически рассчитывается</div>
-
-    <div class="total-finance-grid fade-up">
-      <div class="tf-card"><div class="tf-val" style="color:var(--success)" id="f-total-income">+73 000 ₽</div><div class="tf-key">Валовые доходы</div></div>
-      <div class="tf-card"><div class="tf-val" style="color:var(--red)" id="f-total-expense">−16 000 ₽</div><div class="tf-key">Расходы</div></div>
-      <div class="tf-card"><div class="tf-val" style="color:var(--text-dim)" id="f-total-platform">−14 600 ₽</div><div class="tf-key">Комиссия платформы</div></div>
-      <div class="tf-card"><div class="tf-val" style="color:var(--gold)" id="f-total-net">= 42 400 ₽</div><div class="tf-key">Чистая прибыль</div></div>
-    </div>
-
-    <!-- Main calculator -->
-    <div class="section-block fade-up" style="max-width:680px;">
-      <div class="block-title">
-        <div class="block-title-left"><svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="16" y1="12" x2="8" y2="12"/><line x1="8" y1="18" x2="12" y2="18"/></svg> Калькулятор нового турнира</div>
+  <!-- CLIPS -->
+  <div id="panel-clips" class="panel">
+    <!-- Форма добавления (только для себя) -->
+    <div class="add-clip-form" id="add-clip-form" style="display:none;">
+      <h3>+ Добавить нарезку</h3>
+      <div class="field">
+        <label>Ссылка на YouTube</label>
+        <input type="url" id="clip-url" placeholder="https://www.youtube.com/watch?v=..." oninput="previewYT()">
       </div>
-      <div class="calc-row-input" style="margin-bottom:14px;">
-        <label style="width:200px;">Макс. участников</label>
-        <input type="number" id="mc-slots" value="64" min="8" oninput="mainCalc()" style="max-width:100px;">
+      <div class="yt-preview" id="yt-preview">
+        <iframe id="yt-iframe" src="" allowfullscreen></iframe>
       </div>
-      <div class="calc-row-input" style="margin-bottom:14px;">
-        <label style="width:200px;">Взнос с участника (₽)</label>
-        <input type="number" id="mc-fee" value="500" min="0" oninput="mainCalc()">
+      <div class="field" style="margin-top:10px;">
+        <label>Название</label>
+        <input type="text" id="clip-title" placeholder="Ace на Inferno...">
       </div>
-      <div class="calc-row-input" style="margin-bottom:14px;">
-        <label style="width:200px;">Доля призового фонда (%)</label>
-        <input type="number" id="mc-pct" value="50" min="50" max="80" oninput="mainCalc()">
-        <span style="font-size:11px;color:var(--text-muted);">50–80%</span>
-      </div>
-      <div class="calc-row-input" style="margin-bottom:18px;">
-        <label style="width:200px;">Прочие расходы (₽)</label>
-        <input type="number" id="mc-exp" value="5000" min="0" oninput="mainCalc()">
-      </div>
-
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
-        <div class="cr"><div class="cr-val green" id="mc-gross">32 000 ₽</div><div class="cr-key">Валовой сбор</div></div>
-        <div class="cr"><div class="cr-val gold" id="mc-prize">16 000 ₽</div><div class="cr-key">Призовой фонд (50%)</div></div>
-        <div class="cr"><div class="cr-val red" id="mc-platform">6 400 ₽</div><div class="cr-key">Платформе (20%)</div></div>
-        <div class="cr"><div class="cr-val" style="color:var(--blue)" id="mc-organizer">4 600 ₽</div><div class="cr-key">Организатору (после расходов)</div></div>
-        <div class="cr"><div class="cr-val" style="color:var(--text-dim)" id="mc-exp-show">5 000 ₽</div><div class="cr-key">Расходы</div></div>
-        <div class="cr"><div class="cr-val green" id="mc-net">4 600 ₽</div><div class="cr-key">Чистая прибыль</div></div>
-      </div>
-      <div style="font-size:11px;color:var(--text-muted);margin-top:14px;line-height:1.6;">* Расчёт при 100% заполнении турнира. Комиссия платформы 20% от валового сбора. Призовой фонд минимум 50% от сбора.</div>
-    </div>
-  </div>
-
-  <footer>
-    <div style="display:flex;align-items:center;gap:8px;">
-      <div class="logo-hex" style="width:24px;height:24px;"><svg viewBox="0 0 18 18" fill="none" style="width:12px;height:12px;"><polygon points="9,1 16,4.5 16,13.5 9,17 2,13.5 2,4.5" stroke="#080c12" stroke-width="1.5"/><circle cx="9" cy="9" r="2.5" fill="#080c12"/></svg></div>
-      <span style="font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;color:var(--gold);letter-spacing:1.5px;">GAME GENESIS</span>
-      <span style="font-size:12px;color:var(--text-muted);">© 2024–2025</span>
-    </div>
-    <div style="display:flex;gap:20px;font-size:12px;"><a href="#">Правила</a><a href="#">Поддержка</a><a href="auth.html">Выйти</a></div>
-  </footer>
-</div>
-
-<!-- EDIT PROFILE MODAL -->
-<div class="modal-overlay" id="modal-edit">
-  <div class="modal">
-    <div class="modal-title" id="modal-title-text">Редактировать профиль</div>
-    <div id="modal-body">
-      <div class="modal-field"><label>Логин (никнейм)</label><input class="modal-input" id="m-username" value="ZayTop"></div>
-      <div class="modal-field"><label>Имя и фамилия</label><input class="modal-input" id="m-fullname" value="Зайналбек Мусаев"></div>
-      <div class="modal-field"><label>Email</label><input class="modal-input" id="m-email" type="email" value="zaytop@mail.ru"></div>
-      <div class="modal-field"><label>Телефон</label><input class="modal-input" id="m-phone" value="+7 (928) 000-01-01"></div>
-      <div class="modal-field"><label>Faceit никнейм</label><input class="modal-input" id="m-faceit" value="ZayTop_Official"></div>
-      <div class="modal-field"><label>Основная игра</label>
-        <select class="modal-input" id="m-game" style="cursor:pointer;">
-          <option value="CS2" selected> </option><option value="Dota 2">Dota 2</option><option value="Valorant">Valorant</option><option value="FIFA 25">FIFA 25</option>
+      <div style="display:flex;gap:10px;margin-top:4px;">
+        <select id="clip-game" style="background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text);font-family:'Exo 2',sans-serif;outline:none;cursor:pointer;flex:1;">
+          <option>CS2</option><option>Dota 2</option><option>Valorant</option><option>FIFA 25</option>
         </select>
+        <button class="btn-gold" onclick="addClip()">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Добавить
+        </button>
       </div>
-      <div class="modal-field"><label>Университет</label><input class="modal-input" id="m-uni" value="ЧГУ"></div>
     </div>
-    <div class="modal-btns">
-      <button class="modal-cancel" onclick="closeModal()">Отмена</button>
-      <button class="modal-save" onclick="saveProfile()">Сохранить</button>
+
+    <div class="clips-grid" id="clips-grid">
+      <div class="empty"><div class="empty-icon">🎬</div><h3>Нарезок пока нет</h3><p>Добавьте YouTube ссылку выше</p></div>
     </div>
   </div>
+
+  <!-- TOURNAMENTS -->
+  <div id="panel-tournaments" class="panel">
+    <div id="tournaments-list">
+      <div class="empty"><div class="empty-icon">🏆</div><h3>Нет турниров</h3><p>Создайте или зарегистрируйтесь на турнир</p></div>
+    </div>
+  </div>
+
+  <!-- SETTINGS (только для себя) -->
+  <div id="panel-settings" class="panel">
+    <div style="max-width:600px;">
+      <div class="block" style="margin-bottom:16px;">
+        <div class="block-head"><div class="block-title">Приватность</div></div>
+        <div style="padding:0 20px;">
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <h4>Скрытый профиль</h4>
+              <p>Скрывает ФИО — другие видят только никнейм</p>
+            </div>
+            <button class="toggle" id="toggle-private" onclick="togglePrivate()"></button>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <h4>Скрыть телефон</h4>
+              <p>Телефон виден только вам</p>
+            </div>
+            <button class="toggle on" id="toggle-phone"></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="block" style="margin-bottom:16px;">
+        <div class="block-head">
+          <div class="block-title">Редактировать профиль</div>
+          <button class="btn-gold" onclick="saveProfile()"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Сохранить</button>
+        </div>
+        <div style="padding:20px;">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+            <div class="m-field"><label>Имя и фамилия</label><input type="text" id="set-fullname" placeholder="Ваше имя"></div>
+            <div class="m-field"><label>Телефон</label><input type="tel" id="set-phone" placeholder="+7 (999) 000-00-00"></div>
+            <div class="m-field"><label>Основная игра</label>
+              <select id="set-game"><option>CS2</option><option>Dota 2</option><option>Valorant</option><option>FIFA 25</option></select>
+            </div>
+            <div class="m-field"><label>Университет</label><input type="text" id="set-uni" placeholder="ЧГУ, ЧГПУ..."></div>
+            <div class="m-field"><label>Faceit никнейм</label><input type="text" id="set-faceit" placeholder="ваш никнейм на Faceit"></div>
+            <div class="m-field"><label>Steam ссылка</label><input type="url" id="set-steam" placeholder="steamcommunity.com/id/..."></div>
+            <div class="m-field" style="grid-column:1/-1;"><label>О себе</label><textarea id="set-bio" placeholder="Расскажите о себе..."></textarea></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </div>
+
+<!-- EDIT MODAL -->
+<div class="modal-bg" id="modal">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="modal-title">Редактировать</div>
+      <button class="modal-close" onclick="closeModal()"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<div id="toast"></div>
 
 <script>
-  // ════════════════════════════════════════
-  //  ЗАГРУЗКА РЕАЛЬНЫХ ДАННЫХ ПОЛЬЗОВАТЕЛЯ
-  // ════════════════════════════════════════
+var TOKEN = localStorage.getItem('gg_token');
+var ME = null;
+try { ME = JSON.parse(localStorage.getItem('gg_user')); } catch(e) {}
 
-  const TOKEN = localStorage.getItem('gg_token');
-  const CACHED_USER = JSON.parse(localStorage.getItem('gg_user') || 'null');
+// Чей профиль смотрим
+var TARGET_USER = new URLSearchParams(window.location.search).get('user');
+var IS_OWN = !TARGET_USER || (ME && (ME.username === TARGET_USER));
+var PROFILE = null;
+var CLIPS = [];
 
-  // Если не вошёл — редирект
-  if (!TOKEN || !CACHED_USER) {
-    location.href = '/auth.html';
+// ── ЗАГРУЗКА ──
+async function loadProfile() {
+  try {
+    var url = IS_OWN && TOKEN
+      ? '/api/users/profile'
+      : '/api/users/' + (TARGET_USER || (ME && ME.username));
+
+    var headers = {};
+    if (TOKEN) headers['Authorization'] = 'Bearer ' + TOKEN;
+    var res = await fetch(url, { headers: headers });
+    if (!res.ok) throw new Error('Профиль не найден');
+    var data = await res.json();
+
+    PROFILE = IS_OWN ? data.user : data;
+    CLIPS = IS_OWN ? (data.clips || []) : [];
+
+    renderProfile();
+    renderClips(CLIPS);
+    if (IS_OWN) {
+      renderTournaments(data.organized_tournaments || []);
+      renderSettings();
+    }
+  } catch(e) {
+    console.error(e);
+    document.getElementById('display-name').textContent = e.message;
+  }
+}
+
+// ── РЕНДЕР ПРОФИЛЯ ──
+function renderProfile() {
+  var u = PROFILE;
+  var isPrivate = u.is_private;
+  var showFull = IS_OWN || !isPrivate;
+
+  document.title = (u.username || 'Профиль') + ' — Game Genesis';
+
+  // Аватар — инициалы
+  var nameForInitials = showFull && u.full_name ? u.full_name : u.username || '?';
+  var initials = nameForInitials.split(' ').map(function(w){return w[0]||'';}).join('').toUpperCase().slice(0,2);
+  document.getElementById('avatar-initials').textContent = initials;
+
+  // Имя
+  var displayName = showFull && u.full_name ? u.full_name : u.username;
+  document.getElementById('display-name').textContent = displayName;
+  document.getElementById('display-username').textContent = '@' + u.username;
+
+  // Приватный бейдж
+  if (isPrivate && !IS_OWN) {
+    document.getElementById('private-badge').style.display = 'inline-flex';
   }
 
-  // Заполняем сразу из кэша (быстро)
-  function fillProfile(user) {
-    if (!user) return;
-    const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val || '—'; };
+  // Теги
+  var tags = document.getElementById('profile-tags');
+  if (u.game) tags.innerHTML += '<span class="pill pill-game">' + u.game + '</span>';
+  if (u.university) tags.innerHTML += '<span style="font-size:11px;color:var(--text-dim);">🎓 ' + u.university + '</span>';
+  if (u.role === 'admin') tags.innerHTML += '<span style="font-size:11px;color:var(--gold);background:rgba(240,192,64,.1);padding:2px 8px;border-radius:4px;border:1px solid rgba(240,192,64,.2);">⭐ Организатор</span>';
 
-    set('display-username', user.username);
-    set('display-fullname', user.full_name);
-    set('display-email', user.email);
-    set('display-phone', user.phone);
-    set('display-game', user.game || 'CS2');
-    set('display-uni', user.university || '');
-    set('display-faceit', user.faceit_nick || '');
-    set('display-bio', user.bio || 'Расскажите о себе...');
-
-    set('info-username', user.username);
-    set('info-email', user.email);
-    set('info-phone', user.phone);
-    set('info-faceit', user.faceit_nick || '—');
-    set('info-game', user.game || 'CS2');
-    set('info-uni', user.university || '—');
-    set('info-role', user.role === 'organizer' ? 'Организатор' : 'Игрок');
-
-    // Статистика
-    set('stat-wins', user.wins || 0);
-    set('stat-losses', user.losses || 0);
-    set('stat-rating', user.rating || 0);
-    set('stat-rank', user.rating > 0 ? '#?' : '—');
-
-    // Аватар — инициалы
-    const av = document.getElementById('avatar-initials');
-    if (av && user.full_name) {
-      av.textContent = user.full_name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
-    }
-
-    // Дата регистрации
-    if (user.created_at) {
-      const d = new Date(user.created_at);
-      set('info-created', d.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' }));
-    }
-
-    // Теги
-    const gameTag = document.getElementById('display-game-tag');
-    if (gameTag) gameTag.textContent = user.game || 'CS2';
-    const uniTag = document.getElementById('display-uni-tag');
-    if (uniTag) uniTag.textContent = user.university || '';
+  // Кнопки действий
+  var actions = document.getElementById('profile-actions');
+  if (IS_OWN) {
+    actions.innerHTML =
+      '<button class="btn-outline" onclick="switchTab(\'settings\', document.getElementById(\'tab-settings-btn\'))">' +
+        '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>' +
+        'Настройки' +
+      '</button>';
+    document.getElementById('tab-settings-btn').style.display = '';
+    document.getElementById('cover-edit-btn').style.display = 'block';
+    document.getElementById('bio-edit-btn').style.display = 'block';
+    document.getElementById('contacts-block').style.display = 'block';
+    document.getElementById('add-clip-form').style.display = 'block';
   }
 
-  // Сразу показываем кэш
-  fillProfile(CACHED_USER);
+  // Статы
+  function set(id, val) { var el=document.getElementById(id); if(el) el.textContent = val; }
+  set('stat-rating', (u.rating||0).toLocaleString('ru-RU'));
+  set('stat-wins', u.wins||0);
+  set('stat-losses', u.losses||0);
+  set('stat-clips', CLIPS.length);
 
-  // Затем загружаем свежие данные с сервера
-  async function loadProfile() {
-    try {
-      const res = await fetch('/api/users/profile', {
-        headers: { 'Authorization': 'Bearer ' + TOKEN }
-      });
-      if (res.status === 401) { location.href = '/auth.html'; return; }
-      const data = await res.json();
-      if (data.user) {
-        fillProfile(data.user);
-        localStorage.setItem('gg_user', JSON.stringify(data.user));
-      }
-      // Турниры организатора
-      if (data.organized_tournaments) {
-        renderMyTournaments(data.organized_tournaments);
-      }
-      // Нарезки
-      if (data.clips) {
-        renderClips(data.clips);
-      }
-    } catch(e) {
-      console.error('Ошибка загрузки профиля:', e);
-    }
+  // Био
+  set('bio-text', u.bio || (IS_OWN ? 'Расскажите о себе...' : 'Пользователь не заполнил информацию'));
+
+  // Игровой профиль
+  set('info-game', u.game || '—');
+  set('info-uni', u.university || '—');
+  set('info-since', u.created_at ? new Date(u.created_at).toLocaleDateString('ru-RU',{month:'long',year:'numeric'}) : '—');
+
+  // Faceit
+  if (u.faceit_nick) {
+    document.getElementById('info-faceit').innerHTML =
+      '<a href="https://www.faceit.com/ru/players/' + u.faceit_nick + '" target="_blank">' + u.faceit_nick + ' →</a>';
   }
 
-  loadProfile();
-
-  // ── ТУРНИРЫ ОРГАНИЗАТОРА ──
-  function renderMyTournaments(list) {
-    const container = document.getElementById('my-tournaments-list');
-    if (!container) return;
-    if (!list || !list.length) {
-      container.innerHTML = `<div style="text-align:center;padding:32px;color:var(--text-muted);">
-        <p style="margin-bottom:12px;">Вы ещё не создали ни одного турнира</p>
-        <a href="/create-tournament.html" style="color:var(--gold);text-decoration:none;font-weight:600;">+ Создать первый турнир</a>
-      </div>`;
-      return;
-    }
-    container.innerHTML = list.map(t => `
-      <div class="t-item">
-        <div class="t-item-top">
-          <div class="t-item-icon gold">🏆</div>
-          <div class="t-item-info">
-            <div class="t-item-name">${t.name}</div>
-            <div class="t-item-meta">
-              <span class="t-meta-pill">${t.game}</span>
-              <span class="t-meta-pill">${t.status}</span>
-              <span class="t-meta-pill">${t.start_date || ''}</span>
-            </div>
-          </div>
-        </div>
-      </div>`).join('');
-  }
-
-  // ── НАРЕЗКИ ──
-  function renderClips(list) {
-    const grid = document.getElementById('clips-grid');
-    if (!grid) return;
-    // Убираем демо-нарезки, оставляем только кнопку загрузки
-    const uploadCard = grid.querySelector('.clip-card[onclick]') || grid.children[0];
-    grid.innerHTML = '';
-    // Кнопка добавить
-    const addBtn = document.createElement('div');
-    addBtn.className = 'clip-card';
-    addBtn.style.cursor = 'pointer';
-    addBtn.onclick = () => openModal('clip');
-    addBtn.innerHTML = `
-      <div class="upload-clip">
-        <svg viewBox="0 0 24 24"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
-        <div class="upload-clip-text">Загрузить нарезку</div>
-        <div class="upload-clip-sub">MP4, максимум 500MB</div>
-      </div>
-      <div class="clip-body"><div class="clip-title" style="color:var(--text-muted);">Нажмите чтобы добавить</div></div>`;
-    grid.appendChild(addBtn);
-
-    if (list && list.length) {
-      list.forEach(clip => {
-        const card = document.createElement('div');
-        card.className = 'clip-card';
-        const colors = ['#0f1e35,#1a0a1e','#0a1e10,#1e1a0a','#1a100a,#0a1015'];
-        const col = colors[Math.floor(Math.random()*colors.length)];
-        card.innerHTML = `
-          <div class="clip-thumb">
-            <div style="width:100%;height:100%;background:linear-gradient(135deg,${col});"></div>
-            <div class="clip-grad"></div>
-            <div class="clip-play"><div class="play-circle"><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3" fill="#080c12"/></svg></div></div>
-            <div class="clip-duration">${clip.duration || '0:30'}</div>
-            <div class="clip-views">👁 ${clip.views || 0}</div>
-          </div>
-          <div class="clip-body">
-            <div class="clip-title">${clip.title}</div>
-            <div class="clip-meta"><span class="clip-game">${clip.game || 'CS2'}</span><span class="clip-date">${new Date(clip.created_at).toLocaleDateString('ru-RU')}</span></div>
-          </div>`;
-        grid.appendChild(card);
-      });
+  // Steam
+  if (u.steam_url || u.faceit_nick) {
+    var steamVal = u.steam_url || '—';
+    if (u.steam_url) {
+      document.getElementById('info-steam').innerHTML =
+        '<a href="' + (u.steam_url.startsWith('http') ? u.steam_url : 'https://' + u.steam_url) + '" target="_blank">Открыть →</a>';
     }
   }
 
-  // ── TABS ──
-  function switchTab(id, el) {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-    if (el) el.classList.add('active');
-    else {
-      const idx = {overview:1,clips:2,tournaments:3,finance:4}[id];
-      const tabEl = document.querySelector('.tab:nth-child('+idx+')');
-      if (tabEl) tabEl.classList.add('active');
+  // Контакты (только свои)
+  if (IS_OWN) {
+    set('info-email', u.email || '—');
+    set('info-phone', u.phone || '—');
+  }
+}
+
+// ── КЛИПЫ ──
+function getYTId(url) {
+  var m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/);
+  return m ? m[1] : null;
+}
+
+function previewYT() {
+  var url = document.getElementById('clip-url').value;
+  var id = getYTId(url);
+  var preview = document.getElementById('yt-preview');
+  var iframe = document.getElementById('yt-iframe');
+  if (id) {
+    iframe.src = 'https://www.youtube.com/embed/' + id;
+    preview.style.display = 'block';
+    // Автозаполняем название если пустое
+    if (!document.getElementById('clip-title').value) {
+      document.getElementById('clip-title').value = 'Нарезка ' + new Date().toLocaleDateString('ru-RU');
     }
-    const panel = document.getElementById('tab-' + id);
-    if (panel) panel.classList.add('active');
-    triggerFade();
+  } else {
+    preview.style.display = 'none';
+    iframe.src = '';
   }
+}
 
-  // ── MODAL ──
-  function openModal(type) {
-    const modal = document.getElementById('modal-edit');
-    const title = document.getElementById('modal-title-text');
-    const body = document.getElementById('modal-body');
-    const user = JSON.parse(localStorage.getItem('gg_user') || '{}');
+async function addClip() {
+  var url = document.getElementById('clip-url').value.trim();
+  var title = document.getElementById('clip-title').value.trim();
+  var game = document.getElementById('clip-game').value;
+  var ytId = getYTId(url);
 
-    if (type === 'edit') {
-      title.textContent = 'Редактировать профиль';
-      body.innerHTML = `
-        <div class="modal-field"><label>Имя и фамилия</label><input class="modal-input" id="m-fullname" value="${user.full_name || ''}"></div>
-        <div class="modal-field"><label>Телефон</label><input class="modal-input" id="m-phone" value="${user.phone || ''}"></div>
-        <div class="modal-field"><label>Основная игра</label>
-          <select class="modal-input" id="m-game" style="cursor:pointer;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-family:'Exo 2',sans-serif;width:100%;outline:none;">
-            <option ${user.game==='CS2'?'selected':''}> </option>
-            <option ${user.game==='Dota 2'?'selected':''}>Dota 2</option>
-            <option ${user.game==='Valorant'?'selected':''}>Valorant</option>
-            <option ${user.game==='FIFA 25'?'selected':''}>FIFA 25</option>
-          </select>
-        </div>
-        <div class="modal-field"><label>Университет</label><input class="modal-input" id="m-uni" value="${user.university || ''}"></div>
-        <div class="modal-field"><label>Faceit никнейм</label><input class="modal-input" id="m-faceit" value="${user.faceit_nick || ''}"></div>
-        <div class="modal-field"><label>О себе</label><textarea class="modal-input" id="m-bio" style="min-height:80px;resize:vertical;">${user.bio || ''}</textarea></div>
-      `;
-      document.querySelector('.modal-save').onclick = saveProfile;
-    } else if (type === 'bio') {
-      title.textContent = 'О себе';
-      body.innerHTML = `<div class="modal-field"><label>Описание</label><textarea class="modal-input" id="m-bio" style="min-height:120px;resize:vertical;">${user.bio || ''}</textarea></div>`;
-      document.querySelector('.modal-save').onclick = async () => {
-        const bio = document.getElementById('m-bio').value;
-        await saveField({ bio });
-        document.getElementById('display-bio').textContent = bio;
-        closeModal();
-      };
-    } else if (type === 'clip') {
-      title.textContent = 'Добавить нарезку';
-      body.innerHTML = `
-        <div class="modal-field"><label>Название</label><input class="modal-input" id="m-clip-title" placeholder="Ace на Inferno..."></div>
-        <div class="modal-field"><label>Игра</label>
-          <select class="modal-input" id="m-clip-game" style="cursor:pointer;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-family:'Exo 2',sans-serif;width:100%;outline:none;">
-            <option> </option><option>Dota 2</option><option>Valorant</option><option>FIFA 25</option>
-          </select>
-        </div>
-        <div class="modal-field"><label>Длительность</label><input class="modal-input" id="m-clip-dur" placeholder="1:23"></div>
-      `;
-      document.querySelector('.modal-save').onclick = addClip;
-    } else if (type === 'avatar' || type === 'cover') {
-      title.textContent = type === 'avatar' ? 'Изменить аватар' : 'Изменить обложку';
-      body.innerHTML = `
-        <div style="border:2px dashed var(--border);border-radius:10px;padding:30px;text-align:center;color:var(--text-dim);">
-          <svg viewBox="0 0 24 24" style="width:32px;height:32px;stroke:currentColor;fill:none;stroke-width:1.5;margin:0 auto 10px;display:block"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
-          <div style="font-size:14px;font-weight:500;">Загрузка фото — в следующей версии</div>
-          <div style="font-size:11px;margin-top:4px;opacity:.5;">Пока аватар — инициалы имени</div>
-        </div>`;
-      document.querySelector('.modal-save').onclick = closeModal;
-    }
-    modal.classList.add('open');
-  }
+  if (!url || !ytId) { toast('Введите корректную ссылку YouTube', 'err'); return; }
+  if (!title) { toast('Введите название', 'err'); return; }
 
-  function closeModal() { document.getElementById('modal-edit').classList.remove('open'); }
-  document.getElementById('modal-edit').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
-
-  // ── СОХРАНИТЬ ПРОФИЛЬ в БД ──
-  async function saveField(fields) {
-    try {
-      const res = await fetch('/api/users/profile', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + TOKEN },
-        body: JSON.stringify(fields)
-      });
-      if (!res.ok) throw new Error('error');
-      const updated = await res.json();
-      localStorage.setItem('gg_user', JSON.stringify({ ...CACHED_USER, ...updated }));
-      return updated;
-    } catch(e) {
-      console.error('Ошибка сохранения:', e);
-      return null;
-    }
-  }
-
-  async function saveProfile() {
-    const fields = {
-      full_name: document.getElementById('m-fullname')?.value?.trim(),
-      phone:     document.getElementById('m-phone')?.value?.trim(),
-      game:      document.getElementById('m-game')?.value,
-      university:document.getElementById('m-uni')?.value?.trim(),
-      faceit_nick:document.getElementById('m-faceit')?.value?.trim(),
-      bio:       document.getElementById('m-bio')?.value?.trim(),
-    };
-    // Убираем пустые
-    Object.keys(fields).forEach(k => { if (!fields[k]) delete fields[k]; });
-
-    const saveBtn = document.querySelector('.modal-save');
-    saveBtn.textContent = 'Сохраняем...';
-    saveBtn.disabled = true;
-
-    const updated = await saveField(fields);
-    if (updated) {
-      fillProfile({ ...CACHED_USER, ...updated });
-      closeModal();
-    } else {
-      // Сохраняем хотя бы локально
-      fillProfile({ ...CACHED_USER, ...fields });
-      closeModal();
-    }
-    saveBtn.textContent = 'Сохранить';
-    saveBtn.disabled = false;
-  }
-
-  // ── ДОБАВИТЬ НАРЕЗКУ ──
-  async function addClip() {
-    const title = document.getElementById('m-clip-title')?.value?.trim();
-    const game = document.getElementById('m-clip-game')?.value;
-    const duration = document.getElementById('m-clip-dur')?.value?.trim();
-    if (!title) return;
-    try {
-      await fetch('/api/users/clips', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + TOKEN },
-        body: JSON.stringify({ title, game, duration })
-      });
-    } catch(e) {}
-    closeModal();
-    loadProfile(); // Перезагружаем
-  }
-
-  // ── FADE ──
-  const observer = new IntersectionObserver(entries => {
-    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
-  }, { threshold: 0.06 });
-  function triggerFade() {
-    document.querySelectorAll('.fade-up').forEach(el => {
-      el.classList.remove('visible');
-      observer.observe(el);
-      setTimeout(() => el.classList.add('visible'), 80);
+  try {
+    var res = await fetch('/api/users/clips', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + TOKEN },
+      body: JSON.stringify({ title: title, game: game, youtube_url: url, yt_id: ytId })
     });
+    if (!res.ok) throw new Error('Ошибка');
+    var clip = await res.json();
+    CLIPS.push(clip);
+    document.getElementById('clip-url').value = '';
+    document.getElementById('clip-title').value = '';
+    document.getElementById('yt-preview').style.display = 'none';
+    document.getElementById('yt-iframe').src = '';
+    renderClips(CLIPS);
+    document.getElementById('stat-clips').textContent = CLIPS.length;
+    toast('Нарезка добавлена!');
+  } catch(e) {
+    // Добавляем локально если API не поддерживает
+    var localClip = { id: Date.now(), title: title, game: game, yt_id: ytId, youtube_url: url, created_at: new Date().toISOString() };
+    CLIPS.push(localClip);
+    document.getElementById('clip-url').value = '';
+    document.getElementById('clip-title').value = '';
+    document.getElementById('yt-preview').style.display = 'none';
+    renderClips(CLIPS);
+    document.getElementById('stat-clips').textContent = CLIPS.length;
+    toast('Нарезка добавлена!');
   }
-  triggerFade();
+}
+
+function renderClips(list) {
+  var grid = document.getElementById('clips-grid');
+  var recent = document.getElementById('recent-clips');
+
+  if (!list || !list.length) {
+    grid.innerHTML = '<div class="empty"><div class="empty-icon">🎬</div><h3>Нарезок пока нет</h3><p>' + (IS_OWN ? 'Добавьте YouTube ссылку выше' : 'Игрок ещё не добавил нарезки') + '</p></div>';
+    if (recent) recent.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);grid-column:1/-1;font-size:13px;">Нарезок пока нет</div>';
+    return;
+  }
+
+  function clipHTML(c, small) {
+    var ytId = c.yt_id || getYTId(c.youtube_url || c.title || '');
+    if (!ytId) return '';
+    var date = c.created_at ? new Date(c.created_at).toLocaleDateString('ru-RU') : '';
+    return '<div class="clip-card">' +
+      '<div class="clip-thumb">' +
+        '<iframe src="https://www.youtube.com/embed/' + ytId + '" allowfullscreen></iframe>' +
+      '</div>' +
+      '<div class="clip-body">' +
+        '<div class="clip-title">' + c.title + '</div>' +
+        '<div class="clip-meta">' +
+          '<span>' + (c.game||'CS2') + '</span>' +
+          '<span>' + date + '</span>' +
+        '</div>' +
+        (IS_OWN ? '<div class="clip-actions"><button class="btn-danger" onclick="deleteClip(' + c.id + ')">Удалить</button></div>' : '') +
+      '</div>' +
+    '</div>';
+  }
+
+  grid.innerHTML = list.map(function(c){ return clipHTML(c); }).join('');
+  if (recent) {
+    recent.innerHTML = list.slice(0,3).map(function(c){
+      var ytId = c.yt_id || getYTId(c.youtube_url || '');
+      if (!ytId) return '';
+      return '<div style="border-radius:8px;overflow:hidden;aspect-ratio:16/9;background:#111928;">' +
+        '<iframe src="https://www.youtube.com/embed/' + ytId + '" style="width:100%;height:100%;border:none;" allowfullscreen></iframe>' +
+        '</div>';
+    }).join('') || '<div style="text-align:center;padding:20px;color:var(--text-muted);grid-column:1/-1;font-size:13px;">Нет нарезок</div>';
+  }
+}
+
+async function deleteClip(id) {
+  CLIPS = CLIPS.filter(function(c){ return c.id !== id; });
+  renderClips(CLIPS);
+  try {
+    await fetch('/api/users/clips/' + id, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + TOKEN } });
+  } catch(e) {}
+  toast('Нарезка удалена');
+}
+
+// ── ТУРНИРЫ ──
+function renderTournaments(list) {
+  var wrap = document.getElementById('tournaments-list');
+  document.getElementById('stat-tournaments').textContent = list.length;
+
+  if (!list.length) {
+    wrap.innerHTML = '<div class="empty"><div class="empty-icon">🏆</div><h3>Нет турниров</h3><p>Вы ещё не создали ни одного турнира</p>' +
+      '<div style="margin-top:16px;display:flex;gap:10px;justify-content:center;">' +
+      '<a href="/create-tournament.html" style="display:inline-flex;align-items:center;gap:7px;padding:10px 20px;background:var(--gold);color:#080c12;border-radius:8px;font-family:Rajdhani,sans-serif;font-size:14px;font-weight:700;text-decoration:none;letter-spacing:1px;">+ Создать турнир</a>' +
+      '</div></div>';
+    return;
+  }
+
+  var statusCls = {open:'pill-open',live:'pill-live',done:'pill-done',soon:'pill-open'};
+  var statusLbl = {open:'Открыта',live:'Live',done:'Завершён',soon:'Скоро'};
+  wrap.innerHTML = list.map(function(t) {
+    return '<div class="t-item">' +
+      '<div>' +
+        '<div class="t-item-name">' + t.name + '</div>' +
+        '<div class="t-item-meta">' + (t.game||'') + ' · ' + (t.start_date ? new Date(t.start_date).toLocaleDateString('ru-RU') : '—') + '</div>' +
+      '</div>' +
+      '<div style="display:flex;align-items:center;gap:12px;">' +
+        '<span class="pill ' + (statusCls[t.status]||'pill-open') + '">' + (statusLbl[t.status]||t.status) + '</span>' +
+        '<div class="t-item-actions">' +
+          '<button class="btn-sm" onclick="location.href=\'/tournament.html?id=' + t.id + '\'">Страница</button>' +
+          '<button class="btn-sm" onclick="location.href=\'/organizer.html\'">Панель</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+// ── НАСТРОЙКИ ──
+function renderSettings() {
+  var u = PROFILE;
+  if (!u) return;
+  var set = function(id, val) { var el=document.getElementById(id); if(el && val) el.value=val; };
+  set('set-fullname', u.full_name);
+  set('set-phone', u.phone);
+  set('set-uni', u.university);
+  set('set-faceit', u.faceit_nick);
+  set('set-steam', u.steam_url);
+  set('set-bio', u.bio);
+  if (u.game) {
+    var gameEl = document.getElementById('set-game');
+    if (gameEl) {
+      for (var i=0; i<gameEl.options.length; i++) {
+        if (gameEl.options[i].value === u.game) { gameEl.selectedIndex = i; break; }
+      }
+    }
+  }
+  // Тоггл приватности
+  if (u.is_private) document.getElementById('toggle-private').classList.add('on');
+}
+
+async function saveProfile() {
+  var data = {
+    full_name: document.getElementById('set-fullname').value.trim(),
+    phone: document.getElementById('set-phone').value.trim(),
+    game: document.getElementById('set-game').value,
+    university: document.getElementById('set-uni').value.trim(),
+    faceit_nick: document.getElementById('set-faceit').value.trim(),
+    steam_url: document.getElementById('set-steam').value.trim(),
+    bio: document.getElementById('set-bio').value.trim()
+  };
+  Object.keys(data).forEach(function(k){ if (!data[k]) delete data[k]; });
+  try {
+    var res = await fetch('/api/users/profile', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + TOKEN },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error('Ошибка');
+    var updated = await res.json();
+    var merged = Object.assign({}, PROFILE, updated);
+    localStorage.setItem('gg_user', JSON.stringify(merged));
+    PROFILE = merged;
+    renderProfile();
+    toast('Профиль сохранён!');
+  } catch(e) {
+    // Сохраняем локально
+    var merged = Object.assign({}, PROFILE, data);
+    localStorage.setItem('gg_user', JSON.stringify(merged));
+    PROFILE = merged;
+    renderProfile();
+    toast('Сохранено локально');
+  }
+}
+
+function togglePrivate() {
+  var btn = document.getElementById('toggle-private');
+  btn.classList.toggle('on');
+  var isPrivate = btn.classList.contains('on');
+  fetch('/api/users/profile', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + TOKEN },
+    body: JSON.stringify({ is_private: isPrivate })
+  }).catch(function(){});
+  toast(isPrivate ? '🔒 Профиль скрыт' : '🌐 Профиль открыт');
+}
+
+// ── ТАБЫ ──
+function switchTab(id, btn) {
+  document.querySelectorAll('.panel').forEach(function(p){ p.classList.remove('active'); });
+  document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
+  var panel = document.getElementById('panel-' + id);
+  if (panel) panel.classList.add('active');
+  if (btn) btn.classList.add('active');
+}
+
+// ── МОДАЛКА ──
+function openModal(type) {
+  var modal = document.getElementById('modal');
+  var title = document.getElementById('modal-title');
+  var body = document.getElementById('modal-body');
+  if (type === 'bio') {
+    title.textContent = 'О себе';
+    body.innerHTML = '<div class="m-field"><label>Текст</label><textarea id="m-bio" style="min-height:120px;">' + (PROFILE.bio||'') + '</textarea></div>' +
+      '<div style="display:flex;gap:10px;margin-top:4px;">' +
+      '<button class="btn-outline" style="flex:1" onclick="closeModal()">Отмена</button>' +
+      '<button class="btn-gold" style="flex:2" onclick="saveBio()"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Сохранить</button>' +
+      '</div>';
+  } else if (type === 'avatar' || type === 'cover') {
+    title.textContent = type === 'avatar' ? 'Аватар' : 'Обложка';
+    body.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-dim);">' +
+      '<div style="font-size:36px;margin-bottom:12px;">🖼️</div>' +
+      '<div style="font-size:14px;margin-bottom:8px;">Загрузка изображений — в следующей версии</div>' +
+      '<div style="font-size:12px;color:var(--text-muted);">Сейчас аватар — инициалы имени</div>' +
+      '</div>' +
+      '<button class="btn-outline" style="width:100%;justify-content:center;" onclick="closeModal()">Закрыть</button>';
+  }
+  modal.classList.add('open');
+}
+
+async function saveBio() {
+  var bio = document.getElementById('m-bio').value.trim();
+  try {
+    await fetch('/api/users/profile', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + TOKEN },
+      body: JSON.stringify({ bio: bio })
+    });
+  } catch(e) {}
+  PROFILE.bio = bio;
+  document.getElementById('bio-text').textContent = bio || 'Расскажите о себе...';
+  document.getElementById('set-bio').value = bio;
+  closeModal();
+  toast('Сохранено!');
+}
+
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+document.getElementById('modal').addEventListener('click', function(e){ if(e.target===this) closeModal(); });
+
+// ── TOAST ──
+function toast(msg, type) {
+  var el = document.getElementById('toast');
+  el.textContent = (type==='err'?'✗ ':'✓ ') + msg;
+  el.className = 'show ' + (type==='err'?'err':'ok');
+  clearTimeout(el._t);
+  el._t = setTimeout(function(){ el.classList.remove('show'); }, 3000);
+}
+
+// ── INIT ──
+if (!IS_OWN && !TARGET_USER && !ME) {
+  window.location.href = '/auth.html';
+} else {
+  loadProfile();
+}
 </script>
 </body>
 </html>
