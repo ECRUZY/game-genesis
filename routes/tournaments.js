@@ -26,26 +26,54 @@ router.get('/:id', async (req, res) => {
     )
     if (!t.rows[0]) return res.status(404).json({ error: 'Турнир не найден' })
 
-    // Участники
-    const regs = await db.query(
-      `SELECT r.id, r.nickname, r.team_name, r.registered_at, u.username, u.full_name, u.game, u.rating
-       FROM registrations r JOIN users u ON r.user_id = u.id
-       WHERE r.tournament_id = $1 ORDER BY r.registered_at`,
+    // Участники — из teams + team_players (новая система)
+    const teamsRes = await db.query(
+      `SELECT t.id, t.name as team_name, t.status, t.created_at,
+        json_agg(json_build_object(
+          'nickname', tp.nickname,
+          'full_name', tp.full_name,
+          'steam_url', tp.steam_url,
+          'is_captain', tp.is_captain
+        ) ORDER BY tp.is_captain DESC) as players
+       FROM teams t
+       LEFT JOIN team_players tp ON tp.team_id = t.id
+       WHERE t.tournament_id = $1
+       GROUP BY t.id ORDER BY t.created_at`,
       [req.params.id]
     )
 
-    // Матчи / сетка
-    const matches = await db.query(
-      `SELECT m.*, u1.username as p1_name, u2.username as p2_name, uw.username as winner_name
-       FROM matches m
-       LEFT JOIN users u1 ON m.player1_id = u1.id
-       LEFT JOIN users u2 ON m.player2_id = u2.id
-       LEFT JOIN users uw ON m.winner_id = uw.id
-       WHERE m.tournament_id = $1 ORDER BY m.round, m.id`,
-      [req.params.id]
-    )
+    // Также берём из registrations (старая система — для совместимости)
+    let regsRes = { rows: [] }
+    try {
+      regsRes = await db.query(
+        `SELECT r.id, r.nickname, r.registered_at, u.username, u.full_name
+         FROM registrations r
+         LEFT JOIN users u ON r.user_id = u.id
+         WHERE r.tournament_id = $1 ORDER BY r.registered_at`,
+        [req.params.id]
+      )
+    } catch(e) {}
 
-    res.json({ tournament: t.rows[0], participants: regs.rows, matches: matches.rows })
+    // Матчи
+    let matches = { rows: [] }
+    try {
+      matches = await db.query(
+        `SELECT m.*, t1.name as team1_name, t2.name as team2_name, tw.name as winner_name
+         FROM matches m
+         LEFT JOIN teams t1 ON m.team1_id = t1.id
+         LEFT JOIN teams t2 ON m.team2_id = t2.id
+         LEFT JOIN teams tw ON m.winner_team_id = tw.id
+         WHERE m.tournament_id = $1 ORDER BY m.bracket_type, m.round, m.match_number`,
+        [req.params.id]
+      )
+    } catch(e) {}
+
+    res.json({
+      tournament: t.rows[0],
+      participants: teamsRes.rows,
+      registrations: regsRes.rows,
+      matches: matches.rows
+    })
   } catch (e) {
     console.error(e)
     res.status(500).json({ error: 'Ошибка сервера' })
