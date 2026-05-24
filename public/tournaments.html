@@ -695,7 +695,7 @@ function renderCards(list) {
               '<div class="t-prize">' + prize + '</div>' +
               '<div class="t-prize-label">Призовой фонд</div>' +
             '</div>' +
-            '<button class="t-btn ' + (t.status !== 'open' ? 'ghost' : '') + '" data-reg="' + t.id + '">' + btnLbl + '</button>' +
+            '<button data-reg="' + t.id + '" style="font-family:Rajdhani,sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;padding:8px 18px;border-radius:7px;border:none;background:' + (t.status === 'open' ? '#f0c040' : 'transparent') + ';color:' + (t.status === 'open' ? '#080c12' : '#5c7090') + ';border:1px solid ' + (t.status === 'open' ? 'transparent' : '#253550') + ';cursor:pointer;white-space:nowrap;transition:.2s;">' + btnLbl + '</button>' +
           '</div>' +
         '</div>' +
       '</div>';
