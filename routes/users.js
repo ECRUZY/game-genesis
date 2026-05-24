@@ -48,7 +48,7 @@ router.get('/profile', auth, async (req, res) => {
 
 // ── ОБНОВИТЬ ПРОФИЛЬ ──
 router.put('/profile', auth, async (req, res) => {
-  const { full_name, phone, game, university, faceit_nick, bio } = req.body
+  const { full_name, phone, game, university, faceit_nick, bio, steam_url, is_private } = req.body
   try {
     const result = await db.query(
       `UPDATE users SET
@@ -57,10 +57,12 @@ router.put('/profile', auth, async (req, res) => {
         game = COALESCE($3, game),
         university = COALESCE($4, university),
         faceit_nick = COALESCE($5, faceit_nick),
-        bio = COALESCE($6, bio)
-       WHERE id = $7
-       RETURNING id, username, email, phone, full_name, game, university, faceit_nick, bio, role, verified`,
-      [full_name, phone, game, university, faceit_nick, bio, req.user.id]
+        bio = COALESCE($6, bio),
+        steam_url = COALESCE($7, steam_url),
+        is_private = CASE WHEN $8::text IS NOT NULL THEN $8::boolean ELSE is_private END
+       WHERE id = $9
+       RETURNING id, username, email, phone, full_name, game, university, faceit_nick, bio, steam_url, is_private, role, verified`,
+      [full_name, phone, game, university, faceit_nick, bio, steam_url, is_private !== undefined ? String(is_private) : null, req.user.id]
     )
     res.json(result.rows[0])
   } catch (e) {
@@ -70,12 +72,12 @@ router.put('/profile', auth, async (req, res) => {
 
 // ── ДОБАВИТЬ НАРЕЗКУ ──
 router.post('/clips', auth, async (req, res) => {
-  const { title, game, duration } = req.body
+  const { title, game, duration, youtube_url, yt_id } = req.body
   if (!title) return res.status(400).json({ error: 'Введите название' })
   try {
     const result = await db.query(
-      'INSERT INTO clips (user_id, title, game, duration) VALUES ($1,$2,$3,$4) RETURNING *',
-      [req.user.id, title, game || 'CS2', duration || '0:30']
+      'INSERT INTO clips (user_id, title, game, duration, youtube_url, yt_id) VALUES ($1,$2,$3,$4,$5,$6) RETURNING *',
+      [req.user.id, title, game || 'CS2', duration || '0:30', youtube_url || null, yt_id || null]
     )
     res.status(201).json(result.rows[0])
   } catch (e) {
