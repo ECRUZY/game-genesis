@@ -656,49 +656,52 @@ function renderCards(list) {
   for (var i = 0; i < list.length; i++) {
     var t = list[i];
     var filled = t.filled_count || 0;
-    var pct = t.max_slots > 0 ? Math.round(filled / t.max_slots * 100) : 0;
+    var max = t.max_slots || 16;
+    var pct = max > 0 ? Math.round(filled / max * 100) : 0;
     var bg = GAME_BG[t.game] || GAME_BG['CS2'];
-    var statusLbl = STATUS_LABEL[t.status] || t.status;
     var isLive = t.status === 'live';
-    var statusColor = t.status==='live' ? '#f87171' : t.status==='open' ? '#4ade80' : t.status==='soon' ? '#f0c040' : '#5c7090';
-    var btnLbl = t.status==='open' ? 'Записаться' : t.status==='live' ? 'Смотреть' : 'Подробнее';
-    var prizeStr = t.prize_pool > 0 ? t.prize_pool.toLocaleString('ru-RU') + ' ₽' : '—';
-    var feeStr = t.entry_fee > 0 ? t.entry_fee + ' ₽' : 'Бесплатно';
-    var feeColor = t.entry_fee > 0 ? '#f0c040' : '#4ade80';
+    var statusLbl = STATUS_LABEL[t.status] || t.status;
+    var statusCls = STATUS_CLS[t.status] || 'fc-tag-open';
+    var btnLbl = t.status === 'open' ? 'Записаться' : t.status === 'live' ? 'Смотреть' : 'Подробнее';
+    var prize = t.prize_pool > 0 ? t.prize_pool.toLocaleString('ru-RU') + ' ₽' : '—';
+    var fee = t.entry_fee > 0 ? t.entry_fee + ' ₽' : 'Бесплатно';
+    var feeColor = t.entry_fee > 0 ? 'var(--gold)' : 'var(--success)';
+    var barCls = t.status === 'live' ? 'live' : t.status === 'open' ? 'open' : 'soon';
 
     html +=
-      '<div class="t-card" data-id="' + t.id + '" style="cursor:pointer;">' +
-        '<div class="t-thumb" style="background:' + bg + ';position:relative;height:140px;overflow:hidden;">' +
-          '<div style="position:absolute;inset:0;background:linear-gradient(to bottom,transparent 40%,rgba(13,20,32,1));"></div>' +
-          '<span style="position:absolute;top:10px;left:10px;background:rgba(8,12,18,.8);border:1px solid #253550;color:#dde4ef;font-size:10px;font-weight:700;padding:3px 9px;border-radius:5px;">' + t.game + '</span>' +
-          '<span style="position:absolute;top:10px;right:10px;background:rgba(8,12,18,.8);border:1px solid ' + statusColor + ';color:' + statusColor + ';font-size:10px;font-weight:700;padding:3px 9px;border-radius:5px;display:flex;align-items:center;gap:4px;">' +
-            (isLive ? '<span style="width:5px;height:5px;border-radius:50%;background:' + statusColor + ';animation:blink 1s infinite;"></span>' : '') +
+      '<div class="t-card" data-id="' + t.id + '">' +
+        '<div class="t-thumb">' +
+          '<div class="t-thumb-bg" style="background:' + bg + ';width:100%;height:100%;"></div>' +
+          '<div class="t-thumb-overlay"></div>' +
+          '<div class="t-game-tag">' + t.game + '</div>' +
+          '<div class="t-status-badge ' + statusCls + '">' +
+            (isLive ? '<span style="width:5px;height:5px;border-radius:50%;background:currentColor;display:inline-block;margin-right:4px;animation:blink 1s infinite;"></span>' : '') +
             statusLbl +
-          '</span>' +
+          '</div>' +
         '</div>' +
-        '<div style="padding:14px 16px 16px;">' +
-          '<div style="font-family:Rajdhani,sans-serif;font-size:16px;font-weight:700;color:#fff;margin-bottom:8px;line-height:1.3;">' + t.name + '</div>' +
-          '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;">' +
-            '<span style="font-size:11px;color:#5c7090;">' + fmtDate(t.start_date) + '</span>' +
-            '<span style="font-size:11px;color:#5c7090;">' + filled + ' / ' + (t.max_slots||16) + ' уч.</span>' +
-            '<span style="font-size:11px;color:' + feeColor + ';">' + feeStr + '</span>' +
+        '<div class="t-body">' +
+          '<div class="t-name">' + t.name + '</div>' +
+          '<div class="t-metas">' +
+            '<div class="t-meta">' + fmtDate(t.start_date) + '</div>' +
+            '<div class="t-meta">' + filled + ' / ' + max + ' уч.</div>' +
+            '<div class="t-meta" style="color:' + feeColor + ';">' + fee + '</div>' +
           '</div>' +
-          '<div style="height:3px;background:#1a2436;border-radius:2px;margin-bottom:12px;">' +
-            '<div style="height:100%;width:' + pct + '%;background:#f0c040;border-radius:2px;"></div>' +
+          '<div class="t-bar-wrap">' +
+            '<div class="t-bar-top"><span>Регистрация</span><span>' + pct + '%</span></div>' +
+            '<div class="t-bar"><div class="t-bar-fill ' + barCls + '" style="width:' + pct + '%;"></div></div>' +
           '</div>' +
-          '<div style="display:flex;align-items:center;justify-content:space-between;">' +
-            '<div>' +
-              '<div style="font-family:Rajdhani,sans-serif;font-size:18px;font-weight:700;color:#f0c040;">' + prizeStr + '</div>' +
-              '<div style="font-size:10px;color:#2e3f58;text-transform:uppercase;letter-spacing:.4px;">Призовой фонд</div>' +
+          '<div class="t-footer">' +
+            '<div class="t-prize-wrap">' +
+              '<div class="t-prize">' + prize + '</div>' +
+              '<div class="t-prize-label">Призовой фонд</div>' +
             '</div>' +
-            '<button class="t-btn" data-reg="' + t.id + '" style="font-family:Rajdhani,sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;padding:8px 16px;border-radius:6px;border:none;background:#f0c040;color:#080c12;cursor:pointer;white-space:nowrap;">' + btnLbl + '</button>' +
+            '<button class="t-btn ' + (t.status !== 'open' ? 'ghost' : '') + '" data-reg="' + t.id + '">' + btnLbl + '</button>' +
           '</div>' +
         '</div>' +
       '</div>';
   }
   grid.innerHTML = html;
 
-  // Делегирование кликов
   grid.onclick = function(e) {
     var card = e.target.closest('.t-card');
     if (!card) return;
@@ -707,19 +710,6 @@ function renderCards(list) {
     else { window.location.href = '/tournament.html?id=' + card.dataset.id; }
   };
 }
-
-
-var ALL_TOURNAMENTS = [];
-
-var GAME_BG = {
-  'CS2':            'linear-gradient(135deg,#0f1e35,#0a1520)',
-  'Dota 2':         'linear-gradient(135deg,#150a20,#0f1830)',
-  'Valorant':       'linear-gradient(135deg,#200a0a,#1a0f20)',
-  'FIFA 25':        'linear-gradient(135deg,#0a1e10,#0f1a0a)',
-  'Mobile Legends': 'linear-gradient(135deg,#0a1528,#1a1008)'
-};
-var STATUS_LABEL = {live:'Live', open:'Открыта', soon:'Скоро', done:'Завершён'};
-var STATUS_CLS   = {live:'fc-tag-live', open:'fc-tag-open', soon:'fc-tag-soon', done:'fc-tag-done'};
 
 function fmtDate(d) {
   if (!d) return 'Дата уточняется';
