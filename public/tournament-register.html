@@ -109,12 +109,8 @@
         <a href="/tournaments.html">Турниры</a> &rsaquo;
         <span>Регистрация</span>
       </div>
-      <div class="t-name">Открытый Чемпионат Чеченской Республики 2025</div>
-      <div class="t-pills">
-        <span class="tp blue">CS2 &middot; 5 на 5</span>
-        <span class="tp gold">50 000 ₽ призовых</span>
-        <span class="tp green">Регистрация открыта</span>
-      </div>
+      <div class="t-name" id="t-name">Загружаем...</div>
+      <div class="t-pills" id="t-pills"><span class="tp blue">...</span></div>
     </div>
   </div>
 
@@ -130,7 +126,7 @@
 
       <div id="fw">
         <h2 style="font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;color:#fff;margin-bottom:6px;">Как вы хотите участвовать?</h2>
-        <p style="font-size:13px;color:var(--text-dim);margin-bottom:18px;">Турнир формата 5 на 5. Выберите подходящий вариант.</p>
+        <p style="font-size:13px;color:var(--text-dim);margin-bottom:18px;" id="t-format-desc">Выберите подходящий вариант.</p>
 
         <div class="mode-cards">
           <div class="mc sel" id="mc-full" onclick="setMode('full')">
@@ -233,23 +229,18 @@
     <div class="rp">
       <div class="ic">
         <div class="ic-title"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>О турнире</div>
-        <div class="ic-row"><span class="ick">Игра</span><span class="icv">CS2</span></div>
-        <div class="ic-row"><span class="ick">Формат</span><span class="icv">5 на 5</span></div>
-        <div class="ic-row"><span class="ick">Тип сетки</span><span class="icv">Single Elimination</span></div>
-        <div class="ic-row"><span class="ick">Взнос</span><span class="icv green">Бесплатно</span></div>
-        <div class="ic-row"><span class="ick">Призовой фонд</span><span class="icv gold">50 000 ₽</span></div>
-        <div class="ic-row"><span class="ick">Дата начала</span><span class="icv">15 июня 2025</span></div>
+        <div id="t-info-rows">
+          <div class="ic-row"><span class="ick">Загрузка...</span><span class="icv">—</span></div>
+        </div>
         <div class="sl-wrap">
-          <div class="sl-lbl"><span>Зарегистрировано</span><span>64 / 128</span></div>
-          <div class="sl-bar"><div class="sl-fill"></div></div>
+          <div class="sl-lbl"><span>Зарегистрировано</span><span id="t-slots-text">—</span></div>
+          <div class="sl-bar"><div class="sl-fill" id="t-slots-fill" style="width:0%"></div></div>
         </div>
       </div>
-      <div class="fp-box">
-        <div class="fp-title">Свободные игроки (<span id="fc">3</span>)</div>
+      <div class="fp-box" id="fpool-box">
+        <div class="fp-title">Свободные игроки (<span id="fc">0</span>)</div>
         <div id="fpool">
-          <div class="fpi"><div class="fpa">АМ</div><div><div class="fpn">ArbiFire</div><div class="fps">Арби Магомадов · Faceit 7</div></div></div>
-          <div class="fpi"><div class="fpa">РА</div><div><div class="fpn">RusKnight</div><div class="fps">Руслан Алиев · Premier 14k</div></div></div>
-          <div class="fpi"><div class="fpa">ХИ</div><div><div class="fpn">XHasan</div><div class="fps">Хасан Исмаилов · Premier 12k</div></div></div>
+          <div style="font-size:12px;color:var(--text-muted);padding:8px 0;text-align:center;">Загружаем...</div>
         </div>
       </div>
     </div>
@@ -376,11 +367,7 @@ function submitSolo() {
   });
 }
 
-function doSend(data) {
-  var btn = document.querySelector('.fp.active .btn-sub');
-  if (btn) { btn.disabled=true; btn.textContent='Отправляем...'; }
-  setTimeout(function(){ showSuccess(data); }, 1200);
-}
+// doSend — см. ниже (реальная версия с API)
 
 function showSuccess(d) {
   document.getElementById('fw').style.display='none';
@@ -404,9 +391,152 @@ function showSuccess(d) {
   }
 }
 
+// ── ЗАГРУЗКА ДАННЫХ ТУРНИРА ──
+var TOURNAMENT_ID = new URLSearchParams(window.location.search).get('id');
+
+async function loadTournamentData() {
+  // Заголовок страницы
+  if (!TOURNAMENT_ID) {
+    document.getElementById('t-name').textContent = 'Турнир не найден';
+    document.getElementById('t-info-rows').innerHTML =
+      '<div class="ic-row"><span class="ick" style="color:var(--red)">Укажите id турнира в URL</span></div>';
+    return;
+  }
+
+  try {
+    var res = await fetch('/api/tournaments/' + TOURNAMENT_ID);
+    if (!res.ok) throw new Error('Турнир не найден');
+    var data = await res.json();
+    var t = data.tournament;
+
+    // Название
+    document.getElementById('t-name').textContent = t.name;
+    document.title = t.name + ' — Регистрация | Game Genesis';
+
+    // Pills
+    var fmtLabel = {single_elimination:'Single Elimination', double_elimination:'Double Elimination', round_robin:'Round Robin'};
+    document.getElementById('t-pills').innerHTML =
+      '<span class="tp blue">' + t.game + (t.team_size && t.team_size !== '1x1' ? ' · ' + t.team_size : '') + '</span>' +
+      (t.prize_pool > 0 ? '<span class="tp gold">' + t.prize_pool.toLocaleString('ru-RU') + ' ₽ призовых</span>' : '') +
+      '<span class="tp green">Регистрация открыта</span>';
+
+    // Правая панель — инфо
+    var fmtDate = function(d) { return d ? new Date(d).toLocaleDateString('ru-RU', {day:'numeric', month:'long', year:'numeric'}) : '—'; };
+    document.getElementById('t-info-rows').innerHTML =
+      '<div class="ic-row"><span class="ick">Игра</span><span class="icv">' + t.game + '</span></div>' +
+      '<div class="ic-row"><span class="ick">Формат</span><span class="icv">' + (t.team_size || '1x1') + '</span></div>' +
+      '<div class="ic-row"><span class="ick">Тип сетки</span><span class="icv">' + (fmtLabel[t.format] || t.format || 'Single Elimination') + '</span></div>' +
+      '<div class="ic-row"><span class="ick">Взнос</span><span class="icv ' + (t.entry_fee > 0 ? '' : 'green') + '">' + (t.entry_fee > 0 ? t.entry_fee.toLocaleString('ru-RU') + ' ₽' : 'Бесплатно') + '</span></div>' +
+      (t.prize_pool > 0 ? '<div class="ic-row"><span class="ick">Призовой фонд</span><span class="icv gold">' + t.prize_pool.toLocaleString('ru-RU') + ' ₽</span></div>' : '') +
+      '<div class="ic-row"><span class="ick">Дата начала</span><span class="icv">' + fmtDate(t.start_date) + '</span></div>' +
+      '<div class="ic-row"><span class="ick">Организатор</span><span class="icv">' + (t.organizer_name || '—') + '</span></div>';
+
+    // Прогресс-бар участников
+    var filled = data.participants ? data.participants.length : 0;
+    var max = t.max_slots || 16;
+    var pct = max > 0 ? Math.round(filled / max * 100) : 0;
+    document.getElementById('t-slots-text').textContent = filled + ' / ' + max;
+    var fill = document.getElementById('t-slots-fill');
+    if (fill) fill.style.width = pct + '%';
+
+    // Описание формата
+    var teamSize = parseInt((t.team_size||'1').split('x')[0]) || 1;
+    TS = teamSize; // обновляем глобальную переменную
+    if (teamSize > 1) {
+      document.getElementById('t-format-desc').textContent =
+        'Турнир формата ' + t.team_size + '. Выберите подходящий вариант участия.';
+      // Показываем все 3 режима для командных турниров
+      document.getElementById('mc-partial').style.display = '';
+    } else {
+      // Соло турнир — только solo режим
+      document.getElementById('t-format-desc').textContent = 'Индивидуальный турнир. Регистрируйтесь лично.';
+      document.getElementById('mc-full').style.display = 'none';
+      document.getElementById('mc-partial').style.display = 'none';
+      setMode('solo');
+    }
+
+    // Свободные игроки из реальных регистраций
+    loadFreeAgents(data.participants || []);
+
+  } catch(e) {
+    document.getElementById('t-name').textContent = 'Ошибка загрузки';
+    document.getElementById('t-info-rows').innerHTML =
+      '<div class="ic-row"><span class="ick" style="color:var(--red)">' + e.message + '</span></div>';
+    console.error(e);
+  }
+}
+
+function loadFreeAgents(participants) {
+  var fpool = document.getElementById('fpool');
+  var fc = document.getElementById('fc');
+  if (!fpool) return;
+
+  // Свободные агенты — те кто зарегистрировался без команды (solo)
+  // Пока показываем всех участников как "solo" если нет данных о команде
+  var freeAgents = participants.filter(function(p) { return !p.team_name; });
+
+  if (fc) fc.textContent = freeAgents.length;
+
+  if (!freeAgents.length) {
+    fpool.innerHTML = '<div style="font-size:12px;color:var(--text-muted);padding:8px 0;text-align:center;">Свободных игроков нет</div>';
+    return;
+  }
+
+  fpool.innerHTML = freeAgents.map(function(p) {
+    var ini = (p.full_name || p.username || p.nickname || '?').split(' ').map(function(w){return w[0];}).join('').toUpperCase().slice(0,2);
+    return '<div class="fpi">' +
+      '<div class="fpa">' + ini + '</div>' +
+      '<div><div class="fpn">' + (p.nickname || p.username || '—') + '</div>' +
+      '<div class="fps">' + (p.full_name || '') + '</div></div>' +
+    '</div>';
+  }).join('');
+}
+
+// ── ОТПРАВКА ЗАЯВКИ с tournament_id ──
+async function doSend(data) {
+  var btn = document.querySelector('.fp.active .btn-sub');
+  if (btn) { btn.disabled = true; btn.textContent = 'Отправляем...'; }
+
+  if (!TOURNAMENT_ID) {
+    alert('Ошибка: ID турнира не найден в URL');
+    if (btn) { btn.disabled = false; btn.textContent = 'Отправить заявку'; }
+    return;
+  }
+
+  try {
+    // Отправляем команду через реальный API
+    var res = await fetch('/api/tournaments/' + TOURNAMENT_ID + '/teams', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        team_name: data.team_name || ('Команда #' + Date.now()),
+        players: data.players.map(function(p) {
+          return {
+            full_name:  p.name  || '',
+            nickname:   p.nick  || p.nickname || '',
+            steam_url:  p.steam || p.steam_url || '',
+            is_captain: p.is_captain || false
+          };
+        }),
+        team_type: data.type,
+        needs_players: data.needs || 0
+      })
+    });
+
+    var resp = await res.json();
+    if (!res.ok) throw new Error(resp.error || 'Ошибка сервера');
+
+    showSuccess(data);
+  } catch(e) {
+    if (btn) { btn.disabled = false; btn.textContent = 'Отправить заявку'; }
+    alert('Ошибка: ' + e.message);
+  }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
   buildFull();
   buildPartial(2);
+  loadTournamentData();
 });
 </script>
 -e 
