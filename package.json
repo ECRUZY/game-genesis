@@ -1,7 +1,7 @@
 {
   "name": "game-genesis",
   "version": "1.0.0",
-  "description": "Game Genesis - Киберспортивная платформа",
+  "description": "Game Genesis - \u041a\u0438\u0431\u0435\u0440\u0441\u043f\u043e\u0440\u0442\u0438\u0432\u043d\u0430\u044f \u043f\u043b\u0430\u0442\u0444\u043e\u0440\u043c\u0430",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -13,7 +13,8 @@
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "jsonwebtoken": "^9.0.2",
-    "pg": "^8.12.0"
+    "pg": "^8.12.0",
+    "nodemailer": "^6.9.13"
   },
   "devDependencies": {
     "nodemon": "^3.1.4"
