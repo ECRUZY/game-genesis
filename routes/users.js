@@ -110,14 +110,48 @@ router.get('/ratings', async (req, res) => {
 })
 
 // ── ПУБЛИЧНЫЙ ПРОФИЛЬ ──
+// ── ПУБЛИЧНЫЙ ПРОФИЛЬ ──
 router.get('/:username', async (req, res) => {
-  const result = await db.query(
-    `SELECT id, username, full_name, game, university, faceit_nick, bio, rating, wins, losses, created_at
-     FROM users WHERE username = $1`,
-    [req.params.username]
-  )
-  if (!result.rows[0]) return res.status(404).json({ error: 'Пользователь не найден' })
-  res.json(result.rows[0])
+  try {
+    const result = await db.query(
+      `SELECT id, username, full_name, game, university, faceit_nick, steam_url, bio,
+               is_private, rating, wins, losses, created_at, role
+       FROM users WHERE username = $1`,
+      [req.params.username]
+    )
+    if (!result.rows[0]) return res.status(404).json({ error: 'Пользователь не найден' })
+    const u = result.rows[0]
+    if (u.is_private) u.full_name = null
+
+    // Клипы (публичные)
+    let clips = []
+    try {
+      const clipsRes = await db.query(
+        'SELECT id, title, game, youtube_url, yt_id, created_at FROM clips WHERE user_id = $1 ORDER BY created_at DESC',
+        [u.id]
+      )
+      clips = clipsRes.rows
+    } catch(e) {}
+
+    // Турниры организатора (публичные)
+    let tournaments = []
+    try {
+      const tRes = await db.query(
+        'SELECT id, name, game, status, max_slots, entry_fee, prize_pool, start_date FROM tournaments WHERE organizer_id = $1 ORDER BY created_at DESC',
+        [u.id]
+      )
+      tournaments = tRes.rows
+    } catch(e) {}
+
+    res.json({
+      ...u,
+      clips,
+      organized_tournaments: tournaments
+    })
+  } catch(e) {
+    console.error(e)
+    res.status(500).json({ error: 'Ошибка сервера' })
+  }
 })
 
 module.exports = router
