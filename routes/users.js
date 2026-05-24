@@ -21,24 +21,33 @@ router.get('/profile', auth, async (req, res) => {
     )
 
     // Регистрации (участие)
-    const registrations = await db.query(
-      `SELECT t.id, t.name, t.game, t.status, t.start_date, r.registered_at
-       FROM registrations r JOIN tournaments t ON r.tournament_id = t.id
-       WHERE r.user_id = $1 ORDER BY r.registered_at DESC`,
-      [req.user.id]
-    )
+    let registrations = { rows: [] }
+    try {
+      registrations = await db.query(
+        `SELECT t.id, t.name, t.game, t.status, t.start_date, r.registered_at
+         FROM registrations r JOIN tournaments t ON r.tournament_id = t.id
+         WHERE r.user_id = $1 ORDER BY r.registered_at DESC`,
+        [req.user.id]
+      )
+    } catch(e) { console.log('Registrations error:', e.message) }
 
-    // Нарезки
-    const clips = await db.query(
-      'SELECT * FROM clips WHERE user_id = $1 ORDER BY created_at DESC',
-      [req.user.id]
-    )
+    // Нарезки (с защитой если колонки нет)
+    let clipsRows = []
+    try {
+      const clips = await db.query(
+        'SELECT * FROM clips WHERE user_id = $1 ORDER BY created_at DESC',
+        [req.user.id]
+      )
+      clipsRows = clips.rows
+    } catch(e) {
+      console.log('Clips query error (migration needed):', e.message)
+    }
 
     res.json({
       user: user.rows[0],
       organized_tournaments: tournaments.rows,
       participated_tournaments: registrations.rows,
-      clips: clips.rows
+      clips: clipsRows
     })
   } catch (e) {
     console.error(e)
