@@ -359,25 +359,44 @@ var CLIPS = [];
 // ── ЗАГРУЗКА ──
 async function loadProfile() {
   try {
-    var url = IS_OWN && TOKEN
-      ? '/api/users/profile'
-      : '/api/users/' + (TARGET_USER || (ME && ME.username));
+    var targetUsername = TARGET_USER || (ME && ME.username);
+    if (!targetUsername) { window.location.href = '/auth.html'; return; }
 
-    var headers = {};
-    if (TOKEN) headers['Authorization'] = 'Bearer ' + TOKEN;
-    var res = await fetch(url, { headers: headers });
-    if (!res.ok) throw new Error('Профиль не найден');
-    var data = await res.json();
+    // Всегда грузим публичный профиль по username
+    var pubRes = await fetch('/api/users/' + targetUsername);
+    if (!pubRes.ok) throw new Error('Профиль не найден');
+    var pubData = await pubRes.json();
+    PROFILE = pubData;
 
-    PROFILE = IS_OWN ? data.user : data;
-    CLIPS = IS_OWN ? (data.clips || []) : [];
+    // Если это наш профиль И есть токен — догружаем приватные данные
+    if (IS_OWN && TOKEN) {
+      try {
+        var privRes = await fetch('/api/users/profile', {
+          headers: { 'Authorization': 'Bearer ' + TOKEN }
+        });
+        if (privRes.ok) {
+          var privData = await privRes.json();
+          // Мерджим — публичные данные + приватные
+          PROFILE = Object.assign({}, pubData, privData.user);
+          CLIPS = privData.clips || [];
+          renderTournaments(privData.organized_tournaments || []);
+          renderSettings();
+        } else {
+          // Токен протух — показываем как публичный
+          IS_OWN = false;
+        }
+      } catch(e) {
+        IS_OWN = false;
+      }
+    } else {
+      // Публичный просмотр — грузим клипы и турниры из публичных endpoint'ов
+      CLIPS = pubData.clips || [];
+      renderTournaments(pubData.organized_tournaments || []);
+    }
 
     renderProfile();
     renderClips(CLIPS);
-    if (IS_OWN) {
-      renderTournaments(data.organized_tournaments || []);
-      renderSettings();
-    }
+
   } catch(e) {
     console.error(e);
     document.getElementById('display-name').textContent = e.message;
