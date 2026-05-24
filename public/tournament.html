@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+  <script src="/nav.js"></script>
+  <script src="/api.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Турнир Чеченской Республики — Game Genesis</title>
@@ -396,55 +398,10 @@
 <div class="grid-bg"></div>
 
 <!-- HEADER -->
-<header>
-  <a href="index.html" class="logo">
-    <div class="logo-hex">
-      <svg viewBox="0 0 18 18" fill="none"><polygon points="9,1 16,4.5 16,13.5 9,17 2,13.5 2,4.5" stroke="#080c12" stroke-width="1.5"/><circle cx="9" cy="9" r="2.5" fill="#080c12"/></svg>
-    </div>
-    <span class="logo-name">GAME GENESIS</span>
-  </a>
-  <nav>
-    <a href="index.html" class="nav-a">Главная</a>
-    <a href="#" class="nav-a active">Турниры</a>
-    <a href="#" onclick="location.href='/tournament-register.html?id='+(new URLSearchParams(window.location.search).get('id')||'1')" class="nav-a">Регистрация</a>
-    <a href="#" class="nav-a">Рейтинг</a>
-    <a href="create-tournament.html" class="nav-a">Создать турнир</a>
-    <a href="#" class="nav-a">Лиги</a>
-  </nav>
-  <div class="header-right">
-    <button class="btn-login" onclick="location.href='auth.html'">Войти</button>
-    <button class="btn-cta" onclick="location.href='/tournament-register.html?id=' + (new URLSearchParams(window.location.search).get('id') || '1')">Участвовать</button>
-  </div>
-</header>
+
 
 <!-- SIDEBAR -->
-<aside class="sidebar">
-  <div class="sb-item" onclick="location.href='index.html'">
-    <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-    <span class="tip">Главная</span>
-  </div>
-  <div class="sb-item active">
-    <svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/></svg>
-    <span class="tip">Турниры</span>
-  </div>
-  <div class="sb-item">
-    <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-    <span class="tip">Рейтинг</span>
-  </div>
-  <div class="sb-item">
-    <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-    <span class="tip">Лиги</span>
-  </div>
-  <div class="sb-sep"></div>
-  <div class="sb-item" onclick="location.href='/tournament-register.html?id=' + (new URLSearchParams(window.location.search).get('id') || '1')">
-    <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-    <span class="tip">Регистрация</span>
-  </div>
-  <div class="sb-item">
-    <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-    <span class="tip">Профиль</span>
-  </div>
-</aside>
+
 
 <div class="page">
 
@@ -469,11 +426,11 @@
         <span class="badge badge-free">Бесплатно</span>
       </div>
 
-      <h1 class="t-title">Открытый Чемпионат<br><em>Чеченской Республики</em> 2025</h1>
+      <h1 class="t-title" id="t-name">Загружаем...</h1>
       <p class="t-desc">Крупнейший студенческий киберспортивный турнир региона. Команды из университетов Грозного, Гудермеса, Шали и других городов республики сражаются за звание чемпиона.</p>
 
       <div class="t-hero-actions">
-        <button class="btn-primary" onclick="location.href='/tournament-register.html?id=' + (new URLSearchParams(window.location.search).get('id') || '1')">
+        <button class="btn-primary" onclick="location.href='tournament-register.html'">
           <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
           Подать заявку
         </button>
@@ -485,10 +442,10 @@
     </div>
 
     <div class="t-hero-panel">
-      <div class="hp"><div class="hp-val">64 / 128</div><div class="hp-key">Участников</div></div>
-      <div class="hp"><div class="hp-val">50 000 ₽</div><div class="hp-key">Призовой фонд</div></div>
-      <div class="hp"><div class="hp-val">15 июня</div><div class="hp-key">Дата начала</div></div>
-      <div class="hp"><div class="hp-val">Раунд 3/5</div><div class="hp-key">Прогресс</div></div>
+      <div class="hp"><div class="hp-val" id="hp-participants">— / —</div><div class="hp-key">Участников</div></div>
+      <div class="hp"><div class="hp-val" id="hp-prize">—</div><div class="hp-key">Призовой фонд</div></div>
+      <div class="hp"><div class="hp-val" id="hp-date">—</div><div class="hp-key">Дата начала</div></div>
+      <div class="hp"><div class="hp-val" id="hp-status">—</div><div class="hp-key">Прогресс</div></div>
     </div>
   </div>
 
@@ -514,193 +471,16 @@
 
   <!-- ── BRACKET TAB ── -->
   <div id="tab-bracket" class="tab-panel active">
-    <h2 class="bracket-title fade-up">Сетка турнира</h2>
-    <p class="bracket-sub fade-up">Single Elimination · 16 команд · Идёт раунд 1/4 финала</p>
-
-    <div class="bracket-wrap fade-up">
-      <div class="bracket">
-
-        <!-- Round 1 – Qualification -->
-        <div class="round">
-          <div class="round-label">Квалификация</div>
-          <div class="matches">
-
-            <div class="match">
-              <div class="match-header">Матч #1</div>
-              <div class="team winner">
-                <div class="team-seed">1</div>
-                <div class="team-flag">🇷🇺</div>
-                <div class="team-name">ZayTop</div>
-                <div class="team-score">16</div>
-              </div>
-              <div class="team">
-                <div class="team-seed">8</div>
-                <div class="team-flag">🇷🇺</div>
-                <div class="team-name">DarkPulse</div>
-                <div class="team-score">9</div>
-              </div>
-            </div>
-
-            <div class="match">
-              <div class="match-header">Матч #2</div>
-              <div class="team winner">
-                <div class="team-seed">4</div>
-                <div class="team-flag">🇷🇺</div>
-                <div class="team-name">NazSniperX</div>
-                <div class="team-score">16</div>
-              </div>
-              <div class="team">
-                <div class="team-seed">5</div>
-                <div class="team-flag">🇷🇺</div>
-                <div class="team-name">GrozTeam</div>
-                <div class="team-score">12</div>
-              </div>
-            </div>
-
-            <div class="match">
-              <div class="match-header">Матч #3</div>
-              <div class="team winner">
-                <div class="team-seed">3</div>
-                <div class="team-flag">🇷🇺</div>
-                <div class="team-name">AdamGhost</div>
-                <div class="team-score">16</div>
-              </div>
-              <div class="team">
-                <div class="team-seed">6</div>
-                <div class="team-flag">🇷🇺</div>
-                <div class="team-name">ShadowRift</div>
-                <div class="team-score">7</div>
-              </div>
-            </div>
-
-            <div class="match">
-              <div class="match-header">Матч #4</div>
-              <div class="team winner">
-                <div class="team-seed">2</div>
-                <div class="team-flag">🇷🇺</div>
-                <div class="team-name">MagForce</div>
-                <div class="team-score">16</div>
-              </div>
-              <div class="team">
-                <div class="team-seed">7</div>
-                <div class="team-flag">🇷🇺</div>
-                <div class="team-name">NovaBears</div>
-                <div class="team-score">14</div>
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-        <!-- connector -->
-        <div style="width:32px;flex-shrink:0;"></div>
-
-        <!-- Round 2 – 1/4 -->
-        <div class="round">
-          <div class="round-label">1/4 Финала</div>
-          <div class="matches">
-
-            <div class="match">
-              <div class="match-header">Матч #5</div>
-              <div class="team winner">
-                <div class="team-seed">1</div>
-                <div class="team-flag">🇷🇺</div>
-                <div class="team-name">ZayTop</div>
-                <div class="team-score">16</div>
-              </div>
-              <div class="team">
-                <div class="team-seed">4</div>
-                <div class="team-flag">🇷🇺</div>
-                <div class="team-name">NazSniperX</div>
-                <div class="team-score">11</div>
-              </div>
-            </div>
-
-            <div class="match">
-              <div class="match-header">Матч #6</div>
-              <div class="team winner">
-                <div class="team-seed">3</div>
-                <div class="team-flag">🇷🇺</div>
-                <div class="team-name">AdamGhost</div>
-                <div class="team-score">16</div>
-              </div>
-              <div class="team">
-                <div class="team-seed">2</div>
-                <div class="team-flag">🇷🇺</div>
-                <div class="team-name">MagForce</div>
-                <div class="team-score">13</div>
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-        <!-- connector -->
-        <div style="width:32px;flex-shrink:0;"></div>
-
-        <!-- Round 3 – 1/2 -->
-        <div class="round">
-          <div class="round-label">1/2 Финала</div>
-          <div class="matches" style="justify-content:center;">
-
-            <div class="match">
-              <div class="match-header" style="color:var(--gold)">Матч #7 · Live</div>
-              <div class="team">
-                <div class="team-seed">1</div>
-                <div class="team-flag">🇷🇺</div>
-                <div class="team-name">ZayTop</div>
-                <div class="team-score" style="color:var(--text-dim)">—</div>
-              </div>
-              <div class="team">
-                <div class="team-seed">3</div>
-                <div class="team-flag">🇷🇺</div>
-                <div class="team-name">AdamGhost</div>
-                <div class="team-score" style="color:var(--text-dim)">—</div>
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-        <!-- connector -->
-        <div style="width:32px;flex-shrink:0;"></div>
-
-        <!-- FINAL -->
-        <div class="round final-round">
-          <div class="round-label gold">Финал</div>
-          <div class="matches" style="justify-content:center;">
-
-            <div class="match final">
-              <div class="match-header gold">🏆 Финал</div>
-              <div class="team tbd">
-                <div class="team-seed">?</div>
-                <div class="team-flag">—</div>
-                <div class="team-name">TBD</div>
-                <div class="team-score" style="color:var(--text-muted)">—</div>
-              </div>
-              <div class="team tbd">
-                <div class="team-seed">?</div>
-                <div class="team-flag">—</div>
-                <div class="team-name">TBD</div>
-                <div class="team-score" style="color:var(--text-muted)">—</div>
-              </div>
-            </div>
-
-            <div style="margin-top:16px;text-align:center;">
-              <div style="font-size:11px;color:var(--text-dim);">15 июня · 18:00</div>
-              <div style="font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;color:var(--gold);margin-top:4px;">50 000 ₽</div>
-              <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;">Призовой фонд</div>
-            </div>
-
-          </div>
-        </div>
-
+    <div id="bracket-wrap">
+      <div style="text-align:center;padding:60px 20px;">
+        <div style="font-size:48px;margin-bottom:16px;">⚙️</div>
+        <h3 style="font-family:Rajdhani,sans-serif;font-size:22px;font-weight:700;color:var(--text-dim);margin-bottom:8px;">Сетка ещё не опубликована</h3>
+        <p style="font-size:14px;color:var(--text-muted);">Организатор опубликует сетку после закрытия регистрации</p>
       </div>
     </div>
   </div>
 
-  <!-- ── RATINGS TAB ── -->
-  <div id="tab-ratings" class="tab-panel">
+    <div id="tab-ratings" class="tab-panel">
     <h2 class="ratings-title fade-up">Рейтинг турнира</h2>
     <p class="ratings-sub fade-up">Таблица составлена по результатам сыгранных матчей. Актуально в режиме реального времени.</p>
 
@@ -847,40 +627,18 @@
           </tr>
         </tbody>
       </table>
-      <div class="rating-note">Рейтинг обновляется автоматически по результатам матчей. Для участия в рейтинге необходимо <a href="#" onclick="location.href='/tournament-register.html?id='+(new URLSearchParams(window.location.search).get('id')||'1')" style="color:var(--gold);">зарегистрироваться</a> на платформе.</div>
+      <div class="rating-note">Рейтинг обновляется автоматически по результатам матчей. Для участия в рейтинге необходимо <a href="tournament-register.html" style="color:var(--gold);">зарегистрироваться</a> на платформе.</div>
     </div>
   </div>
 
   <!-- ── PARTICIPANTS TAB ── -->
   <div id="tab-participants" class="tab-panel">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;" class="fade-up">
-      <div>
-        <h2 class="ratings-title">Участники</h2>
-        <p class="ratings-sub" style="margin-bottom:0">64 из 128 зарегистрировано</p>
-      </div>
-      <button class="btn-primary" onclick="location.href='/tournament-register.html?id=' + (new URLSearchParams(window.location.search).get('id') || '1')">
-        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        Зарегистрироваться
-      </button>
-    </div>
-    <div class="participants-grid fade-up">
-      <!-- Generated participants -->
-      <script>
-        const names = ["Зайналбек М.","Нажмудин С.","Адам У.","Магомед Д.","Ислам Я.","Арби М.","Руслан А.","Хасан И.","Умар Б.","Алихан Г.","Шамиль К.","Дени Х.","Асламбек Н.","Тимур З.","Ваха С.","Мовсар Л.","Рамзан В.","Абдула Т.","Хамзат Ю.","Али Р.","Хусейн А.","Ибрагим Ш.","Мухаммад Д.","Саид К."];
-        const nicks = ["ZayTop","NazSniperX","AdamGhost","MagForce","IslamPRO","ArbiFire","RusKnight","XHasan","UmarStrike","AliGamer","ShamGun","DeniBolt","AslPRO","TimurX","VahaCool","MovShadow","RamZen","AbdRush","HamFrost","AliBlaze","HusFlame","IbraWolf","MuhRocket","SaidStorm"];
-        const games = ["CS2","CS2","CS2","CS2","Dota 2","CS2","Valorant","CS2","Dota 2","CS2","CS2","Valorant","CS2","Dota 2","CS2","CS2","Valorant","CS2","CS2","Dota 2","CS2","CS2","Valorant","CS2"];
-        let html = '';
-        for(let i=0;i<24;i++){
-          const initials = names[i].split(' ').map(w=>w[0]).join('').toUpperCase();
-          html += `<div class="participant-card"><div class="pc-num">${i+1}</div><div class="pc-avatar">${initials}</div><div class="pc-info"><div class="pc-name">${names[i]}</div><div class="pc-nick">${nicks[i]}</div></div><div class="pc-game">${games[i]}</div></div>`;
-        }
-        document.write(html);
-      </script>
+    <div id="participants-wrap" style="padding:20px;">
+      <div style="text-align:center;padding:40px;color:var(--text-dim);">Загружаем участников...</div>
     </div>
   </div>
 
-  <!-- ── INFO TAB ── -->
-  <div id="tab-info" class="tab-panel">
+    <div id="tab-info" class="tab-panel">
     <div class="info-grid fade-up">
 
       <div class="info-block">
@@ -952,7 +710,7 @@
     </div>
 
     <div style="text-align:center;margin-top:36px;" class="fade-up">
-      <button class="btn-primary" onclick="location.href='/tournament-register.html?id=' + (new URLSearchParams(window.location.search).get('id') || '1')" style="margin:0 auto;max-width:260px;">
+      <button class="btn-primary" onclick="location.href='tournament-register.html'" style="margin:0 auto;max-width:260px;">
         <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
         Зарегистрироваться на турнир
       </button>
@@ -998,39 +756,213 @@
 </script>
 
 <script>
-// Загружаем реальный турнир по ID из URL
-(async function() {
-  var tid = new URLSearchParams(window.location.search).get('id');
-  if (!tid) return; // Если нет id — оставляем демо данные
+// ════════════════════════════════
+//  СТРАНИЦА ТУРНИРА — РЕАЛЬНЫЕ ДАННЫЕ
+// ════════════════════════════════
+var TID = new URLSearchParams(window.location.search).get('id');
+var TOKEN = localStorage.getItem('gg_token');
 
+if (!TID) {
+  document.getElementById('t-name').textContent = 'Турнир не найден';
+}
+
+async function loadTournament() {
+  if (!TID) return;
   try {
-    var res = await fetch('/api/tournaments/' + tid);
-    if (!res.ok) return;
+    var res = await fetch('/api/tournaments/' + TID);
+    if (!res.ok) throw new Error('Турнир не найден');
     var data = await res.json();
     var t = data.tournament;
-    if (!t) return;
 
-    // Обновляем заголовок страницы
+    // ── Заголовок ──
     document.title = t.name + ' — Game Genesis';
+    var nameEl = document.getElementById('t-name');
+    if (nameEl) nameEl.innerHTML = t.name;
 
-    // Обновляем элементы если есть
-    var set = function(id, val) { var el = document.getElementById(id); if (el && val) el.textContent = val; };
-    var fmtDate = function(d) { return d ? new Date(d).toLocaleDateString('ru-RU',{day:'numeric',month:'long',year:'numeric'}) : '—'; };
+    // ── Описание ──
+    var descEl = document.getElementById('t-desc');
+    if (descEl && t.description) descEl.textContent = t.description;
 
-    // Название турнира в breadcrumb и заголовке
-    document.querySelectorAll('.t-title, [class*="t-title"]').forEach(function(el) {
-      if (el.textContent.includes('Чемпионат') || el.textContent.includes('Открытый')) {
-        el.innerHTML = t.name;
-      }
+    // ── HP stats ──
+    function set(id, val) { var el = document.getElementById(id); if (el) el.textContent = val; }
+    var filled = data.participants ? data.participants.length : 0;
+    var fmtDate = function(d) { return d ? new Date(d).toLocaleDateString('ru-RU',{day:'numeric',month:'long'}) : '—'; };
+    var statusLabel = {live:'Live', open:'Открыта', soon:'Скоро', done:'Завершён'};
+
+    set('hp-participants', filled + ' / ' + (t.max_slots||16));
+    set('hp-prize', t.prize_pool > 0 ? t.prize_pool.toLocaleString('ru-RU') + ' ₽' : 'Без призов');
+    set('hp-date', fmtDate(t.start_date));
+    set('hp-status', statusLabel[t.status] || t.status);
+
+    // ── Кнопка регистрации ──
+    document.querySelectorAll('[onclick*="tournament-register"]').forEach(function(btn) {
+      btn.onclick = function() { window.location.href = '/tournament-register.html?id=' + TID; };
     });
 
-    // Обновляем мета-панель
-    set('s-status', {live:'Live',open:'Открыта',done:'Завершён',soon:'Скоро'}[t.status] || t.status);
-    set('s-participants', (data.participants ? data.participants.length : 0) + ' / ' + (t.max_slots||16));
-    set('s-matches-done', data.matches ? data.matches.filter(function(m){return m.status==='done';}).length : 0);
+    // ── Участники ──
+    renderParticipants(data.participants || []);
 
-  } catch(e) { console.error('Ошибка загрузки турнира:', e); }
-})();
+    // ── Сетка ──
+    await loadBracket();
+
+  } catch(e) {
+    console.error(e);
+    var nameEl = document.getElementById('t-name');
+    if (nameEl) nameEl.textContent = e.message;
+  }
+}
+
+function renderParticipants(list) {
+  var wrap = document.getElementById('participants-wrap');
+  if (!wrap) return;
+
+  if (!list.length) {
+    wrap.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);">Участников пока нет</div>';
+    return;
+  }
+
+  var html = '<table style="width:100%;border-collapse:collapse;">' +
+    '<thead><tr>' +
+    '<th style="padding:10px 16px;text-align:left;font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--text-dim);border-bottom:1px solid var(--border);">#</th>' +
+    '<th style="padding:10px 16px;text-align:left;font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--text-dim);border-bottom:1px solid var(--border);">Игрок</th>' +
+    '<th style="padding:10px 16px;text-align:left;font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--text-dim);border-bottom:1px solid var(--border);">Никнейм</th>' +
+    '<th style="padding:10px 16px;text-align:left;font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--text-dim);border-bottom:1px solid var(--border);">Дата</th>' +
+    '</tr></thead><tbody>';
+
+  list.forEach(function(p, i) {
+    html += '<tr style="border-bottom:1px solid rgba(26,36,54,.4);">' +
+      '<td style="padding:11px 16px;font-family:Rajdhani,sans-serif;font-size:15px;font-weight:700;color:var(--text-muted);">' + (i+1) + '</td>' +
+      '<td style="padding:11px 16px;font-size:13px;color:var(--text);">' + (p.full_name || p.username || '—') + '</td>' +
+      '<td style="padding:11px 16px;font-size:13px;color:var(--text-dim);">' + (p.nickname || p.nick || '—') + '</td>' +
+      '<td style="padding:11px 16px;font-size:12px;color:var(--text-muted);">' + new Date(p.registered_at||p.created_at).toLocaleDateString('ru-RU') + '</td>' +
+      '</tr>';
+  });
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+}
+
+async function loadBracket() {
+  var wrap = document.getElementById('bracket-wrap');
+  if (!wrap) return;
+
+  try {
+    var headers = {};
+    if (TOKEN) headers['Authorization'] = 'Bearer ' + TOKEN;
+    var res = await fetch('/api/tournaments/' + TID + '/bracket', { headers: headers });
+    var data = await res.json();
+
+    if (!data.generated) {
+      wrap.innerHTML =
+        '<div style="text-align:center;padding:60px 20px;">' +
+        '<div style="font-size:48px;margin-bottom:16px;">⚙️</div>' +
+        '<h3 style="font-family:Rajdhani,sans-serif;font-size:22px;font-weight:700;color:var(--text-dim);margin-bottom:8px;">Сетка ещё не сгенерирована</h3>' +
+        '<p style="font-size:14px;color:var(--text-muted);">Организатор создаст сетку после закрытия регистрации</p>' +
+        '</div>';
+      return;
+    }
+
+    if (!data.published) {
+      wrap.innerHTML =
+        '<div style="text-align:center;padding:60px 20px;">' +
+        '<div style="font-size:48px;margin-bottom:16px;">🔒</div>' +
+        '<h3 style="font-family:Rajdhani,sans-serif;font-size:22px;font-weight:700;color:var(--text-dim);margin-bottom:8px;">Сетка ещё не опубликована</h3>' +
+        '<p style="font-size:14px;color:var(--text-muted);">Организатор скоро откроет сетку для участников</p>' +
+        '</div>';
+      return;
+    }
+
+    // Рендерим реальную сетку
+    renderBracket(data);
+
+  } catch(e) {
+    console.error('Bracket error:', e);
+  }
+}
+
+function renderBracket(data) {
+  var wrap = document.getElementById('bracket-wrap');
+  var matches = data.matches || [];
+  var upper = matches.filter(function(m){ return m.bracket_type === 'upper'; });
+  var lower = matches.filter(function(m){ return m.bracket_type === 'lower'; });
+  var grand = matches.filter(function(m){ return m.bracket_type === 'grand_final'; });
+
+  function groupRounds(arr) {
+    var rounds = {};
+    arr.forEach(function(m) {
+      if (!rounds[m.round]) rounds[m.round] = [];
+      rounds[m.round].push(m);
+    });
+    return rounds;
+  }
+
+  function renderMatch(m) {
+    var t1 = m.team1_name || 'TBD';
+    var t2 = m.team2_name || 'TBD';
+    var w1 = m.winner_team_id && m.winner_team_id === m.team1_id;
+    var w2 = m.winner_team_id && m.winner_team_id === m.team2_id;
+    return '<div style="background:var(--bg-card2);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin:8px 0;">' +
+      '<div style="padding:4px 10px;font-size:10px;color:var(--text-muted);background:rgba(0,0,0,.2);display:flex;justify-content:space-between;">' +
+        'Матч #' + m.match_number +
+        '<span>' + (m.status === 'done' ? '✓ Сыгран' : 'Ожидает') + '</span>' +
+      '</div>' +
+      '<div style="display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--border);' + (w1?'background:rgba(240,192,64,.05);':'') + '">' +
+        '<div style="width:18px;height:18px;border-radius:4px;background:var(--bg-card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--text-dim);">' + (m.team1_seed||'?') + '</div>' +
+        '<div style="flex:1;font-size:13px;font-weight:500;">' + t1 + '</div>' +
+        '<div style="font-family:Rajdhani,sans-serif;font-size:16px;font-weight:700;color:' + (w1?'var(--gold)':'var(--text-dim)') + ';">' + (m.status==='done'?m.score1:'—') + '</div>' +
+      '</div>' +
+      '<div style="display:flex;align-items:center;gap:8px;padding:9px 12px;' + (w2?'background:rgba(240,192,64,.05);':'') + '">' +
+        '<div style="width:18px;height:18px;border-radius:4px;background:var(--bg-card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--text-dim);">' + (m.team2_seed||'?') + '</div>' +
+        '<div style="flex:1;font-size:13px;font-weight:500;">' + t2 + '</div>' +
+        '<div style="font-family:Rajdhani,sans-serif;font-size:16px;font-weight:700;color:' + (w2?'var(--gold)':'var(--text-dim)') + ';">' + (m.status==='done'?m.score2:'—') + '</div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  var html = '<div style="overflow-x:auto;padding:20px;">';
+
+  // Upper
+  if (upper.length) {
+    var ur = groupRounds(upper);
+    html += '<div style="margin-bottom:24px;"><div style="font-family:Rajdhani,sans-serif;font-size:13px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1.5px;padding:10px 0;border-bottom:1px solid var(--border);margin-bottom:14px;">⬆️ Верхняя сетка</div>';
+    html += '<div style="display:flex;gap:0;">';
+    Object.keys(ur).sort().forEach(function(r) {
+      var labels = ['Раунд 1','1/4 Финала','1/2 Финала','Финал'];
+      html += '<div style="flex:1;padding:0 10px;">';
+      html += '<div style="font-family:Rajdhani,sans-serif;font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;text-align:center;padding-bottom:10px;border-bottom:1px solid var(--border);margin-bottom:12px;">' + (labels[parseInt(r)-1]||'Раунд '+r) + '</div>';
+      ur[r].forEach(function(m) { html += renderMatch(m); });
+      html += '</div>';
+    });
+    html += '</div></div>';
+  }
+
+  // Lower
+  if (lower.length) {
+    var lr = groupRounds(lower);
+    html += '<div style="margin-bottom:24px;"><div style="font-family:Rajdhani,sans-serif;font-size:13px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:1.5px;padding:10px 0;border-bottom:1px solid var(--border);margin-bottom:14px;">⬇️ Нижняя сетка</div>';
+    html += '<div style="display:flex;gap:0;">';
+    Object.keys(lr).sort().forEach(function(r) {
+      html += '<div style="flex:1;padding:0 10px;">';
+      html += '<div style="font-family:Rajdhani,sans-serif;font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;text-align:center;padding-bottom:10px;border-bottom:1px solid var(--border);margin-bottom:12px;">Раунд L' + r + '</div>';
+      lr[r].forEach(function(m) { html += renderMatch(m); });
+      html += '</div>';
+    });
+    html += '</div></div>';
+  }
+
+  // Grand Final
+  if (grand.length) {
+    html += '<div style="margin-bottom:24px;"><div style="font-family:Rajdhani,sans-serif;font-size:13px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:1.5px;padding:10px 0;border-bottom:1px solid var(--border);margin-bottom:14px;">🏆 Гранд-Финал</div>';
+    html += '<div style="display:flex;justify-content:center;"><div style="max-width:280px;width:100%;">';
+    grand.forEach(function(m) { html += renderMatch(m); });
+    html += '</div></div></div>';
+  }
+
+  html += '</div>';
+  wrap.innerHTML = html;
+}
+
+// Запуск
+loadTournament();
 </script>
 </body>
 </html>
