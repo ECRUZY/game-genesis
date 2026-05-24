@@ -409,7 +409,11 @@ function renderProfile() {
 
   // Теги
   var tags = document.getElementById('profile-tags');
-  if (u.game) tags.innerHTML += '<span class="pill pill-game">' + u.game + '</span>';
+  if (u.game) {
+    u.game.split(',').forEach(function(g) {
+      tags.innerHTML += '<span class="pill pill-game">' + g.trim() + '</span>';
+    });
+  }
   if (u.university) tags.innerHTML += '<span style="font-size:11px;color:var(--text-dim);">🎓 ' + u.university + '</span>';
   if (u.role === 'admin') tags.innerHTML += '<span style="font-size:11px;color:var(--gold);background:rgba(240,192,64,.1);padding:2px 8px;border-radius:4px;border:1px solid rgba(240,192,64,.2);">⭐ Организатор</span>';
 
@@ -620,23 +624,51 @@ function renderSettings() {
   set('set-faceit', u.faceit_nick);
   set('set-steam', u.steam_url);
   set('set-bio', u.bio);
-  if (u.game) {
-    var gameEl = document.getElementById('set-game');
-    if (gameEl) {
-      for (var i=0; i<gameEl.options.length; i++) {
-        if (gameEl.options[i].value === u.game) { gameEl.selectedIndex = i; break; }
-      }
-    }
-  }
+  if (u.game) setActiveGames(u.game);
   // Тоггл приватности
   if (u.is_private) document.getElementById('toggle-private').classList.add('on');
+}
+
+function toggleGame(btn) {
+  var isActive = btn.style.background === 'var(--gold-dim)' || btn.classList.contains('active-game');
+  if (isActive) {
+    btn.style.background = 'transparent';
+    btn.style.color = 'var(--text-dim)';
+    btn.style.borderColor = 'var(--border)';
+    btn.classList.remove('active-game');
+  } else {
+    btn.style.background = 'var(--gold-dim)';
+    btn.style.color = 'var(--gold)';
+    btn.style.borderColor = 'rgba(240,192,64,.4)';
+    btn.classList.add('active-game');
+  }
+}
+
+function getSelectedGames() {
+  var active = document.querySelectorAll('.game-btn.active-game');
+  var games = [];
+  active.forEach(function(b){ games.push(b.dataset.game); });
+  return games.length > 0 ? games.join(',') : null;
+}
+
+function setActiveGames(gamesStr) {
+  if (!gamesStr) return;
+  var games = gamesStr.split(',');
+  document.querySelectorAll('.game-btn').forEach(function(btn) {
+    if (games.indexOf(btn.dataset.game) >= 0) {
+      btn.style.background = 'var(--gold-dim)';
+      btn.style.color = 'var(--gold)';
+      btn.style.borderColor = 'rgba(240,192,64,.4)';
+      btn.classList.add('active-game');
+    }
+  });
 }
 
 async function saveProfile() {
   var data = {
     full_name: document.getElementById('set-fullname').value.trim(),
     phone: document.getElementById('set-phone').value.trim(),
-    game: document.getElementById('set-game').value,
+    game: getSelectedGames() || document.querySelector('.game-btn.active-game') && document.querySelector('.game-btn.active-game').dataset.game || 'CS2',
     university: document.getElementById('set-uni').value.trim(),
     faceit_nick: document.getElementById('set-faceit').value.trim(),
     steam_url: document.getElementById('set-steam').value.trim(),
