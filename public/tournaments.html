@@ -910,79 +910,7 @@ function filterCards() {
   renderCards(list);
 }
 
-function renderCards(list) {
-  var grid = document.getElementById('t-grid');
-  var empty = document.getElementById('empty-state');
-  var cnt = document.getElementById('result-count');
 
-  if (cnt) cnt.textContent = '\u041D\u0430\u0439\u0434\u0435\u043D\u043E: ' + list.length;
-
-  if (!list.length) {
-    if (grid) grid.innerHTML = '';
-    if (empty) empty.style.display = 'block';
-    return;
-  }
-  if (empty) empty.style.display = 'none';
-  if (!grid) return;
-
-  var html = '';
-  for (var i = 0; i < list.length; i++) {
-    var t = list[i];
-    var filled = t.filled_count || 0;
-    var pct = t.max_slots > 0 ? Math.round(filled / t.max_slots * 100) : 0;
-    var bg = GAME_BG[t.game] || GAME_BG['CS2'];
-    var statusLbl = STATUS_LABEL[t.status] || t.status;
-    var statusCls = STATUS_CLS[t.status] || 'fc-tag-open';
-    var isLive = t.status === 'live';
-    var btnLbl = t.status === 'open' ? '\u0417\u0430\u043F\u0438\u0441\u0430\u0442\u044C\u0441\u044F' :
-                 t.status === 'live' ? '\u0421\u043C\u043E\u0442\u0440\u0435\u0442\u044C' : '\u041F\u043E\u0434\u0440\u043E\u0431\u043D\u0435\u0435';
-
-    html += '<div class="t-card" data-id="' + t.id + '" style="cursor:pointer;animation-delay:' + (i*0.04) + 's">' +
-      '<div class="t-thumb" style="background:' + bg + ';">' +
-        '<div class="t-thumb-overlay"></div>' +
-        '<span class="t-game-badge">' + t.game + '</span>' +
-        '<span class="t-status-badge ' + statusCls + '">' +
-          (isLive ? '<span style="width:5px;height:5px;border-radius:50%;background:currentColor;animation:blink 1s infinite;display:inline-block;margin-right:4px;"></span>' : '') +
-          statusLbl +
-        '</span>' +
-      '</div>' +
-      '<div class="t-body">' +
-        '<div class="t-name">' + t.name + '</div>' +
-        '<div class="t-meta-row">' +
-          '<span class="t-meta-item">\uD83D\uDCC5 ' + fmtDate(t.start_date) + '</span>' +
-          '<span class="t-meta-item">\uD83D\uDC65 ' + filled + ' / ' + (t.max_slots||16) + '</span>' +
-          '<span class="t-meta-item" style="color:' + (t.entry_fee>0?'var(--gold)':'var(--success)') + ';">' +
-            (t.entry_fee > 0 ? t.entry_fee + ' \u20BD' : '\u0411\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u043E') +
-          '</span>' +
-        '</div>' +
-        '<div class="t-progress"><div class="t-progress-bar" style="width:' + pct + '%;"></div></div>' +
-        '<div class="t-footer">' +
-          '<div class="t-prize-wrap">' +
-            '<div class="t-prize">' + (t.prize_pool > 0 ? t.prize_pool.toLocaleString('ru-RU') + ' \u20BD' : '\u2014') + '</div>' +
-            '<div class="t-prize-key">\u041F\u0440\u0438\u0437\u043E\u0432\u043E\u0439 \u0444\u043E\u043D\u0434</div>' +
-          '</div>' +
-          '<button class="t-btn" data-reg="' + t.id + '" style="white-space:nowrap;">' + btnLbl + '</button>' +
-        '</div>' +
-      '</div>' +
-    '</div>';
-  }
-  grid.innerHTML = html;
-
-  // Делегирование кликов — один раз на grid
-  grid.onclick = function(e) {
-    var card = e.target.closest('.t-card');
-    if (!card) return;
-    var btn = e.target.closest('[data-reg]');
-    if (btn) {
-      e.stopPropagation();
-      window.location.href = '/tournament-register.html?id=' + btn.dataset.reg;
-    } else {
-      window.location.href = '/tournament.html?id=' + card.dataset.id;
-    }
-  };
-}
-
-// Intersection Observer
 var obs = new IntersectionObserver(function(entries) {
   entries.forEach(function(e) { if (e.isIntersecting) e.target.classList.add('visible'); });
 }, { threshold: 0.05 });
