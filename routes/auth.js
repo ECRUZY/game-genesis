@@ -4,6 +4,7 @@ const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const db = require('../db')
 const authMiddleware = require('../middleware/auth')
+const { sendVerificationCode, sendPasswordReset } = require('../utils/mailer')
 
 // ── РЕГИСТРАЦИЯ ──
 router.post('/register', async (req, res) => {
@@ -35,9 +36,14 @@ router.post('/register', async (req, res) => {
 
     const user = result.rows[0]
 
-    // В реальном проекте здесь отправляешь email с кодом
-    // Пока просто логируем (на Railway будет виден в логах)
-    console.log(`📧 Код верификации для ${email}: ${code}`)
+    // Отправляем код на email
+    try {
+      await sendVerificationCode(email, code, username)
+      console.log(`📧 Код отправлен на ${email}`)
+    } catch(mailErr) {
+      console.error('Mail error:', mailErr.message)
+      // Не блокируем регистрацию если почта не отправилась
+    }
 
     const token = jwt.sign(
       { id: user.id, username: user.username, role: user.role },
@@ -48,8 +54,8 @@ router.post('/register', async (req, res) => {
     res.status(201).json({
       token,
       user: { id: user.id, username: user.username, email: user.email, full_name: user.full_name, game: user.game, role: user.role, verified: user.verified },
-      // В демо-режиме возвращаем код — в продакшене убери это!
-      dev_code: process.env.NODE_ENV !== 'production' ? code : undefined
+      // dev_code только для разработки
+      dev_code: process.env.NODE_ENV === 'development' ? code : undefined
     })
   } catch (e) {
     if (e.code === '23505') {
@@ -88,7 +94,10 @@ router.post('/resend-code', authMiddleware, async (req, res) => {
   const expires = Date.now() + 10 * 60 * 1000
   await db.query('UPDATE users SET verify_code=$1, verify_expires=$2 WHERE id=$3', [code, expires, req.user.id])
   const userRes = await db.query('SELECT email FROM users WHERE id=$1', [req.user.id])
-  console.log(`📧 Новый код для ${userRes.rows[0].email}: ${code}`)
+  try {
+    const uData = await db.query('SELECT username FROM users WHERE id=$1', [req.user.id])
+    await sendVerificationCode(userRes.rows[0].email, code, uData.rows[0]?.username || 'Игрок')
+  } catch(e) { console.error('Mail resend error:', e.message) }
   res.json({ success: true, dev_code: process.env.NODE_ENV !== 'production' ? code : undefined })
 })
 
