@@ -30,6 +30,8 @@ async function initDB() {
         university VARCHAR(100),
         faceit_nick VARCHAR(100),
         bio TEXT DEFAULT '',
+        steam_url VARCHAR(300),
+        is_private BOOLEAN DEFAULT false,
         role VARCHAR(20) DEFAULT 'player',
         rating INT DEFAULT 1000,
         wins INT DEFAULT 0,
@@ -88,6 +90,8 @@ async function initDB() {
         title VARCHAR(200) NOT NULL,
         game VARCHAR(50),
         duration VARCHAR(20),
+        youtube_url VARCHAR(500),
+        yt_id VARCHAR(50),
         views INT DEFAULT 0,
         created_at TIMESTAMP DEFAULT NOW()
       );
