@@ -1,12 +1,4 @@
-<!DOCTY
-function switchTab(id, btn) {
-  document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
-  document.querySelectorAll('[onclick*="switchTab"]').forEach(function(b) { b.classList.remove('active'); });
-  var panel = document.getElementById('tab-' + id);
-  if (panel) panel.classList.add('active');
-  if (btn) btn.classList.add('active');
-}
-PE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
   <script src="/nav.js"></script>
@@ -479,28 +471,185 @@ PE html>
 
   <!-- ── BRACKET TAB ── -->
   <div id="tab-bracket" class="tab-panel active">
-    <div id="bracket-wrap">
-      <div style="text-align:center;padding:60px 20px;">
-        <div style="font-size:48px;margin-bottom:16px;">⚙️</div>
-        <h3 style="font-family:Rajdhani,sans-serif;font-size:22px;font-weight:700;color:var(--text-dim);margin-bottom:8px;">Сетка ещё не опубликована</h3>
-        <p style="font-size:14px;color:var(--text-muted);">Организатор опубликует сетку после закрытия регистрации</p>
-      </div>
-    </div>
+    <div id="bracket-wrap"></div>
   </div>
 
     <div id="tab-ratings" class="tab-panel">
-    <div id="ratings-content" style="padding:20px;"><div style="text-align:center;padding:40px;color:var(--text-muted);">Загружаем рейтинг...</div></div>
+    <div id="ratings-content" style="padding:20px;text-align:center;color:var(--text-muted);padding-top:40px;">Рейтинг формируется по результатам матчей</div>
   </div>
 
     <div id="tab-participants" class="tab-panel">
-    <div id="participants-wrap" style="padding:20px;">
-      <div style="text-align:center;padding:40px;color:var(--text-dim);">Загружаем участников...</div>
-    </div>
+    <div id="participants-wrap" style="padding:20px;"></div>
   </div>
 
     <div id="tab-info" class="tab-panel">
-    <div id="info-content" style="padding:20px;">
-      <div style="text-align:center;padding:40px;color:var(--text-muted);">Загружаем...</div>
+    <div id="info-content" style="padding:20px;"></div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div class="logo-hex" style="width:26px;height:26px;">
+        <svg viewBox="0 0 18 18" fill="none" style="width:14px;height:14px;"><polygon points="9,1 16,4.5 16,13.5 9,17 2,13.5 2,4.5" stroke="#080c12" stroke-width="1.5"/><circle cx="9" cy="9" r="2.5" fill="#080c12"/></svg>
+      </div>
+      <span style="font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;color:var(--gold);letter-spacing:1.5px;">GAME GENESIS</span>
+      <span>© 2024–2025</span>
     </div>
-  </div></body>
+    <div class="footer-links">
+      <a href="#">Правила платформы</a>
+      <a href="#">Связаться с нами</a>
+      <a href="#">Cookie Policy</a>
+    </div>
+  </footer>
+
+</div>
+
+
+
+<script>
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab-panel').forEach(function(p){ p.classList.remove('active'); });
+  document.querySelectorAll('.tab').forEach(function(b){ b.classList.remove('active'); });
+  var panel = document.getElementById('tab-' + id);
+  if (panel) panel.classList.add('active');
+  if (btn) btn.classList.add('active');
+}
+
+var TID = new URLSearchParams(window.location.search).get('id');
+var TOKEN = localStorage.getItem('gg_token');
+
+function fmtDate(d) {
+  return d ? new Date(d).toLocaleDateString('ru-RU',{day:'numeric',month:'long'}) : '—';
+}
+
+async function loadTournament() {
+  if (!TID) { document.getElementById('t-name').textContent = 'Укажите ID турнира в URL'; return; }
+  try {
+    var res = await fetch('/api/tournaments/' + TID);
+    if (!res.ok) throw new Error('Турнир не найден');
+    var data = await res.json();
+    var t = data.tournament;
+    var participants = data.participants || [];
+
+    document.title = t.name + ' — Game Genesis';
+    document.getElementById('t-name').textContent = t.name;
+
+    function set(id, val) { var el=document.getElementById(id); if(el) el.textContent=val; }
+    set('hp-participants', participants.length + ' / ' + (t.max_slots||16));
+    set('hp-prize', t.prize_pool>0 ? t.prize_pool.toLocaleString('ru-RU')+' ₽' : 'Без призов');
+    set('hp-date', fmtDate(t.start_date));
+    set('hp-status', {live:'Live',open:'Открыта',soon:'Скоро',done:'Завершён'}[t.status]||t.status);
+
+    // Кнопки регистрации
+    document.querySelectorAll('[onclick*="tournament-register"]').forEach(function(btn){
+      btn.onclick = function(){ location.href='/tournament-register.html?id='+TID; };
+    });
+
+    renderParticipants(participants);
+    renderInfo(t, participants);
+    await loadBracket();
+  } catch(e) {
+    document.getElementById('t-name').textContent = e.message;
+  }
+}
+
+function renderParticipants(list) {
+  var wrap = document.getElementById('participants-wrap');
+  if (!wrap) return;
+  if (!list.length) { wrap.innerHTML='<div style="text-align:center;padding:40px;color:var(--text-muted);">Участников пока нет</div>'; return; }
+  var html = '<table style="width:100%;border-collapse:collapse;"><thead><tr>' +
+    '<th style="padding:10px 16px;text-align:left;font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--text-dim);border-bottom:1px solid var(--border);">#</th>' +
+    '<th style="padding:10px 16px;text-align:left;font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--text-dim);border-bottom:1px solid var(--border);">Игрок</th>' +
+    '<th style="padding:10px 16px;text-align:left;font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--text-dim);border-bottom:1px solid var(--border);">Никнейм</th>' +
+    '</tr></thead><tbody>';
+  list.forEach(function(p,i){
+    html += '<tr style="border-bottom:1px solid rgba(26,36,54,.4);">' +
+      '<td style="padding:10px 16px;color:var(--text-muted);font-family:Rajdhani,sans-serif;font-size:15px;font-weight:700;">'+(i+1)+'</td>' +
+      '<td style="padding:10px 16px;font-size:13px;color:var(--text);">'+(p.full_name||p.username||'—')+'</td>' +
+      '<td style="padding:10px 16px;font-size:13px;color:var(--text-dim);">'+(p.nickname||p.nick||'—')+'</td>' +
+      '</tr>';
+  });
+  wrap.innerHTML = html + '</tbody></table>';
+}
+
+function renderInfo(t, participants) {
+  var wrap = document.getElementById('info-content');
+  if (!wrap) return;
+  var fmtMap = {single_elimination:'Single Elimination',double_elimination:'Double Elimination',round_robin:'Round Robin'};
+  var statusMap = {open:'Открыта регистрация',live:'Идёт',soon:'Скоро',done:'Завершён'};
+  var row = function(k,v,color){ return '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(26,36,54,.5);font-size:13px;"><span style="color:var(--text-dim);">'+k+'</span><span style="color:'+(color||'var(--text)')+';font-weight:500;">'+v+'</span></div>'; };
+  wrap.innerHTML =
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">' +
+    '<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;">' +
+      '<div style="font-family:Rajdhani,sans-serif;font-size:16px;font-weight:700;color:#fff;margin-bottom:14px;">Основная информация</div>' +
+      row('Название', t.name) +
+      row('Игра', t.game) +
+      row('Формат', fmtMap[t.format]||t.format||'—') +
+      row('Тип сетки', t.team_size||'1x1') +
+      row('Дата начала', fmtDate(t.start_date)) +
+      row('Взнос', t.entry_fee>0?t.entry_fee.toLocaleString('ru-RU')+' ₽':'Бесплатно', t.entry_fee>0?'':'var(--success)') +
+      row('Статус', statusMap[t.status]||t.status, t.status==='live'?'var(--red)':t.status==='open'?'var(--success)':'') +
+      row('Участников', participants.length+' / '+(t.max_slots||16)) +
+    '</div>' +
+    '<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;">' +
+      '<div style="font-family:Rajdhani,sans-serif;font-size:16px;font-weight:700;color:#fff;margin-bottom:14px;">О турнире</div>' +
+      '<div style="font-size:14px;color:var(--text-dim);line-height:1.7;">'+(t.description||'Описание не указано')+'</div>' +
+    '</div>' +
+    '</div>';
+}
+
+async function loadBracket() {
+  var wrap = document.getElementById('bracket-wrap');
+  if (!wrap) return;
+  try {
+    var headers = TOKEN ? {'Authorization':'Bearer '+TOKEN} : {};
+    var res = await fetch('/api/tournaments/'+TID+'/bracket', {headers:headers});
+    var data = await res.json();
+    if (!data.generated) {
+      wrap.innerHTML = '<div style="text-align:center;padding:60px 20px;"><div style="font-size:48px;margin-bottom:16px;">⚙️</div><h3 style="font-family:Rajdhani,sans-serif;font-size:22px;font-weight:700;color:var(--text-dim);margin-bottom:8px;">Сетка не сгенерирована</h3><p style="font-size:14px;color:var(--text-muted);">Организатор создаст сетку после закрытия регистрации</p></div>';
+      return;
+    }
+    if (!data.published) {
+      wrap.innerHTML = '<div style="text-align:center;padding:60px 20px;"><div style="font-size:48px;margin-bottom:16px;">🔒</div><h3 style="font-family:Rajdhani,sans-serif;font-size:22px;font-weight:700;color:var(--text-dim);margin-bottom:8px;">Сетка не опубликована</h3><p style="font-size:14px;color:var(--text-muted);">Организатор скоро откроет сетку</p></div>';
+      return;
+    }
+    renderBracket(data);
+  } catch(e) { console.error(e); }
+}
+
+function renderBracket(data) {
+  var wrap = document.getElementById('bracket-wrap');
+  var matches = data.matches||[];
+  function grp(arr){ var r={}; arr.forEach(function(m){ if(!r[m.round])r[m.round]=[]; r[m.round].push(m); }); return r; }
+  function mCard(m){
+    var t1=m.team1_name||'TBD', t2=m.team2_name||'TBD';
+    var w1=m.winner_team_id&&m.winner_team_id===m.team1_id, w2=m.winner_team_id&&m.winner_team_id===m.team2_id;
+    return '<div style="background:var(--bg-card2);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin:8px 0;">'+
+      '<div style="padding:4px 10px;font-size:10px;color:var(--text-muted);background:rgba(0,0,0,.2);display:flex;justify-content:space-between;">Матч #'+m.match_number+'<span>'+(m.status==='done'?'✓':'Ожидает')+'</span></div>'+
+      '<div style="display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--border);'+(w1?'background:rgba(240,192,64,.05);':'')+'">'+
+        '<span style="font-size:9px;color:var(--text-dim);min-width:16px;">'+(m.team1_seed||'?')+'</span>'+
+        '<span style="flex:1;font-size:13px;font-weight:500;">'+t1+'</span>'+
+        '<span style="font-family:Rajdhani,sans-serif;font-size:16px;font-weight:700;color:'+(w1?'var(--gold)':'var(--text-dim)')+';">'+(m.status==='done'?m.score1:'—')+'</span>'+
+      '</div>'+
+      '<div style="display:flex;align-items:center;gap:8px;padding:9px 12px;'+(w2?'background:rgba(240,192,64,.05);':'')+'">'+
+        '<span style="font-size:9px;color:var(--text-dim);min-width:16px;">'+(m.team2_seed||'?')+'</span>'+
+        '<span style="flex:1;font-size:13px;font-weight:500;">'+t2+'</span>'+
+        '<span style="font-family:Rajdhani,sans-serif;font-size:16px;font-weight:700;color:'+(w2?'var(--gold)':'var(--text-dim)')+';">'+(m.status==='done'?m.score2:'—')+'</span>'+
+      '</div>'+
+    '</div>';
+  }
+  var upper=matches.filter(function(m){return m.bracket_type==='upper';}),
+      lower=matches.filter(function(m){return m.bracket_type==='lower';}),
+      grand=matches.filter(function(m){return m.bracket_type==='grand_final';});
+  var html='<div style="overflow-x:auto;padding:20px;">';
+  var rl=['Раунд 1','1/4 Финала','1/2 Финала','Финал'];
+  if(upper.length){var ur=grp(upper);html+='<div style="margin-bottom:24px;"><div style="font-family:Rajdhani,sans-serif;font-size:13px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1.5px;padding:10px 0;border-bottom:1px solid var(--border);margin-bottom:14px;">⬆️ Верхняя сетка</div><div style="display:flex;gap:0;">';Object.keys(ur).sort().forEach(function(r){html+='<div style="flex:1;padding:0 10px;"><div style="font-family:Rajdhani,sans-serif;font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;text-align:center;padding-bottom:10px;border-bottom:1px solid var(--border);margin-bottom:12px;">'+(rl[parseInt(r)-1]||'Раунд '+r)+'</div>';ur[r].forEach(function(m){html+=mCard(m);});html+='</div>';});html+='</div></div>';}
+  if(lower.length){var lr=grp(lower);html+='<div style="margin-bottom:24px;"><div style="font-family:Rajdhani,sans-serif;font-size:13px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:1.5px;padding:10px 0;border-bottom:1px solid var(--border);margin-bottom:14px;">⬇️ Нижняя сетка</div><div style="display:flex;gap:0;">';Object.keys(lr).sort().forEach(function(r){html+='<div style="flex:1;padding:0 10px;"><div style="font-family:Rajdhani,sans-serif;font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;text-align:center;padding-bottom:10px;border-bottom:1px solid var(--border);margin-bottom:12px;">Раунд L'+r+'</div>';lr[r].forEach(function(m){html+=mCard(m);});html+='</div>';});html+='</div></div>';}
+  if(grand.length){html+='<div><div style="font-family:Rajdhani,sans-serif;font-size:13px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:1.5px;padding:10px 0;border-bottom:1px solid var(--border);margin-bottom:14px;">🏆 Гранд-Финал</div><div style="display:flex;justify-content:center;"><div style="max-width:280px;width:100%;">';grand.forEach(function(m){html+=mCard(m);});html+='</div></div></div>';}
+  wrap.innerHTML = html+'</div>';
+}
+
+loadTournament();
+</script>
+</body>
 </html>
