@@ -94,7 +94,20 @@
     .spin{width:16px;height:16px;border:2px solid rgba(8,12,18,.3);border-top-color:#080c12;border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0;display:inline-block}
     @media(max-width:960px){.wrap{grid-template-columns:1fr}.rp{position:static}}
     @media(max-width:600px){.wrap{padding:20px 20px 60px}.t-header{padding:0 20px 24px}.mode-cards{grid-template-columns:1fr}.frow,.frow3{grid-template-columns:1fr}}
-  </style>
+  
+    /* Чекбокс */
+    input[type=checkbox] {
+      width: 20px; height: 20px; min-width: 20px;
+      border-radius: 5px; cursor: pointer;
+      accent-color: var(--gold);
+      border: 2px solid var(--border-hi);
+      background: var(--bg-input);
+    }
+    .ag-row { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 16px; cursor: pointer; }
+    .ag-row input { margin-top: 2px; }
+    .ag-text { font-size: 13px; color: var(--text-dim); line-height: 1.6; }
+    .ag-text a { color: var(--gold); text-decoration: none; }
+</style>
 </head>
 <body>
 <div class="grid-bg"></div>
@@ -456,7 +469,7 @@ async function loadTournamentData() {
     }
 
     // Свободные игроки из реальных регистраций
-    loadFreeAgents(data.participants || []);
+    loadFreeAgents();
 
   } catch(e) {
     document.getElementById('t-name').textContent = 'Ошибка загрузки';
@@ -466,30 +479,54 @@ async function loadTournamentData() {
   }
 }
 
-function loadFreeAgents(participants) {
+async function loadFreeAgents() {
   var fpool = document.getElementById('fpool');
   var fc = document.getElementById('fc');
-  if (!fpool) return;
+  if (!fpool || !TOURNAMENT_ID) return;
 
-  // Свободные агенты — те кто зарегистрировался без команды (solo)
-  // Пока показываем всех участников как "solo" если нет данных о команде
-  var freeAgents = participants.filter(function(p) { return !p.team_name; });
+  try {
+    // Загружаем команды турнира и берём тех кто solo
+    var res = await fetch('/api/tournaments/' + TOURNAMENT_ID + '/teams');
+    var teams = await res.json();
 
-  if (fc) fc.textContent = freeAgents.length;
+    // Свободные агенты — команды с типом solo или needs_players > 0
+    var freeAgents = [];
+    teams.forEach(function(t) {
+      if (t.status === 'pending' || t.status === 'accepted') {
+        var players = t.players || [];
+        players.forEach(function(p) {
+          if (p && p.nickname) {
+            freeAgents.push({
+              nickname: p.nickname,
+              full_name: p.full_name || '',
+              team: t.name
+            });
+          }
+        });
+      }
+    });
 
-  if (!freeAgents.length) {
-    fpool.innerHTML = '<div style="font-size:12px;color:var(--text-muted);padding:8px 0;text-align:center;">Свободных игроков нет</div>';
-    return;
+    if (fc) fc.textContent = freeAgents.length;
+
+    if (!freeAgents.length) {
+      fpool.innerHTML = '<div style="font-size:12px;color:var(--text-muted);padding:8px 0;text-align:center;">Свободных игроков нет</div>';
+      return;
+    }
+
+    fpool.innerHTML = freeAgents.map(function(p) {
+      var ini = (p.full_name || p.nickname || '?').split(' ').map(function(w){return w[0]||'';}).join('').toUpperCase().slice(0,2);
+      return '<div class="fpi">' +
+        '<div class="fpa">' + ini + '</div>' +
+        '<div>' +
+          '<div class="fpn">' + p.nickname + '</div>' +
+          '<div class="fps">' + (p.full_name || '') + (p.team ? ' · ' + p.team : '') + '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+
+  } catch(e) {
+    if (fpool) fpool.innerHTML = '<div style="font-size:12px;color:var(--text-muted);padding:8px 0;text-align:center;">Ошибка загрузки</div>';
   }
-
-  fpool.innerHTML = freeAgents.map(function(p) {
-    var ini = (p.full_name || p.username || p.nickname || '?').split(' ').map(function(w){return w[0];}).join('').toUpperCase().slice(0,2);
-    return '<div class="fpi">' +
-      '<div class="fpa">' + ini + '</div>' +
-      '<div><div class="fpn">' + (p.nickname || p.username || '—') + '</div>' +
-      '<div class="fps">' + (p.full_name || '') + '</div></div>' +
-    '</div>';
-  }).join('');
 }
 
 // ── ОТПРАВКА ЗАЯВКИ с tournament_id ──
