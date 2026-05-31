@@ -487,7 +487,7 @@ const CSS = `
 
           <!-- User button -->
           <div class="gg-sb-user" id="gg-user-btn" onclick="window._ggUserMenu()">
-            <div class="gg-sb-avatar" id="gg-av">${initials}</div>
+            <div class="gg-sb-avatar" id="gg-av" style="overflow:hidden;">${user.avatar ? `<img src="${user.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:9px;">` : initials}</div>
             <div class="gg-sb-user-info">
               <div class="gg-sb-user-name">${user.username}</div>
               <div class="gg-sb-user-role">${roleLabel}</div>
