@@ -103,7 +103,7 @@ router.delete('/clips/:id', auth, async (req, res) => {
 // ── РЕЙТИНГ ПЛАТФОРМЫ ──
 router.get('/ratings', async (req, res) => {
   const result = await db.query(
-    `SELECT id, username, full_name, game, university, rating, wins, losses
+    `SELECT id, username, full_name, game, university, rating, wins, losses, is_private
      FROM users ORDER BY rating DESC LIMIT 50`
   )
   res.json(result.rows)
