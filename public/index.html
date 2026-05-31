@@ -1002,7 +1002,7 @@ function renderRatings(list) {
       <div class="player-avatar"><div class="player-avatar-initials">${ini}</div></div>
       <div class="player-info">
         <div class="player-rank ${medals[i]||''}">#${i+1} Место</div>
-        <div class="player-name">${p.full_name || p.username}</div>
+        <div class="player-name">${p.is_private ? p.username : (p.full_name || p.username)}</div>
         <div class="player-nick">${p.username} · ${p.game || 'CS2'}</div>
       </div>
       <div>
