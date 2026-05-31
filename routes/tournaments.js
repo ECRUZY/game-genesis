@@ -408,4 +408,23 @@ router.post('/:id/publish-bracket', auth, async (req, res) => {
   res.json({ success: true })
 })
 
+
+// ── ОБНОВИТЬ ОБЛОЖКУ ТУРНИРА ──
+router.post('/:id/cover', auth, async (req, res) => {
+  const { cover_image } = req.body
+  if (!cover_image) return res.status(400).json({ error: 'Нет изображения' })
+
+  // Проверяем что это организатор или admin
+  const user = await db.query('SELECT role FROM users WHERE id=$1', [req.user.id])
+  const t = await db.query('SELECT organizer_id FROM tournaments WHERE id=$1', [req.params.id])
+  if (!t.rows[0]) return res.status(404).json({ error: 'Турнир не найден' })
+
+  const isAdmin = user.rows[0]?.role === 'admin'
+  const isOrganizer = t.rows[0].organizer_id === req.user.id
+  if (!isAdmin && !isOrganizer) return res.status(403).json({ error: 'Нет доступа' })
+
+  await db.query('UPDATE tournaments SET cover_image=$1 WHERE id=$2', [cover_image, req.params.id])
+  res.json({ success: true })
+})
+
 module.exports = router
