@@ -179,6 +179,10 @@
       <select class="t-sel" id="t-sel" onchange="loadTournament(this.value)">
         <option value="">— Выберите турнир —</option>
       </select>
+      <button class="btn-outline" id="cover-btn" onclick="document.getElementById('cover-input').click()" style="display:none;">
+        📷 Обложка турнира
+      </button>
+      <input type="file" id="cover-input" accept="image/*" style="display:none;" onchange="uploadCover(this)">
       <button class="btn-gold" onclick="location.href='/create-tournament.html'">
         <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Новый турнир
@@ -339,6 +343,9 @@ async function loadMyTournaments() {
 async function loadTournament(tid) {
   if (!tid) return;
   currentTid = tid;
+
+  // Показываем кнопку обложки
+  document.getElementById('cover-btn').style.display = 'flex';
 
   // Загружаем команды
   await loadTeams();
@@ -691,6 +698,37 @@ function toast(msg, type) {
 
 document.getElementById('match-modal').addEventListener('click', function(e){ if(e.target===this) closeModal(); });
 document.getElementById('conf').addEventListener('click', function(e){ if(e.target===this) closeConf(); });
+
+
+async function uploadCover(input) {
+  var file = input.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) { toast('Максимум 5 МБ', 'err'); return; }
+
+  var btn = document.getElementById('cover-btn');
+  btn.textContent = '⏳ Загружаем...';
+  btn.disabled = true;
+
+  var reader = new FileReader();
+  reader.onload = async function(e) {
+    try {
+      var res = await fetch('/api/tournaments/' + currentTid + '/cover', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + TOKEN },
+        body: JSON.stringify({ cover_image: e.target.result })
+      });
+      if (!res.ok) throw new Error('Ошибка');
+      toast('✓ Обложка обновлена! Отображается на странице турнира');
+    } catch(err) {
+      toast('Ошибка загрузки', 'err');
+    } finally {
+      btn.textContent = '📷 Обложка турнира';
+      btn.disabled = false;
+      input.value = '';
+    }
+  };
+  reader.readAsDataURL(file);
+}
 
 // Загрузка
 loadMyTournaments();
