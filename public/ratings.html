@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Рейтинг — Game Genesis</title>
+  <script src="/nav.js"></script>
+  <script src="/api.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Exo+2:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--gold:#f0c040;--gold-dim:rgba(240,192,64,0.1);--bg:#080c12;--bg-card:#0d1420;--bg-card2:#111928;--border:#1a2436;--border-hi:#253550;--text:#dde4ef;--text-dim:#5c7090;--text-muted:#2e3f58;--success:#4ade80;--red:#f87171;--blue:#60a5fa}
+    ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:#1e2d42;border-radius:3px}
+    body{background:var(--bg);color:var(--text);font-family:'Exo 2',sans-serif}
+    .grid-bg{position:fixed;inset:0;z-index:0;pointer-events:none;background-image:linear-gradient(rgba(240,192,64,.02) 1px,transparent 1px),linear-gradient(90deg,rgba(240,192,64,.02) 1px,transparent 1px);background-size:50px 50px}
+    .page{position:relative;z-index:1}
+
+    /* HEADER */
+    .page-header{padding:32px 40px 0}
+    .page-header h1{font-family:'Rajdhani',sans-serif;font-size:32px;font-weight:700;color:#fff}
+    .page-header p{font-size:14px;color:var(--text-dim);margin-top:4px}
+
+    /* MY RANK BANNER */
+    .my-rank-banner{margin:20px 40px 0;background:linear-gradient(135deg,rgba(240,192,64,.08),rgba(240,192,64,.03));border:1px solid rgba(240,192,64,.2);border-radius:14px;padding:16px 24px;display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+    .my-rank-banner .rank-num{font-family:'Rajdhani',sans-serif;font-size:36px;font-weight:700;color:var(--gold);min-width:60px}
+    .my-rank-banner .rank-info h3{font-family:'Rajdhani',sans-serif;font-size:17px;font-weight:700;color:#fff}
+    .my-rank-banner .rank-info p{font-size:12px;color:var(--text-dim);margin-top:2px}
+    .my-rank-banner .rank-pts{font-family:'Rajdhani',sans-serif;font-size:28px;font-weight:700;color:var(--gold);margin-left:auto}
+    .my-rank-banner .rank-pts-label{font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px}
+
+    /* TABS ROW */
+    .tabs-row{display:flex;align-items:center;justify-content:space-between;padding:20px 40px 0;flex-wrap:wrap;gap:12px}
+    .type-tabs{display:flex;gap:2px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:4px}
+    .type-tab{font-family:'Exo 2',sans-serif;font-size:13px;font-weight:500;color:var(--text-dim);padding:8px 18px;border:none;background:transparent;border-radius:7px;cursor:pointer;transition:.2s;white-space:nowrap}
+    .type-tab.active{background:var(--gold);color:#080c12;font-weight:700}
+    .type-tab.soon{opacity:.5;cursor:default}
+
+    /* GAME FILTERS */
+    .game-filters{display:flex;gap:8px;flex-wrap:wrap}
+    .gf{display:flex;align-items:center;gap:7px;padding:7px 14px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text-dim);cursor:pointer;font-size:13px;font-family:'Exo 2',sans-serif;transition:.2s;white-space:nowrap}
+    .gf:hover{border-color:var(--border-hi);color:var(--text)}
+    .gf.active{border-color:var(--gold);background:var(--gold-dim);color:var(--gold)}
+    .gf-icon{font-size:14px}
+
+    /* TABLE */
+    .table-wrap{margin:16px 40px 80px;background:var(--bg-card);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+    .table-head{display:grid;grid-template-columns:60px 1fr 160px 100px 80px;padding:10px 20px;background:rgba(0,0,0,.2);border-bottom:1px solid var(--border)}
+    .th{font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.8px}
+    .th.right{text-align:right}
+
+    .row{display:grid;grid-template-columns:60px 1fr 160px 100px 80px;padding:12px 20px;border-bottom:1px solid rgba(26,36,54,.5);align-items:center;transition:background .15s;cursor:pointer;text-decoration:none;color:inherit}
+    .row:last-child{border-bottom:none}
+    .row:hover{background:rgba(255,255,255,.02)}
+    .row.me{background:rgba(240,192,64,.05);border-left:2px solid var(--gold)}
+
+    /* RANK */
+    .rank-cell{display:flex;align-items:center;gap:8px}
+    .rank-badge{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700}
+    .rank-badge.r1{background:linear-gradient(135deg,#f0c040,#d4a017);color:#080c12}
+    .rank-badge.r2{background:linear-gradient(135deg,#c0c0c0,#909090);color:#080c12}
+    .rank-badge.r3{background:linear-gradient(135deg,#cd7f32,#a0522d);color:#fff}
+    .rank-badge.rn{background:var(--bg-card2);border:1px solid var(--border);color:var(--text-dim)}
+
+    /* PLAYER */
+    .player-cell{display:flex;align-items:center;gap:12px}
+    .player-av{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#1a2a4a,#2a1a4a);display:flex;align-items:center;justify-content:center;font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;color:var(--gold);flex-shrink:0;border:1px solid var(--border)}
+    .player-name{font-weight:600;color:#fff;font-size:14px}
+    .player-sub{font-size:11px;color:var(--text-dim);margin-top:2px;display:flex;align-items:center;gap:6px}
+    .uni-tag{background:rgba(96,165,250,.1);color:var(--blue);border:1px solid rgba(96,165,250,.18);padding:1px 7px;border-radius:4px;font-size:10px;font-weight:600}
+
+    /* GAME TAG */
+    .game-tag{font-size:11px;font-weight:600;padding:3px 9px;border-radius:5px;background:var(--bg-card2);border:1px solid var(--border);color:var(--text-dim)}
+
+    /* WIN RATE */
+    .wr-cell{text-align:right}
+    .wr-val{font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700}
+    .wr-val.high{color:var(--success)}
+    .wr-val.mid{color:var(--gold)}
+    .wr-val.low{color:var(--red)}
+    .wr-sub{font-size:11px;color:var(--text-muted)}
+
+    /* POINTS */
+    .pts-cell{text-align:right;font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;color:var(--gold)}
+    .pts-diff{font-size:11px;color:var(--success);font-family:'Exo 2',sans-serif}
+    .pts-diff.neg{color:var(--red)}
+
+    /* EMPTY / LOADING */
+    .empty{text-align:center;padding:60px 20px;color:var(--text-dim)}
+    .empty-icon{font-size:48px;margin-bottom:14px}
+    .empty h3{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;margin-bottom:6px}
+    .empty p{font-size:13px;color:var(--text-muted)}
+
+    /* SKELETON */
+    .skel{height:62px;border-bottom:1px solid rgba(26,36,54,.5);animation:pulse 1.5s ease-in-out infinite}
+    .skel-inner{height:38px;background:rgba(255,255,255,.03);border-radius:8px;margin:12px 20px}
+    @keyframes pulse{0%,100%{opacity:.4}50%{opacity:.8}}
+
+    /* COMING SOON */
+    .coming-soon{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 20px;text-align:center}
+    .cs-icon{font-size:56px;margin-bottom:20px}
+    .cs-title{font-family:'Rajdhani',sans-serif;font-size:28px;font-weight:700;color:#fff;margin-bottom:8px}
+    .cs-sub{font-size:14px;color:var(--text-dim);max-width:380px;line-height:1.6}
+
+    @media(max-width:900px){.page-header,.tabs-row,.my-rank-banner,.table-wrap{margin-left:20px;margin-right:20px;padding-left:0;padding-right:0}.page-header{padding:24px 20px 0}.tabs-row{padding:16px 20px 0}.table-head,.row{grid-template-columns:50px 1fr 80px 60px}}
+    @media(max-width:600px){.table-head .th:nth-child(3),.row>*:nth-child(3){display:none}.table-head,.row{grid-template-columns:50px 1fr 60px}}
+  </style>
+</head>
+<body>
+<div class="grid-bg"></div>
+<div class="page">
+
+  <div class="page-header">
+    <h1>Рейтинг платформы</h1>
+    <p>Индивидуальный рейтинг игроков Game Genesis · Обновляется по результатам матчей</p>
+  </div>
+
+  <!-- МОЙ РЕЙТИНГ (только для авторизованных) -->
+  <div class="my-rank-banner" id="my-rank-banner" style="display:none;">
+    <div style="display:flex;align-items:center;gap:14px;">
+      <div class="rank-num" id="my-rank-num">#—</div>
+      <div class="rank-info">
+        <h3 id="my-rank-name">Мой рейтинг</h3>
+        <p id="my-rank-sub">— победы · — поражения</p>
+      </div>
+    </div>
+    <div style="text-align:right;margin-left:auto;">
+      <div class="rank-pts" id="my-rank-pts">1 000</div>
+      <div class="rank-pts-label">очков рейтинга</div>
+    </div>
+  </div>
+
+  <!-- ТАБЫ И ФИЛЬТРЫ -->
+  <div class="tabs-row">
+    <div class="type-tabs">
+      <button class="type-tab active" onclick="setType('individual',this)">Индивидуальный</button>
+      <button class="type-tab soon" title="Скоро" onclick="return false">Командный <span style="font-size:10px;opacity:.6;">— скоро</span></button>
+    </div>
+    <div class="game-filters">
+      <button class="gf active" data-game="all" onclick="setGame(this)"><span class="gf-icon">🎮</span>Все игры</button>
+      <button class="gf" data-game="CS2" onclick="setGame(this)"><span class="gf-icon">🔫</span>CS2</button>
+      <button class="gf" data-game="Dota 2" onclick="setGame(this)"><span class="gf-icon">⚔️</span>Dota 2</button>
+      <button class="gf" data-game="Valorant" onclick="setGame(this)"><span class="gf-icon">🎯</span>Valorant</button>
+      <button class="gf" data-game="FIFA 25" onclick="setGame(this)"><span class="gf-icon">⚽</span>FIFA 25</button>
+    </div>
+  </div>
+
+  <!-- ТАБЛИЦА -->
+  <div class="table-wrap">
+    <div class="table-head">
+      <div class="th">Ранг</div>
+      <div class="th">Игрок</div>
+      <div class="th">Игра</div>
+      <div class="th right">В/П</div>
+      <div class="th right">Очки</div>
+    </div>
+    <div id="ratings-body">
+      <!-- Скелетон -->
+      <div class="skel"><div class="skel-inner"></div></div>
+      <div class="skel"><div class="skel-inner"></div></div>
+      <div class="skel"><div class="skel-inner"></div></div>
+      <div class="skel"><div class="skel-inner"></div></div>
+      <div class="skel"><div class="skel-inner"></div></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+var TOKEN = localStorage.getItem('gg_token');
+var ME = null;
+try { ME = JSON.parse(localStorage.getItem('gg_user')); } catch(e) {}
+
+var ALL_PLAYERS = [];
+var currentGame = 'all';
+
+// ── ЗАГРУЗКА РЕЙТИНГА ──
+async function loadRatings() {
+  try {
+    var res = await fetch('/api/users/ratings');
+    if (!res.ok) throw new Error('Ошибка загрузки');
+    ALL_PLAYERS = await res.json();
+    renderMyRank();
+    renderTable(ALL_PLAYERS);
+  } catch(e) {
+    document.getElementById('ratings-body').innerHTML =
+      '<div class="empty"><div class="empty-icon">⚠️</div><h3>Не удалось загрузить</h3><p>' + e.message + '</p></div>';
+  }
+}
+
+// ── МОЙ РЕЙТИНГ ──
+function renderMyRank() {
+  if (!ME) return;
+  var banner = document.getElementById('my-rank-banner');
+  banner.style.display = 'flex';
+
+  // Находим себя в списке
+  var myIdx = ALL_PLAYERS.findIndex(function(p) { return p.id === ME.id || p.username === ME.username; });
+  var myData = myIdx >= 0 ? ALL_PLAYERS[myIdx] : ME;
+  var myRank = myIdx >= 0 ? myIdx + 1 : '—';
+
+  document.getElementById('my-rank-num').textContent = '#' + myRank;
+  document.getElementById('my-rank-name').textContent = myData.is_private ? myData.username : (myData.full_name || myData.username);
+  document.getElementById('my-rank-sub').textContent = (myData.wins||0) + ' победы · ' + (myData.losses||0) + ' поражения';
+  document.getElementById('my-rank-pts').textContent = (myData.rating||1000).toLocaleString('ru-RU');
+}
+
+// ── РЕНДЕР ТАБЛИЦЫ ──
+function renderTable(list) {
+  var body = document.getElementById('ratings-body');
+
+  // Фильтр по игре
+  var filtered = currentGame === 'all'
+    ? list
+    : list.filter(function(p) {
+        if (!p.game) return false;
+        return p.game.split(',').some(function(g) { return g.trim() === currentGame; });
+      });
+
+  if (!filtered.length) {
+    body.innerHTML = '<div class="empty"><div class="empty-icon">🎮</div><h3>Нет игроков</h3><p>По выбранной игре пока нет участников</p></div>';
+    return;
+  }
+
+  // Сортировка по рейтингу
+  filtered = filtered.slice().sort(function(a,b) { return (b.rating||0)-(a.rating||0); });
+
+  body.innerHTML = filtered.map(function(p, i) {
+    var rank = i + 1;
+    var isMe = ME && (p.id === ME.id || p.username === ME.username);
+    var ini = (p.full_name || p.username || '?').split(' ').map(function(w){return w[0]||'';}).join('').toUpperCase().slice(0,2);
+    var displayName = p.is_private ? p.username : (p.full_name || p.username);
+    var wins = p.wins || 0;
+    var losses = p.losses || 0;
+    var total = wins + losses;
+    var wr = total > 0 ? Math.round(wins / total * 100) : 0;
+    var wrClass = wr >= 60 ? 'high' : wr >= 40 ? 'mid' : 'low';
+    var rankClass = rank === 1 ? 'r1' : rank === 2 ? 'r2' : rank === 3 ? 'r3' : 'rn';
+    var pts = (p.rating||0).toLocaleString('ru-RU');
+
+    // Игры пользователя
+    var games = p.game ? p.game.split(',').map(function(g){return g.trim();}) : ['—'];
+    var gameTag = games[0] !== '—' ? '<span class="game-tag">' + games[0] + '</span>' : '<span style="color:var(--text-muted);font-size:12px;">—</span>';
+
+    return '<a href="/profile.html?user=' + p.username + '" class="row' + (isMe ? ' me' : '') + '">' +
+      '<div class="rank-cell"><div class="rank-badge ' + rankClass + '">' + rank + '</div></div>' +
+      '<div class="player-cell">' +
+        '<div class="player-av">' + ini + '</div>' +
+        '<div>' +
+          '<div class="player-name">' + displayName + (isMe ? ' <span style="font-size:10px;color:var(--gold);font-weight:700;background:var(--gold-dim);padding:1px 6px;border-radius:4px;border:1px solid rgba(240,192,64,.3);">ВЫ</span>' : '') + '</div>' +
+          '<div class="player-sub">' +
+            '@' + p.username +
+            (p.university ? '<span class="uni-tag">' + p.university + '</span>' : '') +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div>' + gameTag + '</div>' +
+      '<div class="wr-cell"><div class="wr-val ' + wrClass + '">' + wr + '%</div><div class="wr-sub">' + wins + 'W / ' + losses + 'L</div></div>' +
+      '<div class="pts-cell">' + pts + '</div>' +
+    '</a>';
+  }).join('');
+}
+
+// ── ФИЛЬТРЫ ──
+function setGame(btn) {
+  currentGame = btn.dataset.game;
+  document.querySelectorAll('.gf').forEach(function(b){
+    b.classList.remove('active');
+  });
+  btn.classList.add('active');
+  renderTable(ALL_PLAYERS);
+}
+
+function setType(type, btn) {
+  if (type !== 'individual') return;
+  document.querySelectorAll('.type-tab').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+}
+
+loadRatings();
+</script>
+</body>
+</html>
