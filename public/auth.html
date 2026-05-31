@@ -363,7 +363,7 @@
         <div class="input-wrap">
           <span class="input-icon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
           <input type="password" id="l-pass" class="has-eye" placeholder="Ваш пароль">
-          <button class="eye-btn" onclick="toggleEye('l-pass', this)" tabindex="-1">
+          <button type="button" class="eye-btn" onclick="toggleEye('l-pass', this)" tabindex="-1">
             <svg id="eye-l-pass" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
           </button>
         </div>
@@ -488,7 +488,7 @@
           <div class="input-wrap">
             <span class="input-icon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
             <input type="password" id="r-pass" class="has-eye" placeholder="Минимум 8 символов" oninput="checkStrength()">
-            <button class="eye-btn" onclick="toggleEye('r-pass', this)" tabindex="-1">
+            <button type="button" class="eye-btn" onclick="toggleEye('r-pass', this)" tabindex="-1">
               <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
             </button>
           </div>
@@ -509,7 +509,7 @@
           <div class="input-wrap">
             <span class="input-icon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
             <input type="password" id="r-pass2" class="has-eye" placeholder="Повторите пароль" oninput="checkMatch()">
-            <button class="eye-btn" onclick="toggleEye('r-pass2', this)" tabindex="-1">
+            <button type="button" class="eye-btn" onclick="toggleEye('r-pass2', this)" tabindex="-1">
               <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
             </button>
           </div>
@@ -720,17 +720,22 @@
 
   // ── STEP 2 ──
   async function reg2Next() {
-    const pass = document.getElementById('r-pass').value;
-    const pass2 = document.getElementById('r-pass2').value;
+    console.log("reg2Next called");
+    const pass = document.getElementById('r-pass') ? document.getElementById('r-pass').value : '';
+    const pass2El = document.getElementById('r-pass2');
+    const pass2 = pass2El ? pass2El.value : '';
+    console.log("pass length:", pass.length, "pass2 length:", pass2.length);
     let ok = true;
 
-    if (pass.length < 8) { ferr('err-r-pass', true); setInputState('r-pass','err'); ok = false; }
+    if (pass.length < 8) { ferr('err-r-pass', true); setInputState('r-pass','err'); ok = false; console.log("FAIL: pass too short"); }
     else { ferr('err-r-pass', false); setInputState('r-pass','ok'); }
 
-    if (pass !== pass2 || !pass2) { ferr('err-r-pass2', true); setInputState('r-pass2','err'); ok = false; }
+    if (pass !== pass2 || !pass2) { ferr('err-r-pass2', true); setInputState('r-pass2','err'); ok = false; console.log("FAIL: pass mismatch", pass === pass2, !!pass2); }
     else { ferr('err-r-pass2', false); setInputState('r-pass2','ok'); }
 
-    if (!document.getElementById('r-agree').checked) { alert('Примите правила платформы'); ok = false; }
+    const agreeEl = document.getElementById('r-agree');
+    if (!agreeEl || !agreeEl.checked) { alert('Примите правила платформы'); ok = false; console.log("FAIL: agree not checked"); }
+    console.log("ok:", ok);
     if (!ok) return;
 
     const btn = document.getElementById('reg2-btn');
@@ -890,7 +895,7 @@
   }
 
   // ── LOGIN ──
-  function doLogin() {
+  async function doLogin() {
     const login = document.getElementById('l-login').value.trim();
     const pass = document.getElementById('l-pass').value;
     let ok = true;
@@ -901,19 +906,38 @@
     const btn = document.querySelector('#panel-login .btn-submit');
     btn.disabled = true;
     btn.innerHTML = '<div class="spinner"></div> Входим...';
-
     document.getElementById('login-err-box').style.display = 'none';
 
-    setTimeout(() => {
-      // demo: any credentials work except "wrong"
-      if (login.toLowerCase() === 'wrong') {
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ login, password: pass })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
         document.getElementById('login-err-box').style.display = 'block';
+        const errEl = document.getElementById('login-err-box').querySelector('p, span, div');
+        if (errEl) errEl.textContent = data.error || 'Неверный логин или пароль';
         btn.disabled = false;
         btn.innerHTML = '<svg viewBox="0 0 24 24" style="width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg> Войти';
-      } else {
-        location.href = 'profile.html';
+        return;
       }
-    }, 1200);
+
+      // Сохраняем токен и данные
+      localStorage.setItem('gg_token', data.token);
+      localStorage.setItem('gg_user', JSON.stringify(data.user));
+
+      // Редирект на профиль
+      const returnUrl = new URLSearchParams(window.location.search).get('return');
+      location.href = returnUrl || '/profile.html';
+
+    } catch(e) {
+      document.getElementById('login-err-box').style.display = 'block';
+      btn.disabled = false;
+      btn.innerHTML = 'Войти';
+    }
   }
 
   // ── FORGOT PASSWORD ──
