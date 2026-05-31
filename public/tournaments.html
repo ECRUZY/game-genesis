@@ -599,20 +599,35 @@ function setTab(tab, btn) {
   filterCards();
 }
 
-function setGame(game, btn) {
-  filterGame = game;
-  document.querySelectorAll('.game-filter-btn, .game-btn, [data-game]').forEach(function(b){ b.classList.remove('active'); });
-  if (btn) btn.classList.add('active');
+function setGame(gameOrEl, btn) {
+  // Поддерживаем два варианта вызова: setGame(element) и setGame('CS2', btn)
+  var el = (gameOrEl && gameOrEl.dataset) ? gameOrEl : btn;
+  var game = (gameOrEl && gameOrEl.dataset) ? gameOrEl.dataset.game : gameOrEl;
+  filterGame = game || 'all';
+  document.querySelectorAll('[data-game]').forEach(function(b){ 
+    b.classList.remove('active');
+    b.style.background = '';
+    b.style.color = '';
+    b.style.borderColor = '';
+  });
+  if (el) {
+    el.classList.add('active');
+    el.style.background = 'var(--gold-dim)';
+    el.style.color = 'var(--gold)';
+    el.style.borderColor = 'rgba(240,192,64,.4)';
+  }
   filterCards();
 }
 
-function toggleStatus(status, btn) {
+function toggleStatus(statusOrEl, btn) {
+  var el = (statusOrEl && statusOrEl.dataset) ? statusOrEl : btn;
+  var status = (statusOrEl && statusOrEl.dataset) ? statusOrEl.dataset.status : statusOrEl;
   if (filterStatus[status]) {
     delete filterStatus[status];
-    if (btn) btn.classList.remove('active');
+    if (el) { el.classList.remove('active'); el.style.opacity = '0.5'; }
   } else {
     filterStatus[status] = true;
-    if (btn) btn.classList.add('active');
+    if (el) { el.classList.add('active'); el.style.opacity = '1'; }
   }
   filterCards();
 }
@@ -870,20 +885,35 @@ function setTab(tab, btn) {
   filterCards();
 }
 
-function setGame(game, btn) {
-  filterGame = game;
-  document.querySelectorAll('.game-filter-btn, .game-btn, [data-game]').forEach(function(b){ b.classList.remove('active'); });
-  if (btn) btn.classList.add('active');
+function setGame(gameOrEl, btn) {
+  // Поддерживаем два варианта вызова: setGame(element) и setGame('CS2', btn)
+  var el = (gameOrEl && gameOrEl.dataset) ? gameOrEl : btn;
+  var game = (gameOrEl && gameOrEl.dataset) ? gameOrEl.dataset.game : gameOrEl;
+  filterGame = game || 'all';
+  document.querySelectorAll('[data-game]').forEach(function(b){ 
+    b.classList.remove('active');
+    b.style.background = '';
+    b.style.color = '';
+    b.style.borderColor = '';
+  });
+  if (el) {
+    el.classList.add('active');
+    el.style.background = 'var(--gold-dim)';
+    el.style.color = 'var(--gold)';
+    el.style.borderColor = 'rgba(240,192,64,.4)';
+  }
   filterCards();
 }
 
-function toggleStatus(status, btn) {
+function toggleStatus(statusOrEl, btn) {
+  var el = (statusOrEl && statusOrEl.dataset) ? statusOrEl : btn;
+  var status = (statusOrEl && statusOrEl.dataset) ? statusOrEl.dataset.status : statusOrEl;
   if (filterStatus[status]) {
     delete filterStatus[status];
-    if (btn) btn.classList.remove('active');
+    if (el) { el.classList.remove('active'); el.style.opacity = '0.5'; }
   } else {
     filterStatus[status] = true;
-    if (btn) btn.classList.add('active');
+    if (el) { el.classList.add('active'); el.style.opacity = '1'; }
   }
   filterCards();
 }
@@ -916,6 +946,8 @@ var obs = new IntersectionObserver(function(entries) {
 }, { threshold: 0.05 });
 document.querySelectorAll('.fade-up').forEach(function(el) { obs.observe(el); });
 
+// Инициализация — "Открытые" активна по умолчанию
+filterStatus = { 'open': true };
 loadTournaments();
 </script>
 
