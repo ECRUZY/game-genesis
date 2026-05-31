@@ -25,7 +25,7 @@
     .avatar-wrap{display:flex;align-items:flex-end;gap:20px;margin-top:-50px;margin-bottom:16px}
     .avatar{width:100px;height:100px;border-radius:16px;background:linear-gradient(135deg,#1a2a4a,#2a1a4a);border:3px solid var(--bg);display:flex;align-items:center;justify-content:center;font-family:'Rajdhani',sans-serif;font-size:32px;font-weight:700;color:var(--gold);flex-shrink:0;position:relative;overflow:hidden}
     .avatar img{width:100%;height:100%;object-fit:cover}
-    .avatar-overlay{position:absolute;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;cursor:pointer;font-size:11px;color:#fff;text-align:center}
+    .avatar-overlay{position:absolute;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;cursor:pointer;font-size:11px;color:#fff;text-align:center;flex-direction:column;gap:4px}
     .avatar:hover .avatar-overlay{display:flex}
     .profile-names{flex:1;padding-bottom:8px}
     .profile-displayname{font-family:'Rajdhani',sans-serif;font-size:26px;font-weight:700;color:#fff;display:flex;align-items:center;gap:10px}
@@ -166,7 +166,8 @@
     <div class="avatar-wrap">
       <div class="avatar" id="avatar-el">
         <span id="avatar-initials">?</span>
-        <div class="avatar-overlay" onclick="openModal('avatar')">📷<br>Изменить</div>
+        <div class="avatar-overlay" onclick="document.getElementById('avatar-input').click()">📷<br>Изменить</div>
+    <input type="file" id="avatar-input" accept="image/*" style="display:none;" onchange="uploadAvatar(this)">
       </div>
       <div class="profile-names">
         <div class="profile-displayname">
@@ -359,8 +360,20 @@ var CLIPS = [];
 // ── ЗАГРУЗКА ──
 async function loadProfile() {
   try {
+    // Берём username из URL ?user= или из localStorage
     var targetUsername = TARGET_USER || (ME && ME.username);
-    if (!targetUsername) { window.location.href = '/auth.html'; return; }
+    
+    // Если нет - не редиректим, просто показываем пустой профиль с кнопкой входа
+    if (!targetUsername) {
+      document.getElementById('display-name').textContent = 'Профиль не найден';
+      document.getElementById('display-username').textContent = 'Войдите или укажите ?user=username в URL';
+      document.getElementById('profile-actions').innerHTML =
+        '<a href="/auth.html" style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;background:var(--gold);color:#080c12;border-radius:8px;font-family:Rajdhani,sans-serif;font-size:14px;font-weight:700;text-decoration:none;letter-spacing:1px;">Войти</a>';
+      ['stat-rating','stat-wins','stat-losses','stat-tournaments','stat-clips'].forEach(function(id){
+        var el = document.getElementById(id); if(el) el.textContent = '—';
+      });
+      return;
+    }
 
     // Всегда грузим публичный профиль по username
     var pubRes = await fetch('/api/users/' + targetUsername);
@@ -415,6 +428,13 @@ function renderProfile() {
   var nameForInitials = showFull && u.full_name ? u.full_name : u.username || '?';
   var initials = nameForInitials.split(' ').map(function(w){return w[0]||'';}).join('').toUpperCase().slice(0,2);
   document.getElementById('avatar-initials').textContent = initials;
+  // Показываем аватар если есть
+  if (u.avatar) {
+    var avEl = document.getElementById('avatar-initials').parentElement;
+    avEl.innerHTML = '<img src="' + u.avatar + '" style="width:100%;height:100%;object-fit:cover;border-radius:14px;">' +
+      '<div class="avatar-overlay" onclick="document.getElementById('avatar-input').click()">📷<br>Изменить</div>' +
+      '<input type="file" id="avatar-input" accept="image/*" style="display:none;" onchange="uploadAvatar(this)">';
+  }
 
   // Имя
   var displayName = showFull && u.full_name ? u.full_name : u.username;
@@ -625,7 +645,7 @@ function renderTournaments(list) {
         '<span class="pill ' + (statusCls[t.status]||'pill-open') + '">' + (statusLbl[t.status]||t.status) + '</span>' +
         '<div class="t-item-actions">' +
           '<button class="btn-sm" onclick="location.href=\'/tournament.html?id=' + t.id + '\'">Страница</button>' +
-          '<button class="btn-sm" onclick="location.href=\'/organizer.html\'">Панель</button>' +
+          (IS_OWN ? '<button class="btn-sm" onclick="location.href=\'/organizer.html\'">Панель</button>' : '') +
         '</div>' +
       '</div>' +
     '</div>';
@@ -717,6 +737,63 @@ async function saveProfile() {
   }
 }
 
+
+function compressAvatar(base64) {
+  return new Promise(function(resolve) {
+    var img = new Image();
+    img.onload = function() {
+      var canvas = document.createElement('canvas');
+      var size = Math.min(img.width, img.height, 400);
+      canvas.width = size; canvas.height = size;
+      var ctx = canvas.getContext('2d');
+      var sx = (img.width - size) / 2;
+      var sy = (img.height - size) / 2;
+      ctx.drawImage(img, sx, sy, size, size, 0, 0, size, size);
+      resolve(canvas.toDataURL('image/jpeg', 0.85));
+    };
+    img.src = base64;
+  });
+}
+
+async function uploadAvatar(input) {
+  var file = input.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) { toast('Максимум 5 МБ', 'err'); return; }
+
+  var reader = new FileReader();
+  reader.onload = async function(e) {
+    var compressed = await compressAvatar(e.target.result);
+    try {
+      var res = await fetch('/api/users/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + TOKEN },
+        body: JSON.stringify({ avatar: compressed })
+      });
+      if (!res.ok) throw new Error('Ошибка');
+      // Обновляем аватар локально
+      PROFILE.avatar = compressed;
+      var avEl = document.getElementById('avatar-initials');
+      if (avEl) {
+        avEl.parentElement.innerHTML = '<img src="' + compressed + '" style="width:100%;height:100%;object-fit:cover;border-radius:14px;">' +
+          '<div class="avatar-overlay" onclick="document.getElementById('avatar-input').click()">📷<br>Изменить</div>' +
+          '<input type="file" id="avatar-input" accept="image/*" style="display:none;" onchange="uploadAvatar(this)">';
+      }
+      // Обновляем в nav.js если есть
+      var navAv = document.querySelector('.gg-sb-avatar-img, .gg-user-avatar');
+      if (navAv) navAv.src = compressed;
+      // Обновляем localStorage
+      var user = JSON.parse(localStorage.getItem('gg_user') || '{}');
+      user.avatar = compressed;
+      localStorage.setItem('gg_user', JSON.stringify(user));
+      toast('✓ Аватар обновлён!');
+    } catch(err) {
+      toast('Ошибка загрузки', 'err');
+    }
+    input.value = '';
+  };
+  reader.readAsDataURL(file);
+}
+
 function togglePrivate() {
   var btn = document.getElementById('toggle-private');
   btn.classList.toggle('on');
@@ -791,11 +868,7 @@ function toast(msg, type) {
 }
 
 // ── INIT ──
-if (!IS_OWN && !TARGET_USER && !ME) {
-  window.location.href = '/auth.html';
-} else {
-  loadProfile();
-}
+loadProfile();
 </script>
 </body>
 </html>

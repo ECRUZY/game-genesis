@@ -942,8 +942,9 @@ function renderTournaments(list) {
   list.slice(1, 4).forEach(t => {
     html += `
       <a href="/tournament.html?id=${t.id}" class="t-card">
-        <div class="t-thumb" style="background:${bg(t)};">
-          <div class="t-thumb-overlay"></div>
+        <div class="t-thumb" style="background:${bg(t)};position:relative;overflow:hidden;">
+          ${t.cover_image ? `<img src="${t.cover_image}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.65;z-index:0;">` : ''}
+          <div class="t-thumb-overlay" style="z-index:1;"></div>
           <div class="t-game-badge">${t.game}</div>
           <div class="t-status ${statusCls[t.status]||'open'}">
             <div class="t-status-dot"></div>${statusLabel[t.status]||'Открыта'}
@@ -999,7 +1000,7 @@ function renderRatings(list) {
   grid.innerHTML = list.map((p, i) => {
     const ini = (p.full_name || p.username || '?').split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2);
     return `<a href="/profile.html?user=${p.username}" style="text-decoration:none;color:inherit;display:block;" class="player-card rank-${i+1}">
-      <div class="player-avatar"><div class="player-avatar-initials">${ini}</div></div>
+      <div class="player-avatar" style="overflow:hidden;">${p.avatar ? `<img src="${p.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;">` : `<div class="player-avatar-initials">${ini}</div>`}</div>
       <div class="player-info">
         <div class="player-rank ${medals[i]||''}">#${i+1} Место</div>
         <div class="player-name">${p.is_private ? p.username : (p.full_name || p.username)}</div>
