@@ -206,7 +206,7 @@
     .t-card.card-edu:hover { border-color: rgba(167,139,250,.4); }
 
     .t-thumb { height: 130px; position: relative; overflow: hidden; flex-shrink: 0; }
-    .t-thumb-bg { width: 100%; height: 100%; transition: transform .4s; }
+    .t-thumb-bg { width: 100%; height: 100%; position: absolute; inset: 0; transition: transform .4s; z-index: 0; }
     .t-card:hover .t-thumb-bg { transform: scale(1.04); }
     .t-thumb-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 30%, rgba(13,20,32,1) 100%); }
 
@@ -685,9 +685,10 @@ function renderCards(list) {
 
     html +=
       '<div class="t-card" data-id="' + t.id + '">' +
-        '<div class="t-thumb">' +
-          '<div class="t-thumb-bg" style="background:' + bg + ';width:100%;height:100%;"></div>' +
-          '<div class="t-thumb-overlay"></div>' +
+        '<div class="t-thumb" style="position:relative;overflow:hidden;">' +
+          '<div class="t-thumb-bg" style="background:' + bg + ';width:100%;height:100%;position:absolute;inset:0;"></div>' +
+          (t.cover_image ? '<img src="' + t.cover_image + '" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.75;z-index:1;position:absolute;inset:0;">' : '') +
+          '<div class="t-thumb-overlay" style="position:absolute;inset:0;z-index:2;"></div>' +
           '<div class="t-game-tag">' + t.game + '</div>' +
           '<div class="t-status-badge ' + statusCls + '">' +
             (isLive ? '<span style="width:5px;height:5px;border-radius:50%;background:currentColor;display:inline-block;margin-right:4px;animation:blink 1s infinite;"></span>' : '') +
