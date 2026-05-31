@@ -532,6 +532,23 @@ function applyCoverImage(imageData) {
   }
 }
 
+async 
+function compressImage(base64, maxWidth, quality) {
+  return new Promise(function(resolve) {
+    var img = new Image();
+    img.onload = function() {
+      var canvas = document.createElement('canvas');
+      var ratio = Math.min(maxWidth / img.width, maxWidth / img.height, 1);
+      canvas.width = img.width * ratio;
+      canvas.height = img.height * ratio;
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.src = base64;
+  });
+}
+
 async function uploadCover(input) {
   var file = input.files[0];
   if (!file) return;
@@ -543,7 +560,8 @@ async function uploadCover(input) {
 
   var reader = new FileReader();
   reader.onload = async function(e) {
-    var base64 = e.target.result;
+    // Сжимаем изображение перед отправкой
+    var base64 = await compressImage(e.target.result, 1200, 0.8);
     try {
       var res = await fetch('/api/tournaments/' + TID + '/cover', {
         method: 'POST',

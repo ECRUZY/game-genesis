@@ -700,6 +700,23 @@ document.getElementById('match-modal').addEventListener('click', function(e){ if
 document.getElementById('conf').addEventListener('click', function(e){ if(e.target===this) closeConf(); });
 
 
+
+function compressImage(base64, maxWidth, quality) {
+  return new Promise(function(resolve) {
+    var img = new Image();
+    img.onload = function() {
+      var canvas = document.createElement('canvas');
+      var ratio = Math.min(maxWidth / img.width, maxWidth / img.height, 1);
+      canvas.width = img.width * ratio;
+      canvas.height = img.height * ratio;
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.src = base64;
+  });
+}
+
 async function uploadCover(input) {
   var file = input.files[0];
   if (!file) return;
