@@ -57,7 +57,7 @@ router.get('/profile', auth, async (req, res) => {
 
 // ── ОБНОВИТЬ ПРОФИЛЬ ──
 router.put('/profile', auth, async (req, res) => {
-  const { full_name, phone, game, university, faceit_nick, bio, steam_url, is_private } = req.body
+  const { full_name, phone, game, university, faceit_nick, bio, steam_url, is_private, avatar } = req.body
   try {
     const result = await db.query(
       `UPDATE users SET
@@ -68,10 +68,11 @@ router.put('/profile', auth, async (req, res) => {
         faceit_nick = COALESCE($5, faceit_nick),
         bio = COALESCE($6, bio),
         steam_url = COALESCE($7, steam_url),
-        is_private = CASE WHEN $8::text IS NOT NULL THEN $8::boolean ELSE is_private END
+        is_private = CASE WHEN $8::text IS NOT NULL THEN $8::boolean ELSE is_private END,
+        avatar = COALESCE($10, avatar)
        WHERE id = $9
-       RETURNING id, username, email, phone, full_name, game, university, faceit_nick, bio, steam_url, is_private, role, verified`,
-      [full_name, phone, game, university, faceit_nick, bio, steam_url, is_private !== undefined ? String(is_private) : null, req.user.id]
+       RETURNING id, username, email, phone, full_name, game, university, faceit_nick, bio, steam_url, is_private, role, verified, avatar`,
+      [full_name, phone, game, university, faceit_nick, bio, steam_url, is_private !== undefined ? String(is_private) : null, req.user.id, avatar || null]
     )
     res.json(result.rows[0])
   } catch (e) {
@@ -103,7 +104,7 @@ router.delete('/clips/:id', auth, async (req, res) => {
 // ── РЕЙТИНГ ПЛАТФОРМЫ ──
 router.get('/ratings', async (req, res) => {
   const result = await db.query(
-    `SELECT id, username, full_name, game, university, rating, wins, losses, is_private
+    `SELECT id, username, full_name, game, university, rating, wins, losses, is_private, avatar
      FROM users ORDER BY rating DESC LIMIT 50`
   )
   res.json(result.rows)
@@ -115,7 +116,7 @@ router.get('/:username', async (req, res) => {
   try {
     const result = await db.query(
       `SELECT id, username, full_name, game, university, faceit_nick, steam_url, bio,
-               is_private, rating, wins, losses, created_at, role
+               is_private, rating, wins, losses, created_at, role, avatar
        FROM users WHERE username = $1`,
       [req.params.username]
     )
