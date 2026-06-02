@@ -274,36 +274,18 @@ const CSS = `
   .gg-sb-user.open .gg-sb-user-chevron { transform: rotate(180deg); }
 
   /* User dropdown (above) */
-  .gg-sb-user-dd {
-    position: absolute; left: 10px; right: 10px;
-    bottom: calc(100% + 8px);
-    background: var(--bg-card); border: 1px solid var(--border-hi);
-    border-radius: 12px; overflow: hidden;
-    box-shadow: 0 -12px 40px rgba(0,0,0,.5);
-    opacity: 0; pointer-events: none; transform: translateY(6px);
-    transition: opacity .2s, transform .2s; z-index: 100;
-  }
-  .gg-sb-user-dd.open { opacity: 1; pointer-events: all; transform: translateY(0); }
+  
+  
 
-  .gg-dd-head {
-    padding: 12px 14px 10px;
-    border-bottom: 1px solid var(--border);
-    background: rgba(0,0,0,.3);
-  }
-  .gg-dd-uname { font-family: 'Rajdhani',sans-serif; font-size: 16px; font-weight: 700; color: #fff; }
-  .gg-dd-email { font-size: 11px; color: var(--text-dim); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  
+  
+  
 
-  .gg-dd-link {
-    display: flex; align-items: center; gap: 10px;
-    padding: 10px 14px; font-size: 13px; color: var(--text-dim);
-    text-decoration: none; cursor: pointer; transition: .2s;
-    border: none; background: none; width: 100%; text-align: left;
-    font-family: 'Exo 2', sans-serif;
-  }
-  .gg-dd-link svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
-  .gg-dd-link:hover { color: var(--text); background: rgba(255,255,255,.04); }
-  .gg-dd-link.danger:hover { color: var(--red); background: rgba(248,113,113,.06); }
-  .gg-dd-sep { height: 1px; background: var(--border); }
+  
+  
+  
+  
+  
 
   body.gg-collapsed .gg-sb-user-info,
   body.gg-collapsed .gg-sb-user-chevron { opacity: 0; }
@@ -472,18 +454,7 @@ const CSS = `
       <div class="gg-sb-bottom">
         ${user ? `
           <!-- Dropdown user menu (above) -->
-          <div class="gg-sb-user-dd" id="gg-user-dd">
-            <div class="gg-dd-head">
-              <div class="gg-dd-uname">${user.full_name || user.username}</div>
-              <div class="gg-dd-email">${user.email || ''}</div>
-            </div>
-            <a href="/profile.html" class="gg-dd-link">${I.user} Мой профиль</a>
-            <a href="/profile.html#tournaments" class="gg-dd-link">${I.tournaments} Мои турниры</a>
-            <a href="/profile.html#notifications" class="gg-dd-link">${I.bell} Уведомления</a>
-            <div class="gg-dd-sep"></div>
-            <a href="/profile.html#settings" class="gg-dd-link">${I.settings} Настройки</a>
-            <button class="gg-dd-link danger" onclick="window._ggLogout()">${I.logout} Выйти</button>
-          </div>
+          
 
           <!-- User button -->
           <a href="/profile.html" class="gg-sb-user" id="gg-user-btn" style="text-decoration:none;">
@@ -538,13 +509,7 @@ const CSS = `
       localStorage.setItem('gg_nav_collapsed', collapsed ? '1' : '0');
     };
 
-    window._ggUserMenu = function() {
-      const btn = document.getElementById('gg-user-btn');
-      const dd = document.getElementById('gg-user-dd');
-      if (!btn || !dd) return;
-      btn.classList.toggle('open');
-      dd.classList.toggle('open');
-    };
+    
 
     window._ggLogout = function() {
       localStorage.removeItem('gg_token');
@@ -562,15 +527,7 @@ const CSS = `
       document.getElementById('gg-overlay').classList.remove('open');
     };
 
-    // Закрываем user dropdown при клике вне
-    document.addEventListener('click', function(e) {
-      const btn = document.getElementById('gg-user-btn');
-      const dd = document.getElementById('gg-user-dd');
-      if (btn && dd && !btn.contains(e.target) && !dd.contains(e.target)) {
-        btn.classList.remove('open');
-        dd.classList.remove('open');
-      }
-    });
+
 
     // Убираем старый header/sidebar из DOM если уже отрендерился
     document.querySelectorAll('body > header:not(#gg-sidebar), .page > header').forEach(el => {
