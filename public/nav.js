@@ -248,7 +248,7 @@ const CSS = `
     border: 1px solid transparent;
   }
   .gg-sb-user:hover { background: rgba(255,255,255,.04); border-color: var(--border-hi); }
-  .gg-sb-user.open { background: var(--gold-dim); border-color: rgba(240,192,64,.25); }
+  
 
   .gg-sb-avatar {
     width: 36px; height: 36px; border-radius: 9px;
@@ -464,10 +464,7 @@ const CSS = `
               <div class="gg-sb-user-role">${roleLabel}</div>
             </div>
           </a>
-          <button onclick="window._ggLogout()" style="background:none;border:none;cursor:pointer;padding:6px 8px;border-radius:7px;color:var(--text-muted);transition:.2s;display:flex;align-items:center;gap:6px;font-size:12px;font-family:'Exo 2',sans-serif;width:100%;margin-top:4px;" onmouseover="this.style.color='var(--red)';this.style.background='rgba(248,113,113,.08)'" onmouseout="this.style.color='var(--text-muted)';this.style.background='none'">
-            ${I.logout || '<svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>'}
-            Выйти
-          </button>
+          
         ` : `
           <div class="gg-sb-auth">
             <a href="/auth.html" class="gg-sb-btn-login">
