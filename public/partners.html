@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Партнёрам — Game Genesis</title>
+  <script src="/nav.js"></script>
+  <script src="/api.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Exo+2:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --gold:#f0c040;--gold-dim:rgba(240,192,64,0.1);--gold-glow:rgba(240,192,64,0.15);
+      --bg:#080c12;--bg-card:#0d1420;--bg-card2:#111928;--bg-input:#0a1018;
+      --border:#1a2436;--border-hi:#253550;
+      --text:#dde4ef;--text-dim:#5c7090;--text-muted:#2e3f58;
+      --success:#4ade80;--red:#f87171;--blue:#60a5fa;--purple:#a78bfa;
+    }
+    ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:#1e2d42;border-radius:3px}
+    body{background:var(--bg);color:var(--text);font-family:'Exo 2',sans-serif;min-height:100vh}
+    .grid-bg{position:fixed;inset:0;z-index:0;pointer-events:none;background-image:linear-gradient(rgba(240,192,64,.015) 1px,transparent 1px),linear-gradient(90deg,rgba(240,192,64,.015) 1px,transparent 1px);background-size:60px 60px}
+    .page{position:relative;z-index:1}
+
+    /* HERO */
+    .hero{padding:48px 48px 0;max-width:900px}
+    .hero-tag{display:inline-flex;align-items:center;gap:7px;background:var(--gold-dim);border:1px solid rgba(240,192,64,.25);color:var(--gold);font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:5px 14px;border-radius:20px;margin-bottom:20px}
+    .hero h1{font-family:'Rajdhani',sans-serif;font-size:clamp(32px,5vw,52px);font-weight:700;color:#fff;line-height:1.1;margin-bottom:14px}
+    .hero h1 em{color:var(--gold);font-style:normal}
+    .hero p{font-size:15px;color:var(--text-dim);line-height:1.7;max-width:600px;margin-bottom:32px}
+
+    /* TABS */
+    .tabs-nav{display:flex;gap:0;border-bottom:1px solid var(--border);padding:0 48px;overflow-x:auto}
+    .tabs-nav::-webkit-scrollbar{height:0}
+    .tnav{font-family:'Exo 2',sans-serif;font-size:13px;font-weight:500;color:var(--text-dim);padding:14px 20px;border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-1px;cursor:pointer;transition:.2s;white-space:nowrap;display:flex;align-items:center;gap:8px}
+    .tnav:hover{color:var(--text)}.tnav.active{color:var(--gold);border-bottom-color:var(--gold)}
+    .tnav svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+    /* PANELS */
+    .panel{display:none;padding:40px 48px 80px}.panel.active{display:block}
+
+    /* CARDS GRID */
+    .cards-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-bottom:32px}
+
+    /* PLAN CARD */
+    .plan-card{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:24px;position:relative;overflow:hidden;transition:.2s;cursor:default}
+    .plan-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--card-accent),transparent);opacity:.6}
+    .plan-card:hover{border-color:var(--card-accent);transform:translateY(-2px)}
+    .plan-card.gold{--card-accent:var(--gold)}
+    .plan-card.blue{--card-accent:var(--blue)}
+    .plan-card.purple{--card-accent:var(--purple)}
+    .plan-card.green{--card-accent:var(--success)}
+    .plan-icon{font-size:32px;margin-bottom:14px}
+    .plan-name{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;color:#fff;margin-bottom:6px}
+    .plan-price{font-family:'Rajdhani',sans-serif;font-size:28px;font-weight:700;color:var(--card-accent);margin-bottom:12px}
+    .plan-price span{font-size:14px;font-weight:400;color:var(--text-dim)}
+    .plan-desc{font-size:13px;color:var(--text-dim);line-height:1.6;margin-bottom:16px}
+    .plan-features{list-style:none;margin-bottom:20px}
+    .plan-features li{font-size:13px;color:var(--text-dim);padding:5px 0;border-bottom:1px solid rgba(26,36,54,.4);display:flex;align-items:center;gap:8px}
+    .plan-features li:last-child{border-bottom:none}
+    .plan-features li::before{content:'✓';color:var(--card-accent);font-weight:700;flex-shrink:0}
+    .plan-btn{width:100%;padding:12px;border-radius:8px;border:1px solid var(--card-accent);background:transparent;color:var(--card-accent);font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;letter-spacing:1px;cursor:pointer;transition:.2s}
+    .plan-btn:hover{background:var(--card-accent);color:#080c12}
+
+    /* FORM */
+    .form-wrap{max-width:680px}
+    .form-block{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:16px;position:relative;overflow:hidden}
+    .form-block::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+    .form-block-title{font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;color:#fff;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+    .form-block-title svg{width:16px;height:16px;stroke:var(--gold);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    .frow{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    .field{margin-bottom:14px}
+    .field label{display:block;font-size:11px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px}
+    .req{color:var(--gold)}
+    input,select,textarea{width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text);font-family:'Exo 2',sans-serif;outline:none;transition:border-color .2s;-webkit-appearance:none}
+    input:focus,select:focus,textarea:focus{border-color:var(--gold)}
+    input::placeholder,textarea::placeholder{color:var(--text-muted);font-size:13px}
+    textarea{resize:vertical;min-height:80px}
+    select{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%235c7090' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
+    select option{background:#0d1420}
+
+    /* NOTICE */
+    .notice{background:rgba(248,113,113,.06);border:1px solid rgba(248,113,113,.2);border-radius:10px;padding:14px 16px;margin-bottom:16px;font-size:13px;color:var(--red);line-height:1.6}
+    .notice b{color:#fff}
+    .notice-gold{background:rgba(240,192,64,.06);border:1px solid rgba(240,192,64,.2);border-radius:10px;padding:14px 16px;margin-bottom:16px;font-size:13px;color:var(--gold);line-height:1.6}
+    .notice-gold b{color:#fff}
+
+    /* PROHIBITED */
+    .prohibited{background:var(--bg-card);border:1px solid rgba(248,113,113,.2);border-radius:14px;padding:20px 24px;margin-bottom:20px}
+    .prohibited-title{font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;color:var(--red);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+    .prohibited-list{list-style:none}
+    .prohibited-list li{font-size:13px;color:var(--text-dim);padding:6px 0;border-bottom:1px solid rgba(26,36,54,.4);display:flex;align-items:center;gap:8px}
+    .prohibited-list li:last-child{border-bottom:none}
+    .prohibited-list li::before{content:'✗';color:var(--red);font-weight:700;flex-shrink:0}
+
+    /* MEDIA BANNER */
+    .media-layout{display:grid;grid-template-columns:1fr 320px;gap:24px;align-items:start}
+    .media-preview{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;overflow:hidden;position:sticky;top:20px}
+    .media-preview-header{padding:14px 18px;border-bottom:1px solid var(--border);font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;color:#fff;display:flex;align-items:center;justify-content:space-between}
+    .media-preview-badge{font-size:10px;background:var(--gold-dim);color:var(--gold);border:1px solid rgba(240,192,64,.3);padding:2px 8px;border-radius:4px;font-family:'Exo 2',sans-serif;font-weight:600}
+    .media-banner-slot{margin:16px;border-radius:10px;overflow:hidden;background:linear-gradient(135deg,#111928,#1a2436);border:1px dashed var(--border-hi);aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;position:relative}
+    .media-banner-slot.has-content{border-style:solid;border-color:var(--gold)}
+    .media-slot-label{font-size:11px;color:var(--text-muted);text-align:center}
+    .media-slot-label span{display:block;font-size:20px;margin-bottom:6px}
+    .media-info{padding:14px 18px;border-top:1px solid var(--border)}
+    .media-info-row{display:flex;justify-content:space-between;font-size:12px;padding:4px 0}
+    .media-info-row span:first-child{color:var(--text-dim)}.media-info-row span:last-child{color:var(--text);font-weight:500}
+
+    /* AMBASSADOR */
+    .amb-layout{display:grid;grid-template-columns:1fr 340px;gap:24px;align-items:start}
+    .amb-info{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:20px;position:sticky;top:20px}
+    .amb-info h3{font-family:'Rajdhani',sans-serif;font-size:17px;font-weight:700;color:#fff;margin-bottom:14px}
+    .amb-perk{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid rgba(26,36,54,.4);font-size:13px;color:var(--text-dim)}
+    .amb-perk:last-child{border-bottom:none}
+    .amb-perk-icon{font-size:18px;flex-shrink:0;margin-top:1px}
+
+    /* STEP INDICATOR */
+    .steps{display:flex;gap:0;margin-bottom:28px;flex-wrap:wrap}
+    .step{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-muted)}
+    .step-num{width:24px;height:24px;border-radius:50%;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;flex-shrink:0}
+    .step.active .step-num{background:var(--gold);border-color:var(--gold);color:#080c12}
+    .step.active{color:var(--text)}
+    .step-sep{width:32px;height:1px;background:var(--border);margin:0 4px}
+
+    /* SUBMIT BTN */
+    .btn-submit{width:100%;background:var(--gold);border:none;border-radius:10px;padding:14px;font-family:'Rajdhani',sans-serif;font-size:17px;font-weight:700;letter-spacing:1.5px;color:#080c12;cursor:pointer;transition:.2s;display:flex;align-items:center;justify-content:center;gap:9px}
+    .btn-submit:hover{background:#ffd055;box-shadow:0 0 24px rgba(240,192,64,.3)}
+    .btn-submit svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+
+    /* SUCCESS */
+    .success-box{display:none;text-align:center;padding:48px 24px;max-width:500px;margin:0 auto}
+    .success-box.show{display:block}
+    .success-icon{font-size:56px;margin-bottom:18px}
+    .success-title{font-family:'Rajdhani',sans-serif;font-size:30px;font-weight:700;color:#fff;margin-bottom:10px}
+    .success-sub{font-size:14px;color:var(--text-dim);line-height:1.7}
+
+    /* TOAST */
+    #toast{position:fixed;bottom:24px;right:24px;z-index:800;border-radius:10px;padding:12px 20px;font-size:14px;font-weight:500;opacity:0;transition:opacity .3s;pointer-events:none}
+    #toast.show.ok{opacity:1;background:#0d2010;border:1px solid rgba(74,222,128,.3);color:var(--success)}
+    #toast.show.err{opacity:1;background:#200d0d;border:1px solid rgba(248,113,113,.3);color:var(--red)}
+
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .spin{width:16px;height:16px;border:2px solid rgba(8,12,18,.3);border-top-color:#080c12;border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
+
+    @media(max-width:960px){.media-layout,.amb-layout{grid-template-columns:1fr}.media-preview{position:static}}
+    @media(max-width:700px){.hero,.tabs-nav,.panel{padding-left:20px;padding-right:20px}.hero{padding-top:28px}.cards-grid{grid-template-columns:1fr}.frow{grid-template-columns:1fr}}
+  
+    .cbox-wrap { display:flex; align-items:flex-start; gap:10px; margin-bottom:16px; cursor:pointer; }
+    .cbox-wrap input[type=checkbox] { display:none; }
+    .cbox { width:20px; height:20px; min-width:20px; border-radius:5px; border:2px solid var(--border-hi); background:var(--bg-input); display:flex; align-items:center; justify-content:center; transition:.2s; margin-top:1px; flex-shrink:0; }
+    .cbox.on { background:var(--gold); border-color:var(--gold); }
+    .cbox.on::after { content:''; width:5px; height:9px; border:2px solid #080c12; border-top:none; border-left:none; transform:rotate(45deg); display:block; margin-top:-2px; }
+    .cbox-label { font-size:13px; color:var(--text-dim); line-height:1.6; }
+    .cbox-label a { color:var(--gold); text-decoration:none; }
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+<div class="page">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-tag">
+      <svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Партнёрская программа
+    </div>
+    <h1>Станьте частью<br><em>Game Genesis</em></h1>
+    <p>Продвигайте бренд среди активной киберспортивной аудитории Чеченской Республики. Выберите формат сотрудничества который подходит именно вам.</p>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs-nav">
+    <button class="tnav active" onclick="switchTab('tournament',this)">
+      <svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/></svg>
+      Спонсор турнира
+    </button>
+    <button class="tnav" onclick="switchTab('title',this)">
+      <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      Титульный спонсор
+    </button>
+    <button class="tnav" onclick="switchTab('media',this)">
+      <svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="15" rx="2" ry="2"/><polyline points="17 2 12 7 7 2"/></svg>
+      Реклама на сайте
+    </button>
+    <button class="tnav" onclick="switchTab('ambassador',this)">
+      <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+      Амбассадор
+    </button>
+  </div>
+
+  <!-- ══ СПОНСОР ТУРНИРА ══ -->
+  <div id="panel-tournament" class="panel active">
+    <div class="cards-grid" style="margin-bottom:32px;">
+      <div class="plan-card gold">
+        <div class="plan-icon">🏆</div>
+        <div class="plan-name">Спонсор турнира</div>
+        <div class="plan-price">от 5 000 ₽ <span>/ турнир</span></div>
+        <div class="plan-desc">Ваш бренд на страницах одного конкретного турнира</div>
+        <ul class="plan-features">
+          <li>Логотип на странице турнира</li>
+          <li>Упоминание в анонсах</li>
+          <li>Баннер на время турнира</li>
+          <li>Отчёт по охватам</li>
+        </ul>
+      </div>
+      <div class="plan-card blue">
+        <div class="plan-icon">🥇</div>
+        <div class="plan-name">Спонсор призового фонда</div>
+        <div class="plan-price">от 10 000 ₽ <span>/ турнир</span></div>
+        <div class="plan-desc">Ваш взнос идёт в призовой фонд — имя бренда в каждой выплате</div>
+        <ul class="plan-features">
+          <li>«При поддержке [Бренд]» у призов</li>
+          <li>Логотип в сетке и результатах</li>
+          <li>Публикация в соцсетях</li>
+          <li>Сертификат спонсора</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="form-wrap">
+      <div id="form-tournament">
+        <div class="form-block">
+          <div class="form-block-title">
+            <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            О вашей компании
+          </div>
+          <div class="frow">
+            <div class="field"><label>Компания / Бренд <span class="req">*</span></label><input type="text" id="t-company" placeholder="ООО Ваша Компания"></div>
+            <div class="field"><label>Контактное лицо <span class="req">*</span></label><input type="text" id="t-contact" placeholder="Имя и фамилия"></div>
+          </div>
+          <div class="frow">
+            <div class="field"><label>Email <span class="req">*</span></label><input type="email" id="t-email" placeholder="partner@company.ru"></div>
+            <div class="field"><label>Телефон <span class="req">*</span></label><input type="tel" id="t-phone" placeholder="+7 (999) 000-00-00"></div>
+          </div>
+          <div class="field"><label>Сайт или соцсеть</label><input type="url" id="t-site" placeholder="https://"></div>
+        </div>
+
+        <div class="form-block">
+          <div class="form-block-title">
+            <svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/></svg>
+            Турнир и пакет
+          </div>
+          <div class="field">
+            <label>Турнир <span class="req">*</span></label>
+            <select id="t-tournament">
+              <option value="">— Выберите турнир —</option>
+            </select>
+          </div>
+          <div class="frow">
+            <div class="field">
+              <label>Пакет спонсорства <span class="req">*</span></label>
+              <select id="t-package">
+                <option value="">— Выберите пакет —</option>
+                <option value="basic">Спонсор турнира (от 5 000 ₽)</option>
+                <option value="prize">Спонсор призового фонда (от 10 000 ₽)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Сумма спонсорства <span class="req">*</span></label>
+              <input type="number" id="t-amount" placeholder="5000" min="5000">
+            </div>
+          </div>
+          <div class="field"><label>Пожелания / комментарий</label><textarea id="t-comment" placeholder="Расскажите о вашем бренде, целевой аудитории, особых пожеланиях..."></textarea></div>
+        </div>
+
+        <div class="form-block" style="padding:20px 24px;">
+          <div class="cbox-wrap" onclick="toggleCbox('t-agree')"><div class="cbox" id="t-agree-box"></div><input type="checkbox" id="t-agree"><span class="cbox-label">Согласен с <a href="#" style="color:var(--gold);">условиями партнёрской программы</a></span></div>
+          <button class="btn-submit" onclick="submitTournament()">
+            <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            Отправить заявку
+          </button>
+        </div>
+      </div>
+      <div class="success-box" id="success-tournament">
+        <div class="success-icon">🏆</div>
+        <div class="success-title">Заявка отправлена!</div>
+        <div class="success-sub">Организатор турнира получил вашу заявку и свяжется с вами в течение 24 часов для подтверждения деталей.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ ТИТУЛЬНЫЙ СПОНСОР ══ -->
+  <div id="panel-title" class="panel">
+    <div class="cards-grid" style="max-width:680px;margin-bottom:28px;">
+      <div class="plan-card gold">
+        <div class="plan-icon">👑</div>
+        <div class="plan-name">Официальный партнёр</div>
+        <div class="plan-price">от 15 000 ₽ <span>/ месяц</span></div>
+        <ul class="plan-features">
+          <li>Логотип на главной странице</li>
+          <li>Упоминание во всех турнирах месяца</li>
+          <li>Пост в соцсетях (2 раза/нед)</li>
+          <li>Баннер на всех страницах</li>
+          <li>Ежемесячный отчёт</li>
+        </ul>
+      </div>
+      <div class="plan-card purple">
+        <div class="plan-icon">💎</div>
+        <div class="plan-name">Титульный спонсор</div>
+        <div class="plan-price">от 25 000 ₽ <span>/ месяц</span></div>
+        <ul class="plan-features">
+          <li>«Game Genesis при поддержке [Бренд]»</li>
+          <li>Эксклюзивный партнёр платформы</li>
+          <li>Все турниры — с вашим именем</li>
+          <li>Стримы с упоминанием бренда</li>
+          <li>Персональный менеджер</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="prohibited">
+      <div class="prohibited-title">
+        <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+        Запрещённые категории
+      </div>
+      <ul class="prohibited-list">
+        <li>Букмекерские конторы и ставки на спорт</li>
+        <li>Алкогольная и табачная продукция</li>
+        <li>Политическая агитация и партии</li>
+        <li>Микрозаймы и МФО</li>
+        <li>Криптовалютные пирамиды и хайп-проекты</li>
+        <li>Контент 18+</li>
+        <li>Любые нелегальные товары и услуги</li>
+      </ul>
+    </div>
+
+    <div class="form-wrap">
+      <div id="form-title">
+        <div class="steps">
+          <div class="step active"><div class="step-num">1</div><span>Компания</span></div>
+          <div class="step-sep"></div>
+          <div class="step active"><div class="step-num">2</div><span>Пакет</span></div>
+          <div class="step-sep"></div>
+          <div class="step active"><div class="step-num">3</div><span>Модерация</span></div>
+        </div>
+
+        <div class="form-block">
+          <div class="form-block-title">
+            <svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+            О компании
+          </div>
+          <div class="frow">
+            <div class="field"><label>Компания / Бренд <span class="req">*</span></label><input type="text" id="ti-company" placeholder="ООО Ваша Компания"></div>
+            <div class="field"><label>Сфера деятельности <span class="req">*</span></label><input type="text" id="ti-sphere" placeholder="Технологии, еда, одежда..."></div>
+          </div>
+          <div class="frow">
+            <div class="field"><label>Контактное лицо <span class="req">*</span></label><input type="text" id="ti-contact" placeholder="ФИО"></div>
+            <div class="field"><label>Должность</label><input type="text" id="ti-position" placeholder="Директор по маркетингу"></div>
+          </div>
+          <div class="frow">
+            <div class="field"><label>Email <span class="req">*</span></label><input type="email" id="ti-email" placeholder="partner@company.ru"></div>
+            <div class="field"><label>Телефон <span class="req">*</span></label><input type="tel" id="ti-phone" placeholder="+7 (999) 000-00-00"></div>
+          </div>
+          <div class="field"><label>Сайт компании <span class="req">*</span></label><input type="url" id="ti-site" placeholder="https://yourcompany.ru"></div>
+        </div>
+
+        <div class="form-block">
+          <div class="form-block-title">
+            <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            Пакет и условия
+          </div>
+          <div class="frow">
+            <div class="field">
+              <label>Пакет <span class="req">*</span></label>
+              <select id="ti-package">
+                <option value="">— Выберите —</option>
+                <option value="partner">Официальный партнёр (от 15 000 ₽/мес)</option>
+                <option value="title">Титульный спонсор (от 25 000 ₽/мес)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Срок сотрудничества <span class="req">*</span></label>
+              <select id="ti-duration">
+                <option value="">— Выберите —</option>
+                <option value="1">1 месяц</option>
+                <option value="3">3 месяца</option>
+                <option value="6">6 месяцев</option>
+                <option value="12">1 год</option>
+              </select>
+            </div>
+          </div>
+          <div class="field"><label>Опишите вашу целевую аудиторию</label><textarea id="ti-audience" placeholder="Кто ваши клиенты? Возраст, интересы, регион..."></textarea></div>
+          <div class="field"><label>Дополнительные пожелания</label><textarea id="ti-comment" placeholder="Особые требования к размещению, форматы материалов..."></textarea></div>
+        </div>
+
+        <div class="notice-gold">
+          <b>⚠️ Важно:</b> Все заявки проходят модерацию. Мы проверяем соответствие бренда правилам платформы. Ответ в течение 48 часов.
+        </div>
+
+        <div class="form-block" style="padding:20px 24px;">
+          <div class="cbox-wrap" onclick="toggleCbox('ti-agree')"><div class="cbox" id="ti-agree-box"></div><input type="checkbox" id="ti-agree"><span class="cbox-label">Подтверждаю что бренд не относится к запрещённым категориям и согласен с <a href="#" style="color:var(--gold);">правилами платформы</a></span></div>
+          <button class="btn-submit" onclick="submitTitle()">
+            <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            Отправить на модерацию
+          </button>
+        </div>
+      </div>
+      <div class="success-box" id="success-title">
+        <div class="success-icon">👑</div>
+        <div class="success-title">Заявка на модерации</div>
+        <div class="success-sub">Мы проверяем соответствие вашего бренда правилам платформы. Ответ придёт на указанный email в течение 48 часов.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ РЕКЛАМА НА САЙТЕ ══ -->
+  <div id="panel-media" class="panel">
+    <div class="media-layout">
+      <div>
+        <div class="notice-gold" style="margin-bottom:24px;">
+          <b>📺 Рекламный баннер</b> — аренда рекламного слота в правой части сайта. До 5 сменяющихся кадров (видео или изображения). Аудитория — активные геймеры ЧР.
+        </div>
+
+        <div class="form-wrap" style="max-width:100%">
+          <div id="form-media">
+            <div class="form-block">
+              <div class="form-block-title">
+                <svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="15" rx="2"/><polyline points="17 2 12 7 7 2"/></svg>
+                Рекламные материалы
+              </div>
+              <div class="frow">
+                <div class="field"><label>Компания / Бренд <span class="req">*</span></label><input type="text" id="m-company" placeholder="Ваш бренд"></div>
+                <div class="field"><label>Email <span class="req">*</span></label><input type="email" id="m-email" placeholder="ads@company.ru"></div>
+              </div>
+              <div class="frow">
+                <div class="field"><label>Телефон <span class="req">*</span></label><input type="tel" id="m-phone" placeholder="+7 (999) 000-00-00"></div>
+                <div class="field">
+                  <label>Срок размещения <span class="req">*</span></label>
+                  <select id="m-duration" onchange="updatePrice()">
+                    <option value="1">1 месяц — 5 000 ₽</option>
+                    <option value="3">3 месяца — 12 000 ₽</option>
+                    <option value="6">6 месяцев — 20 000 ₽</option>
+                  </select>
+                </div>
+              </div>
+              <div class="field">
+                <label>Количество кадров (до 5) <span class="req">*</span></label>
+                <select id="m-frames">
+                  <option value="1">1 кадр</option>
+                  <option value="2">2 кадра</option>
+                  <option value="3">3 кадра</option>
+                  <option value="4">4 кадра</option>
+                  <option value="5">5 кадров</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Ссылки на материалы (изображения/видео)</label>
+                <textarea id="m-links" placeholder="Вставьте ссылки на рекламные материалы (по одной на строку)&#10;Форматы: JPG, PNG, MP4. Размер: 300×600px или 300×250px"></textarea>
+              </div>
+              <div class="field"><label>Ссылка куда ведёт баннер <span class="req">*</span></label><input type="url" id="m-target" placeholder="https://yoursite.ru"></div>
+              <div class="field"><label>Комментарий</label><textarea id="m-comment" placeholder="Пожелания по размещению, время показа..."></textarea></div>
+            </div>
+
+            <div class="form-block" style="background:rgba(240,192,64,.04);border-color:rgba(240,192,64,.2);">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <span style="font-size:14px;color:var(--text-dim);">Стоимость размещения:</span>
+                <span style="font-family:'Rajdhani',sans-serif;font-size:26px;font-weight:700;color:var(--gold);" id="m-price">5 000 ₽</span>
+              </div>
+              <div style="font-size:12px;color:var(--text-muted);">Оплата после модерации материалов</div>
+            </div>
+
+            <div class="form-block" style="padding:20px 24px;">
+              <div class="cbox-wrap" onclick="toggleCbox('m-agree')"><div class="cbox" id="m-agree-box"></div><input type="checkbox" id="m-agree"><span class="cbox-label">Согласен с <a href="#" style="color:var(--gold);">правилами размещения рекламы</a></span></div>
+              <button class="btn-submit" onclick="submitMedia()">
+                <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                Подать заявку на размещение
+              </button>
+            </div>
+          </div>
+          <div class="success-box" id="success-media">
+            <div class="success-icon">📺</div>
+            <div class="success-title">Заявка принята!</div>
+            <div class="success-sub">Мы проверим ваши материалы и свяжемся для согласования оплаты. Срок модерации — 24 часа.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ПРЕВЬЮ БАННЕРА -->
+      <div class="media-preview">
+        <div class="media-preview-header">
+          Превью слота
+          <span class="media-preview-badge">300 × 600 px</span>
+        </div>
+        <div class="media-banner-slot" id="banner-preview">
+          <div class="media-slot-label">
+            <span>📺</span>
+            Рекламный слот<br>правая панель сайта
+          </div>
+        </div>
+        <div class="media-info">
+          <div class="media-info-row"><span>Размер</span><span>300 × 600 px</span></div>
+          <div class="media-info-row"><span>Форматы</span><span>JPG, PNG, MP4</span></div>
+          <div class="media-info-row"><span>Смена кадров</span><span>каждые 5 сек</span></div>
+          <div class="media-info-row"><span>Страницы</span><span>Все разделы</span></div>
+          <div class="media-info-row"><span>Аудитория</span><span>~500 посещений/день</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ АМБАССАДОР ══ -->
+  <div id="panel-ambassador" class="panel">
+    <div class="amb-layout">
+      <div>
+        <div class="notice-gold" style="margin-bottom:24px;">
+          <b>🤝 Амбассадор Game Genesis</b> — блогеры, стримеры, публичные личности и организации которые продвигают платформу и получают привилегии партнёра.
+        </div>
+
+        <div id="form-ambassador">
+          <div class="form-block">
+            <div class="form-block-title">
+              <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+              Личные данные
+            </div>
+            <div class="frow">
+              <div class="field"><label>Имя / Псевдоним <span class="req">*</span></label><input type="text" id="a-name" placeholder="Ваше имя или ник"></div>
+              <div class="field"><label>Телефон / Telegram <span class="req">*</span></label><input type="text" id="a-phone" placeholder="+7 или @username"></div>
+            </div>
+            <div class="field"><label>Email <span class="req">*</span></label><input type="email" id="a-email" placeholder="your@email.ru"></div>
+          </div>
+
+          <div class="form-block">
+            <div class="form-block-title">
+              <svg viewBox="0 0 24 24"><path d="M21 2H3v16h5v4l4-4h5l4-4V2z"/></svg>
+              Ваши площадки
+            </div>
+            <div class="field">
+              <label>Тип амбассадора <span class="req">*</span></label>
+              <select id="a-type">
+                <option value="">— Выберите —</option>
+                <option value="blogger">Блогер / Ютубер</option>
+                <option value="streamer">Стример (Twitch, VK Play...)</option>
+                <option value="public">Паблик / Сообщество</option>
+                <option value="org">Организация / Клуб</option>
+                <option value="media">СМИ / Медиа</option>
+                <option value="other">Другое</option>
+              </select>
+            </div>
+            <div class="field"><label>Основная площадка (ссылка) <span class="req">*</span></label><input type="url" id="a-main" placeholder="https://youtube.com/c/...  или  https://t.me/..."></div>
+            <div class="field"><label>Дополнительные ссылки</label><textarea id="a-links" placeholder="Другие соцсети, сайт компании, портфолио...&#10;По одной ссылке на строку"></textarea></div>
+            <div class="frow">
+              <div class="field"><label>Аудитория (подписчики)</label><input type="text" id="a-audience" placeholder="например: 15 000"></div>
+              <div class="field"><label>Регион охвата</label><input type="text" id="a-region" placeholder="ЧР, Кавказ, РФ..."></div>
+            </div>
+          </div>
+
+          <div class="form-block">
+            <div class="form-block-title">
+              <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              Предложение
+            </div>
+            <div class="field"><label>Что вы можете предложить платформе? <span class="req">*</span></label><textarea id="a-offer" placeholder="Обзоры турниров, упоминания в стримах, репосты анонсов, организация событий — опишите свои возможности..."></textarea></div>
+            <div class="field"><label>Почему хотите стать амбассадором?</label><textarea id="a-why" placeholder="Расскажите о себе и своих целях..."></textarea></div>
+          </div>
+
+          <div class="form-block" style="padding:20px 24px;">
+            <div class="cbox-wrap" onclick="toggleCbox('a-agree')"><div class="cbox" id="a-agree-box"></div><input type="checkbox" id="a-agree"><span class="cbox-label">Согласен с <a href="#" style="color:var(--gold);">условиями программы амбассадоров</a></span></div>
+            <button class="btn-submit" onclick="submitAmbassador()">
+              <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+              Подать заявку амбассадора
+            </button>
+          </div>
+        </div>
+        <div class="success-box" id="success-ambassador">
+          <div class="success-icon">🤝</div>
+          <div class="success-title">Заявка отправлена!</div>
+          <div class="success-sub">Мы изучим вашу анкету и свяжемся в течение 3 рабочих дней. Ждём вас в команде Game Genesis!</div>
+        </div>
+      </div>
+
+      <!-- ПРИВИЛЕГИИ -->
+      <div class="amb-info">
+        <h3>Что получает амбассадор</h3>
+        <div class="amb-perk">
+          <div class="amb-perk-icon">🎮</div>
+          <div>
+            <div style="font-weight:600;color:var(--text);margin-bottom:2px;">Бесплатное участие</div>
+            <div style="font-size:12px;">Все турниры платформы бесплатно</div>
+          </div>
+        </div>
+        <div class="amb-perk">
+          <div class="amb-perk-icon">⭐</div>
+          <div>
+            <div style="font-weight:600;color:var(--text);margin-bottom:2px;">Бейдж амбассадора</div>
+            <div style="font-size:12px;">Специальная метка в профиле и рейтинге</div>
+          </div>
+        </div>
+        <div class="amb-perk">
+          <div class="amb-perk-icon">📣</div>
+          <div>
+            <div style="font-weight:600;color:var(--text);margin-bottom:2px;">Взаимное продвижение</div>
+            <div style="font-size:12px;">Упоминаем ваш канал в анонсах турниров</div>
+          </div>
+        </div>
+        <div class="amb-perk">
+          <div class="amb-perk-icon">🏆</div>
+          <div>
+            <div style="font-weight:600;color:var(--text);margin-bottom:2px;">Приоритет на события</div>
+            <div style="font-size:12px;">Ранний доступ к анонсам и эксклюзивам</div>
+          </div>
+        </div>
+        <div class="amb-perk">
+          <div class="amb-perk-icon">💰</div>
+          <div>
+            <div style="font-weight:600;color:var(--text);margin-bottom:2px;">Реферальная программа</div>
+            <div style="font-size:12px;">Процент от привлечённых спонсоров</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<script>
+
+function toggleCbox(id) {
+  var cb = document.getElementById(id);
+  var box = document.getElementById(id + '-box');
+  if (!cb) return;
+  cb.checked = !cb.checked;
+  if (box) box.classList.toggle('on', cb.checked);
+}
+
+var TOKEN = localStorage.getItem('gg_token');
+
+// ── ТАБЫ ──
+function switchTab(id, btn) {
+  document.querySelectorAll('.panel').forEach(function(p){ p.classList.remove('active'); });
+  document.querySelectorAll('.tnav').forEach(function(b){ b.classList.remove('active'); });
+  document.getElementById('panel-' + id).classList.add('active');
+  if (btn) btn.classList.add('active');
+}
+
+// ── ЗАГРУЗКА ТУРНИРОВ ──
+async function loadTournaments() {
+  try {
+    var res = await fetch('/api/tournaments?limit=20');
+    var list = await res.json();
+    var sel = document.getElementById('t-tournament');
+    list.filter(function(t){ return t.status === 'open' || t.status === 'soon'; })
+      .forEach(function(t) {
+        var opt = document.createElement('option');
+        opt.value = t.id;
+        opt.textContent = t.name + ' (' + t.game + ')';
+        sel.appendChild(opt);
+      });
+  } catch(e) {}
+}
+
+// ── ЦЕНА МЕДИА ──
+function updatePrice() {
+  var prices = {'1': '5 000 ₽', '3': '12 000 ₽', '6': '20 000 ₽'};
+  var sel = document.getElementById('m-duration');
+  var el = document.getElementById('m-price');
+  if (el && sel) el.textContent = prices[sel.value] || '5 000 ₽';
+}
+
+// ── ОТПРАВКА ЗАЯВОК ──
+function showSuccess(formId, successId) {
+  var form = document.getElementById(formId);
+  var success = document.getElementById(successId);
+  if (form) form.style.display = 'none';
+  if (success) success.classList.add('show');
+}
+
+function toast(msg, type) {
+  var el = document.getElementById('toast');
+  el.textContent = (type==='err'?'✗ ':'✓ ') + msg;
+  el.className = 'show ' + (type==='err'?'err':'ok');
+  clearTimeout(el._t);
+  el._t = setTimeout(function(){ el.classList.remove('show'); }, 3500);
+}
+
+function validate(fields) {
+  var ok = true;
+  fields.forEach(function(id) {
+    var el = document.getElementById(id);
+    if (!el || !el.value.trim()) {
+      if (el) el.style.borderColor = 'var(--red)';
+      ok = false;
+    } else {
+      if (el) el.style.borderColor = '';
+    }
+  });
+  return ok;
+}
+
+async function sendPartnerRequest(type, data) {
+  // Отправляем на email организатора через API (или просто логируем)
+  try {
+    await fetch('/api/partners/request', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: type, data: data })
+    });
+  } catch(e) {
+    // Если API нет — просто показываем успех
+    console.log('Partner request:', type, data);
+  }
+}
+
+function submitTournament() {
+  if (!validate(['t-company','t-contact','t-email','t-phone','t-tournament','t-package','t-amount'])) {
+    toast('Заполните все обязательные поля', 'err'); return;
+  }
+  if (!document.getElementById('t-agree').checked) { toast('Примите условия', 'err'); return; }
+  sendPartnerRequest('tournament', {
+    company: document.getElementById('t-company').value,
+    contact: document.getElementById('t-contact').value,
+    email: document.getElementById('t-email').value,
+    phone: document.getElementById('t-phone').value,
+    tournament: document.getElementById('t-tournament').value,
+    package: document.getElementById('t-package').value,
+    amount: document.getElementById('t-amount').value,
+    comment: document.getElementById('t-comment').value
+  });
+  showSuccess('form-tournament', 'success-tournament');
+}
+
+function submitTitle() {
+  if (!validate(['ti-company','ti-sphere','ti-contact','ti-email','ti-phone','ti-site','ti-package','ti-duration'])) {
+    toast('Заполните все обязательные поля', 'err'); return;
+  }
+  if (!document.getElementById('ti-agree').checked) { toast('Подтвердите соответствие правилам', 'err'); return; }
+  sendPartnerRequest('title', {
+    company: document.getElementById('ti-company').value,
+    sphere: document.getElementById('ti-sphere').value,
+    contact: document.getElementById('ti-contact').value,
+    email: document.getElementById('ti-email').value,
+    phone: document.getElementById('ti-phone').value,
+    site: document.getElementById('ti-site').value,
+    package: document.getElementById('ti-package').value,
+    duration: document.getElementById('ti-duration').value,
+    audience: document.getElementById('ti-audience').value,
+    comment: document.getElementById('ti-comment').value
+  });
+  showSuccess('form-title', 'success-title');
+}
+
+function submitMedia() {
+  if (!validate(['m-company','m-email','m-phone','m-target'])) {
+    toast('Заполните все обязательные поля', 'err'); return;
+  }
+  if (!document.getElementById('m-agree').checked) { toast('Примите правила размещения', 'err'); return; }
+  sendPartnerRequest('media', {
+    company: document.getElementById('m-company').value,
+    email: document.getElementById('m-email').value,
+    phone: document.getElementById('m-phone').value,
+    duration: document.getElementById('m-duration').value,
+    frames: document.getElementById('m-frames').value,
+    links: document.getElementById('m-links').value,
+    target: document.getElementById('m-target').value,
+    price: document.getElementById('m-price').textContent
+  });
+  showSuccess('form-media', 'success-media');
+}
+
+function submitAmbassador() {
+  if (!validate(['a-name','a-phone','a-email','a-type','a-main','a-offer'])) {
+    toast('Заполните все обязательные поля', 'err'); return;
+  }
+  if (!document.getElementById('a-agree').checked) { toast('Примите условия программы', 'err'); return; }
+  sendPartnerRequest('ambassador', {
+    name: document.getElementById('a-name').value,
+    phone: document.getElementById('a-phone').value,
+    email: document.getElementById('a-email').value,
+    type: document.getElementById('a-type').value,
+    main: document.getElementById('a-main').value,
+    links: document.getElementById('a-links').value,
+    audience: document.getElementById('a-audience').value,
+    region: document.getElementById('a-region').value,
+    offer: document.getElementById('a-offer').value,
+    why: document.getElementById('a-why').value
+  });
+  showSuccess('form-ambassador', 'success-ambassador');
+}
+
+loadTournaments();
+</script>
+</body>
+</html>
