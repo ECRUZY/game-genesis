@@ -107,6 +107,27 @@
     .ag-row input { margin-top: 2px; }
     .ag-text { font-size: 13px; color: var(--text-dim); line-height: 1.6; }
     .ag-text a { color: var(--gold); text-decoration: none; }
+
+    /* Красивый чекбокс */
+    .custom-check { display:flex; align-items:flex-start; gap:10px; cursor:pointer; margin-bottom:16px; }
+    .custom-check input[type=checkbox] { display:none; }
+    .check-box {
+      width:20px; height:20px; min-width:20px; border-radius:5px;
+      border:2px solid var(--border-hi); background:var(--bg-input);
+      display:flex; align-items:center; justify-content:center;
+      transition:.2s; cursor:pointer; margin-top:1px;
+    }
+    .custom-check input:checked ~ .check-box,
+    .check-box.checked {
+      background:var(--gold); border-color:var(--gold);
+    }
+    .check-box.checked::after {
+      content:''; width:5px; height:9px;
+      border:2px solid #080c12; border-top:none; border-left:none;
+      transform:rotate(45deg); margin-top:-2px;
+    }
+    .check-label { font-size:12px; color:var(--text-dim); line-height:1.6; }
+    .check-label a { color:var(--gold); text-decoration:none; }
 </style>
 </head>
 <body>
@@ -171,7 +192,7 @@
           </div>
           <div id="full-wrap"></div>
           <div class="fb">
-            <label class="ag-row"><input type="checkbox" id="full-ag"><span class="ag-text">Все 5 игроков согласны участвовать и принимают <a href="#">правила турнира</a>.</span></label>
+            <div class="custom-check" onclick="toggleCheck('full-ag')"><div class="check-box" id="full-ag-box"></div><input type="checkbox" id="full-ag"><span class="check-label">Все 5 игроков согласны участвовать и принимают <a href="#">правила турнира</a>.</span></div>
             <button class="btn-sub" onclick="submitFull()"><svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>Зарегистрировать команду (5/5)</button>
           </div>
         </div>
@@ -196,7 +217,7 @@
           </div>
           <div id="partial-wrap"></div>
           <div class="fb">
-            <label class="ag-row"><input type="checkbox" id="partial-ag"><span class="ag-text">Все игроки согласны. Организатор добавит недостающих.</span></label>
+            <div class="custom-check" onclick="toggleCheck('partial-ag')"><div class="check-box" id="partial-ag-box"></div><input type="checkbox" id="partial-ag"><span class="check-label">Все игроки согласны. Организатор добавит недостающих.</span></div>
             <button class="btn-sub" id="partial-btn" onclick="submitPartial()"><svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>Отправить заявку (2/5, ищем 3)</button>
           </div>
         </div>
@@ -232,7 +253,7 @@
             </div>
           </div>
           <div class="fb">
-            <label class="ag-row"><input type="checkbox" id="solo-ag"><span class="ag-text">Принимаю <a href="#">правила турнира</a> и согласен что организатор распределит меня в команду.</span></label>
+            <div class="custom-check" onclick="toggleCheck('solo-ag')"><div class="check-box" id="solo-ag-box"></div><input type="checkbox" id="solo-ag"><span class="check-label">Принимаю <a href="#">правила турнира</a> и согласен что организатор распределит меня в команду.</span></div>
             <button class="btn-sub" onclick="submitSolo()"><svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>Записаться как свободный игрок</button>
           </div>
         </div>
@@ -260,6 +281,15 @@
   </div>
 </div>
 <script>
+
+function toggleCheck(id) {
+  var cb = document.getElementById(id);
+  var box = document.getElementById(id + '-box');
+  if (!cb) return;
+  cb.checked = !cb.checked;
+  if (box) box.classList.toggle('checked', cb.checked);
+}
+
 var TS = 5;
 var mode = 'full';
 var partCnt = 2;
@@ -520,7 +550,7 @@ async function loadFreeAgents() {
         '<div class="fpa">' + ini + '</div>' +
         '<div style="flex:1;">' +
           '<div class="fpn">' + p.nickname + '</div>' +
-          '<div class="fps">' + (p.full_name || '') + (p.team ? ' · ' + p.team : '') + '</div>' +
+          '<div class="fps">' + (p.is_private ? '' : (p.full_name || '')) + (p.team ? ' · ' + p.team : '') + '</div>' +
         '</div>' +
         '<button onclick="addFreeAgent(' + i + ')" style="background:var(--gold-dim);border:1px solid rgba(240,192,64,.3);color:var(--gold);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px;font-weight:700;flex-shrink:0;">+ В команду</button>' +
       '</div>';
@@ -548,7 +578,7 @@ function addFreeAgent(idx) {
     var nickEl = document.getElementById(prefix + '-' + i + '-k');
     var steamEl = document.getElementById(prefix + '-' + i + '-s');
     if (nameEl && (!nameEl.value || nameEl.value.trim() === '')) {
-      nameEl.value = agent.full_name || agent.nickname;
+      nameEl.value = agent.is_private ? agent.nickname : (agent.full_name || agent.nickname);
       if (nickEl) nickEl.value = agent.nickname;
       if (steamEl && agent.steam_url) steamEl.value = agent.steam_url;
       // Помечаем игрока как добавленного
