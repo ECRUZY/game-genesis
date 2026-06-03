@@ -771,6 +771,15 @@
 
   function goToStep(n) {
     if (n < 1 || n > totalSteps) return;
+    // Запрещаем переход вперёд без валидации
+    if (n > currentStep) {
+      // Валидируем все шаги до n-1
+      for (let i = currentStep; i < n; i++) {
+        if (!validateStep(i)) {
+          return; // Стоп — шаг не заполнен
+        }
+      }
+    }
     // mark done
     for (let i = 1; i < n; i++) {
       document.getElementById('si-' + i).className = 'step-item done';
