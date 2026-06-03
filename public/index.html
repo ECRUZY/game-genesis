@@ -663,7 +663,7 @@
         <div class="live-dot"></div>
         Открыта регистрация
       </div>
-      <h1 class="hero-title">Турнир<br><em>Чеченской</em><br>Республики</h1>
+      <h1 class="hero-title" id="hero-title">Турнир<br><em>Чеченской</em><br>Республики</h1>
       <p class="hero-desc">Нефедеральная киберспортивная платформа, объединяющая студентов, университеты и локальные игровые сообщества Чеченской Республики.</p>
       <div class="hero-btns">
         <button class="btn-primary" onclick="location.href='tournament.html'">
@@ -679,19 +679,19 @@
 
     <div class="hero-stats">
       <div class="hstat">
-        <div class="hstat-val">128</div>
+        <div class="hstat-val" id="h-slots">—</div>
         <div class="hstat-key">Мест</div>
       </div>
       <div class="hstat">
-        <div class="hstat-val">50 000 ₽</div>
+        <div class="hstat-val" id="h-prize">—</div>
         <div class="hstat-key">Призовой фонд</div>
       </div>
       <div class="hstat">
-        <div class="hstat-val">4</div>
-        <div class="hstat-key">Дисциплины</div>
+        <div class="hstat-val" id="h-games">—</div>
+        <div class="hstat-key">Дисциплин</div>
       </div>
       <div class="hstat">
-        <div class="hstat-val">64</div>
+        <div class="hstat-val" id="h-players">—</div>
         <div class="hstat-key">Участников</div>
       </div>
     </div>
@@ -823,164 +823,145 @@
   document.querySelectorAll('.tournaments-grid').forEach(el => barObserver.observe(el));
 </script>
 
+
+
 <script>
-// ════════════════════════════
+// ════════════════════════
 //  ГЛАВНАЯ — РЕАЛЬНЫЕ ДАННЫЕ
-// ════════════════════════════
-
+// ════════════════════════
 async function loadIndexData() {
-  // Параллельно грузим турниры и рейтинг
-  const [tRes, rRes] = await Promise.allSettled([
-    fetch('/api/tournaments?limit=4'),
-    fetch('/api/users/ratings')
-  ]);
+  try {
+    // Загружаем турниры
+    var tres = await fetch('/api/tournaments?limit=4');
+    var tournaments = await tres.json();
 
-  // Турниры
-  if (tRes.status === 'fulfilled' && tRes.value.ok) {
-    const tournaments = await tRes.value.json();
+    // Берём первый открытый/live турнир для hero
+    var main = tournaments.find(function(t) {
+      return t.status === 'open' || t.status === 'live';
+    }) || tournaments[0];
+
+    if (main) {
+      // Hero заголовок
+      var titleEl = document.getElementById('hero-title');
+      if (titleEl) titleEl.innerHTML = main.name;
+
+      // Hero stats
+      function set(id, val) { var el=document.getElementById(id); if(el) el.textContent=val; }
+      set('h-slots', main.max_slots || '—');
+      set('h-prize', main.prize_pool > 0 ? main.prize_pool.toLocaleString('ru-RU') + ' ₽' : 'Бесплатно');
+      set('h-players', (main.filled_count || 0) + ' / ' + (main.max_slots || 0));
+
+      // Считаем уникальные игры
+      var games = new Set(tournaments.map(function(t){ return t.game; }));
+      set('h-games', games.size);
+
+      // Кнопка регистрации
+      var regBtn = document.getElementById('hero-reg-btn');
+      if (regBtn) regBtn.onclick = function() {
+        location.href = '/tournament-register.html?id=' + main.id;
+      };
+
+      // Обложка hero если есть
+      if (main.cover_image) {
+        var heroBg = document.querySelector('.hero-img');
+        if (heroBg) {
+          heroBg.style.backgroundImage = 'url(' + main.cover_image + ')';
+          heroBg.style.backgroundSize = 'cover';
+          heroBg.style.backgroundPosition = 'center';
+          heroBg.style.opacity = '0.4';
+        }
+      }
+    }
+
+    // Рендерим список турниров
     renderTournaments(tournaments);
-  } else {
-    document.getElementById('idx-tournaments').innerHTML =
-      '<div style="grid-column:1/-1;text-align:center;padding:60px 20px;">' +
-      '<div style="font-size:48px;margin-bottom:16px;">🏆</div>' +
-      '<div style="font-family:Rajdhani,sans-serif;font-size:22px;font-weight:700;color:var(--text-dim);margin-bottom:8px;">Турниров пока нет</div>' +
-      '<a href="/create-tournament.html" style="display:inline-flex;padding:12px 24px;background:var(--gold);color:#080c12;border-radius:8px;font-family:Rajdhani,sans-serif;font-size:15px;font-weight:700;text-decoration:none;letter-spacing:1px;">+ Создать турнир</a>' +
-      '</div>';
-  }
 
-  // Рейтинг
-  if (rRes.status === 'fulfilled' && rRes.value.ok) {
-    const ratings = await rRes.value.json();
-    renderRatings(ratings.slice(0, 5));
-  } else {
-    document.getElementById('idx-ratings').innerHTML =
-      '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px;">Рейтинг формируется по результатам матчей</div>';
+    // Загружаем рейтинг
+    var rres = await fetch('/api/users/ratings');
+    if (rres.ok) {
+      var ratings = await rres.json();
+      renderRatings(ratings.slice(0, 5));
+    }
+
+  } catch(e) {
+    console.error('Index load error:', e);
   }
 }
 
 // ── ТУРНИРЫ ──
 function renderTournaments(list) {
-  const grid = document.getElementById('idx-tournaments');
+  var grid = document.getElementById('idx-tournaments');
   if (!grid) return;
 
   if (!list || !list.length) {
-    grid.innerHTML =
-      '<div style="grid-column:1/-1;text-align:center;padding:60px 20px;">' +
-      '<div style="font-size:48px;margin-bottom:16px;">🏆</div>' +
-      '<div style="font-family:Rajdhani,sans-serif;font-size:22px;font-weight:700;color:var(--text-dim);margin-bottom:8px;">Турниров пока нет</div>' +
-      '<div style="font-size:13px;color:var(--text-muted);margin-bottom:20px;">Будьте первым организатором!</div>' +
-      '<a href="/create-tournament.html" style="display:inline-flex;padding:12px 24px;background:var(--gold);color:#080c12;border-radius:8px;font-family:Rajdhani,sans-serif;font-size:15px;font-weight:700;text-decoration:none;letter-spacing:1px;">+ Создать турнир</a>' +
-      '</div>';
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--text-dim);">Турниров пока нет. <a href="/create-tournament.html" style="color:var(--gold);">Создать</a></div>';
     return;
   }
 
-  const gameBg = {
-    'CS2':            'linear-gradient(135deg,#0f1e35,#0a1520)',
-    'Dota 2':         'linear-gradient(135deg,#150a20,#0f1830)',
-    'Valorant':       'linear-gradient(135deg,#200a0a,#1a0f20)',
-    'FIFA 25':        'linear-gradient(135deg,#0a1e10,#0f1a0a)',
-    'Mobile Legends': 'linear-gradient(135deg,#0a1528,#1a1008)'
+  var gameBg = {
+    'CS2':'linear-gradient(135deg,#0f1e35,#0a1520)',
+    'Dota 2':'linear-gradient(135deg,#150a20,#0f1830)',
+    'Valorant':'linear-gradient(135deg,#200a0a,#1a0f20)',
+    'FIFA 25':'linear-gradient(135deg,#0a1e10,#0f1a0a)'
   };
-  const statusLabel = {live:'Live', open:'Открыта регистрация', soon:'Скоро', done:'Завершён'};
-  const statusCls   = {live:'live', open:'open', soon:'soon', done:''};
-  const fmtDate = d => d ? new Date(d).toLocaleDateString('ru-RU',{day:'numeric',month:'long'}) : 'Дата уточняется';
-  const bg = t => gameBg[t.game] || 'linear-gradient(135deg,#0f1e35,#0a1520)';
-  const filled = t => t.filled_count || 0;
-  const pct = t => t.max_slots > 0 ? Math.round(filled(t) / t.max_slots * 100) : 0;
+  var statusLabel = {live:'Live', open:'Открыта регистрация', soon:'Скоро', done:'Завершён'};
+  var statusCls = {live:'live', open:'open', soon:'soon', done:''};
+  var fmtDate = function(d) { return d ? new Date(d).toLocaleDateString('ru-RU',{day:'numeric',month:'long'}) : '—'; };
+  var bg = function(t) { return gameBg[t.game] || gameBg['CS2']; };
 
-  let html = '';
+  var first = list[0];
+  var filled = first.filled_count || 0;
+  var html = '<div class="t-card-big" onclick="location.href='/tournament.html?id=' + first.id + ''" style="cursor:pointer;">' +
+    '<div class="t-big-img">' +
+      '<div style="width:100%;height:100%;background:' + bg(first) + ';position:relative;overflow:hidden;">' +
+        (first.cover_image ? '<img src="' + first.cover_image + '" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.65;">' : '') +
+      '</div>' +
+      '<div class="t-big-img-overlay"></div>' +
+      '<div class="t-big-featured-badge">⭐ Главный турнир</div>' +
+    '</div>' +
+    '<div class="t-big-body"><div>' +
+      '<div style="display:flex;gap:8px;margin-bottom:12px;">' +
+        '<div class="t-game-badge" style="position:static;">' + first.game + '</div>' +
+        '<div class="t-status ' + (statusCls[first.status]||'open') + '" style="position:static;"><div class="t-status-dot"></div>' + (statusLabel[first.status]||'Открыта') + '</div>' +
+      '</div>' +
+      '<div class="t-big-name">' + first.name + '</div>' +
+      '<div class="t-big-desc">' + (first.description||'Соревнование на платформе Game Genesis') + '</div>' +
+      '<div class="t-big-stats">' +
+        '<div class="t-big-stat"><div class="t-big-stat-val">' + (first.prize_pool>0?first.prize_pool.toLocaleString('ru-RU')+' ₽':'Бесплатно') + '</div><div class="t-big-stat-key">Призовой фонд</div></div>' +
+        '<div class="t-big-stat"><div class="t-big-stat-val">' + filled + ' / ' + (first.max_slots||16) + '</div><div class="t-big-stat-key">Участников</div></div>' +
+        '<div class="t-big-stat"><div class="t-big-stat-val">' + fmtDate(first.start_date) + '</div><div class="t-big-stat-key">Дата начала</div></div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="t-big-btns">' +
+      '<button class="btn-primary" onclick="event.stopPropagation();location.href='/tournament-register.html?id=' + first.id + ''">Зарегистрироваться</button>' +
+      '<button class="btn-ghost" onclick="event.stopPropagation();location.href='/tournament.html?id=' + first.id + ''">Подробнее</button>' +
+    '</div></div></div>';
 
-  // Первый — большая карточка
-  const first = list[0];
-  html += `
-    <div class="t-card-big" onclick="location.href='/tournament.html?id=${first.id}'">
-      <div class="t-big-img">
-        <div style="width:100%;height:100%;background:${bg(first)};position:relative;overflow:hidden;">${first.cover_image ? `<img src="${first.cover_image}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.65;">` : ""}</div>
-        <div class="t-big-img-overlay"></div>
-        <div class="t-big-featured-badge">⭐ Главный турнир</div>
-      </div>
-      <div class="t-big-body">
-        <div>
-          <div style="display:flex;gap:8px;margin-bottom:12px;">
-            <div class="t-game-badge" style="position:static;">${first.game}</div>
-            <div class="t-status ${statusCls[first.status]||'open'}" style="position:static;">
-              <div class="t-status-dot"></div>${statusLabel[first.status]||'Открыта'}
-            </div>
-          </div>
-          <div class="t-big-name">${first.name}</div>
-          <div class="t-big-desc">${first.description || 'Соревнование на платформе Game Genesis'}</div>
-          <div class="t-big-stats">
-            <div class="t-big-stat">
-              <div class="t-big-stat-val">${first.prize_pool > 0 ? first.prize_pool.toLocaleString('ru-RU') + ' ₽' : 'Бесплатно'}</div>
-              <div class="t-big-stat-key">Призовой фонд</div>
-            </div>
-            <div class="t-big-stat">
-              <div class="t-big-stat-val">${filled(first)} / ${first.max_slots || 16}</div>
-              <div class="t-big-stat-key">Участников</div>
-            </div>
-            <div class="t-big-stat">
-              <div class="t-big-stat-val">${fmtDate(first.start_date)}</div>
-              <div class="t-big-stat-key">Дата начала</div>
-            </div>
-          </div>
-        </div>
-        <div class="t-big-btns">
-          <button class="btn-primary"
-            onclick="event.stopPropagation();location.href='/tournament-register.html?id=${first.id}'">
-            <svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-            Зарегистрироваться
-          </button>
-          <button class="btn-ghost"
-            onclick="event.stopPropagation();location.href='/tournament.html?id=${first.id}'">
-            Подробнее
-          </button>
-        </div>
-      </div>
-    </div>`;
-
-  // Остальные — маленькие карточки
-  list.slice(1, 4).forEach(t => {
-    html += `
-      <a href="/tournament.html?id=${t.id}" class="t-card">
-        <div class="t-thumb" style="background:${bg(t)};position:relative;overflow:hidden;">
-          ${t.cover_image ? `<img src="${t.cover_image}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.65;z-index:0;">` : ''}
-          <div class="t-thumb-overlay" style="z-index:1;"></div>
-          <div class="t-game-badge">${t.game}</div>
-          <div class="t-status ${statusCls[t.status]||'open'}">
-            <div class="t-status-dot"></div>${statusLabel[t.status]||'Открыта'}
-          </div>
-        </div>
-        <div class="t-body">
-          <div class="t-name">${t.name}</div>
-          <div class="t-meta">
-            <div class="t-meta-item">
-              <svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-              ${fmtDate(t.start_date)}
-            </div>
-            <div class="t-meta-item">
-              <svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-              ${filled(t)} / ${t.max_slots||16}
-            </div>
-            <div class="t-meta-item" style="color:${t.entry_fee>0?'var(--gold)':'var(--success)'};">
-              ${t.entry_fee > 0 ? t.entry_fee + ' ₽' : 'Бесплатно'}
-            </div>
-          </div>
-          <div class="t-bar-wrap">
-            <div class="t-bar-label"><span>Регистрация</span><span>${pct(t)}%</span></div>
-            <div class="t-bar"><div class="t-bar-fill" style="width:${pct(t)}%;"></div></div>
-          </div>
-          <div class="t-footer">
-            <div>
-              <div class="t-prize">${t.prize_pool > 0 ? t.prize_pool.toLocaleString('ru-RU') + ' ₽' : '—'}</div>
-              <div class="t-prize-label">Призовой фонд</div>
-            </div>
-            <button class="t-btn"
-              onclick="event.preventDefault();location.href='/tournament-register.html?id=${t.id}'">
-              ${t.status==='open'?'Записаться':'Подробнее'}
-            </button>
-          </div>
-        </div>
-      </a>`;
+  // Остальные карточки
+  list.slice(1, 4).forEach(function(t) {
+    var f = t.filled_count || 0;
+    var pct = t.max_slots > 0 ? Math.round(f/t.max_slots*100) : 0;
+    html += '<a href="/tournament.html?id=' + t.id + '" class="t-card" style="text-decoration:none;">' +
+      '<div class="t-thumb" style="background:' + bg(t) + ';position:relative;overflow:hidden;">' +
+        (t.cover_image ? '<img src="' + t.cover_image + '" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.65;z-index:0;">' : '') +
+        '<div class="t-thumb-overlay" style="z-index:1;"></div>' +
+        '<div class="t-game-badge" style="z-index:2;">' + t.game + '</div>' +
+        '<div class="t-status ' + (statusCls[t.status]||'open') + '" style="z-index:2;"><div class="t-status-dot"></div>' + (statusLabel[t.status]||'Открыта') + '</div>' +
+      '</div>' +
+      '<div class="t-body">' +
+        '<div class="t-name">' + t.name + '</div>' +
+        '<div class="t-meta">' +
+          '<div class="t-meta-item">' + fmtDate(t.start_date) + '</div>' +
+          '<div class="t-meta-item">' + f + ' / ' + (t.max_slots||16) + '</div>' +
+          '<div class="t-meta-item" style="color:' + (t.entry_fee>0?'var(--gold)':'var(--success)') + ';">' + (t.entry_fee>0?t.entry_fee+'₽':'Бесплатно') + '</div>' +
+        '</div>' +
+        '<div class="t-bar-wrap"><div class="t-bar-top"><span>Регистрация</span><span>' + pct + '%</span></div>' +
+        '<div class="t-bar"><div class="t-bar-fill open" style="width:' + pct + '%;"></div></div></div>' +
+        '<div class="t-footer">' +
+          '<div><div class="t-prize">' + (t.prize_pool>0?t.prize_pool.toLocaleString('ru-RU')+' ₽':'—') + '</div><div class="t-prize-label">Призовой фонд</div></div>' +
+          '<button class="t-btn" onclick="event.preventDefault();location.href='/tournament-register.html?id=' + t.id + ''">' + (t.status==='open'?'Записаться':'Подробнее') + '</button>' +
+        '</div>' +
+      '</div></a>';
   });
 
   grid.innerHTML = html;
@@ -988,29 +969,22 @@ function renderTournaments(list) {
 
 // ── РЕЙТИНГ ──
 function renderRatings(list) {
-  const grid = document.getElementById('idx-ratings');
-  if (!grid) return;
+  var grid = document.getElementById('idx-ratings');
+  if (!grid || !list || !list.length) return;
 
-  if (!list || !list.length) {
-    grid.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px;">Рейтинг формируется по результатам матчей</div>';
-    return;
-  }
-
-  const medals = ['gold','silver','bronze','',''];
-  grid.innerHTML = list.map((p, i) => {
-    const ini = (p.full_name || p.username || '?').split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2);
-    return `<a href="/profile.html?user=${p.username}" style="text-decoration:none;color:inherit;display:block;" class="player-card rank-${i+1}">
-      <div class="player-avatar" style="overflow:hidden;">${p.avatar ? `<img src="${p.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;">` : `<div class="player-avatar-initials">${ini}</div>`}</div>
-      <div class="player-info">
-        <div class="player-rank ${medals[i]||''}">#${i+1} Место</div>
-        <div class="player-name">${p.is_private ? p.username : (p.full_name || p.username)}</div>
-        <div class="player-nick">${p.username} · ${p.game || 'CS2'}</div>
-      </div>
-      <div>
-        <div class="player-pts">${(p.rating||0).toLocaleString('ru-RU')}</div>
-        <div class="player-pts-label">очков</div>
-      </div>
-    </a>`;
+  var medals = ['gold','silver','bronze','',''];
+  grid.innerHTML = list.map(function(p, i) {
+    var ini = (p.full_name||p.username||'?').split(' ').map(function(w){return w[0]||'';}).join('').toUpperCase().slice(0,2);
+    var name = p.is_private ? p.username : (p.full_name||p.username);
+    return '<a href="/profile.html?user=' + p.username + '" style="text-decoration:none;display:block;" class="player-card rank-' + (i+1) + '">' +
+      '<div class="player-avatar" style="overflow:hidden;">' + (p.avatar ? '<img src="' + p.avatar + '" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;">' : '<div class="player-avatar-initials">' + ini + '</div>') + '</div>' +
+      '<div class="player-info">' +
+        '<div class="player-rank ' + (medals[i]||'') + '">#' + (i+1) + ' Место</div>' +
+        '<div class="player-name">' + name + '</div>' +
+        '<div class="player-nick">' + p.username + ' · ' + (p.game||'CS2') + '</div>' +
+      '</div>' +
+      '<div><div class="player-pts">' + (p.rating||0).toLocaleString('ru-RU') + '</div><div class="player-pts-label">очков</div></div>' +
+    '</a>';
   }).join('');
 }
 
