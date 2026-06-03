@@ -110,7 +110,73 @@ router.get('/ratings', async (req, res) => {
   res.json(result.rows)
 })
 
+
+// ── РЕЙТИНГ ИГРОКА ПО ИГРАМ ──
+router.get('/:username/ratings', async (req, res) => {
+  try {
+    const user = await db.query('SELECT id FROM users WHERE username=$1', [req.params.username])
+    if (!user.rows[0]) return res.status(404).json({ error: 'Не найден' })
+
+    const ratings = await db.query(
+      `SELECT game, rating, wins, losses
+       FROM player_ratings WHERE user_id=$1 ORDER BY rating DESC`,
+      [user.rows[0].id]
+    )
+
+    // Если нет записей — берём из основного профиля
+    if (!ratings.rows.length) {
+      const u = await db.query('SELECT game, rating, wins, losses FROM users WHERE id=$1', [user.rows[0].id])
+      if (u.rows[0] && u.rows[0].game) {
+        return res.json([{
+          game: u.rows[0].game,
+          rating: u.rows[0].rating || 1000,
+          wins: u.rows[0].wins || 0,
+          losses: u.rows[0].losses || 0
+        }])
+      }
+    }
+
+    res.json(ratings.rows)
+  } catch(e) {
+    console.error(e)
+    res.status(500).json({ error: 'Ошибка сервера' })
+  }
+})
+
 // ── ПУБЛИЧНЫЙ ПРОФИЛЬ ──
+
+// ── РЕЙТИНГ ИГРОКА ПО ИГРАМ ──
+router.get('/:username/ratings', async (req, res) => {
+  try {
+    const user = await db.query('SELECT id FROM users WHERE username=$1', [req.params.username])
+    if (!user.rows[0]) return res.status(404).json({ error: 'Не найден' })
+
+    const ratings = await db.query(
+      `SELECT game, rating, wins, losses
+       FROM player_ratings WHERE user_id=$1 ORDER BY rating DESC`,
+      [user.rows[0].id]
+    )
+
+    // Если нет записей — берём из основного профиля
+    if (!ratings.rows.length) {
+      const u = await db.query('SELECT game, rating, wins, losses FROM users WHERE id=$1', [user.rows[0].id])
+      if (u.rows[0] && u.rows[0].game) {
+        return res.json([{
+          game: u.rows[0].game,
+          rating: u.rows[0].rating || 1000,
+          wins: u.rows[0].wins || 0,
+          losses: u.rows[0].losses || 0
+        }])
+      }
+    }
+
+    res.json(ratings.rows)
+  } catch(e) {
+    console.error(e)
+    res.status(500).json({ error: 'Ошибка сервера' })
+  }
+})
+
 // ── ПУБЛИЧНЫЙ ПРОФИЛЬ ──
 router.get('/:username', async (req, res) => {
   try {
