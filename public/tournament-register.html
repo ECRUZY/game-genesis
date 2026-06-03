@@ -513,14 +513,16 @@ async function loadFreeAgents() {
       return;
     }
 
-    fpool.innerHTML = freeAgents.map(function(p) {
+    window.FREE_AGENTS = freeAgents;
+    fpool.innerHTML = freeAgents.map(function(p, i) {
       var ini = (p.full_name || p.nickname || '?').split(' ').map(function(w){return w[0]||'';}).join('').toUpperCase().slice(0,2);
-      return '<div class="fpi">' +
+      return '<div class="fpi" id="fa-' + i + '" style="display:flex;align-items:center;gap:8px;">' +
         '<div class="fpa">' + ini + '</div>' +
-        '<div>' +
+        '<div style="flex:1;">' +
           '<div class="fpn">' + p.nickname + '</div>' +
           '<div class="fps">' + (p.full_name || '') + (p.team ? ' · ' + p.team : '') + '</div>' +
         '</div>' +
+        '<button onclick="addFreeAgent(' + i + ')" style="background:var(--gold-dim);border:1px solid rgba(240,192,64,.3);color:var(--gold);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px;font-weight:700;flex-shrink:0;">+ В команду</button>' +
       '</div>';
     }).join('');
 
@@ -530,6 +532,49 @@ async function loadFreeAgents() {
 }
 
 // ── ОТПРАВКА ЗАЯВКИ с tournament_id ──
+
+// Добавить свободного игрока в форму команды
+function addFreeAgent(idx) {
+  var agent = window.FREE_AGENTS && window.FREE_AGENTS[idx];
+  if (!agent) return;
+
+  var prefix = mode === 'full' ? 'f' : 'p';
+  var count = mode === 'full' ? TS : partCnt;
+
+  // Найдём первый пустой слот (не капитан)
+  var added = false;
+  for (var i = 2; i <= count; i++) {
+    var nameEl = document.getElementById(prefix + '-' + i + '-n');
+    var nickEl = document.getElementById(prefix + '-' + i + '-k');
+    var steamEl = document.getElementById(prefix + '-' + i + '-s');
+    if (nameEl && (!nameEl.value || nameEl.value.trim() === '')) {
+      nameEl.value = agent.full_name || agent.nickname;
+      if (nickEl) nickEl.value = agent.nickname;
+      if (steamEl && agent.steam_url) steamEl.value = agent.steam_url;
+      // Помечаем игрока как добавленного
+      var row = document.getElementById('fa-' + idx);
+      if (row) {
+        var btn = row.querySelector('button');
+        if (btn) {
+          btn.textContent = '✓ Добавлен';
+          btn.style.background = 'rgba(74,222,128,.1)';
+          btn.style.color = 'var(--success)';
+          btn.style.borderColor = 'rgba(74,222,128,.3)';
+          btn.disabled = true;
+        }
+      }
+      added = true;
+      // Скролл к форме
+      var playerCard = document.getElementById(prefix + '-' + i + '-n');
+      if (playerCard) playerCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      break;
+    }
+  }
+  if (!added) {
+    alert('Все слоты заняты. Сначала очистите один из игроков.');
+  }
+}
+
 async function doSend(data) {
   var btn = document.querySelector('.fp.active .btn-sub');
   if (btn) { btn.disabled = true; btn.textContent = 'Отправляем...'; }
