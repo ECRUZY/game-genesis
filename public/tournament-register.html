@@ -296,6 +296,7 @@ var partCnt = 2;
 
 function setMode(m) {
   mode = m;
+  resetFreeAgents();
   ['full','partial','solo'].forEach(function(x) {
     document.getElementById('mc-'+x).classList.toggle('sel', x===m);
     document.getElementById('panel-'+x).classList.toggle('active', x===m);
@@ -552,7 +553,7 @@ async function loadFreeAgents() {
           '<div class="fpn">' + p.nickname + '</div>' +
           '<div class="fps">' + (p.team ? p.team : '') + '</div>' +
         '</div>' +
-        '<button onclick="addFreeAgent(' + i + ')" style="background:var(--gold-dim);border:1px solid rgba(240,192,64,.3);color:var(--gold);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px;font-weight:700;flex-shrink:0;">+ В команду</button>' +
+        '<button onclick="toggleFreeAgent(' + i + ')" id="fa-btn-' + i + '" style="background:var(--gold-dim);border:1px solid rgba(240,192,64,.3);color:var(--gold);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px;font-weight:700;flex-shrink:0;">+ В команду</button>' +
       '</div>';
     }).join('');
 
@@ -564,45 +565,71 @@ async function loadFreeAgents() {
 // ── ОТПРАВКА ЗАЯВКИ с tournament_id ──
 
 // Добавить свободного игрока в форму команды
-function addFreeAgent(idx) {
+// Хранит слоты добавленных агентов: {agentIdx: slotNum}
+var addedAgents = {};
+
+function toggleFreeAgent(idx) {
   var agent = window.FREE_AGENTS && window.FREE_AGENTS[idx];
   if (!agent) return;
 
+  var btn = document.getElementById('fa-btn-' + idx);
   var prefix = mode === 'full' ? 'f' : 'p';
   var count = mode === 'full' ? TS : partCnt;
 
-  // Найдём первый пустой слот (не капитан)
-  var added = false;
+  // Если уже добавлен — убираем
+  if (addedAgents[idx] !== undefined) {
+    var slot = addedAgents[idx];
+    var nameEl = document.getElementById(prefix + '-' + slot + '-n');
+    var nickEl = document.getElementById(prefix + '-' + slot + '-k');
+    var steamEl = document.getElementById(prefix + '-' + slot + '-s');
+    if (nameEl) nameEl.value = '';
+    if (nickEl) nickEl.value = '';
+    if (steamEl) steamEl.value = '';
+    delete addedAgents[idx];
+    if (btn) {
+      btn.textContent = '+ В команду';
+      btn.style.background = 'var(--gold-dim)';
+      btn.style.color = 'var(--gold)';
+      btn.style.borderColor = 'rgba(240,192,64,.3)';
+      btn.disabled = false;
+    }
+    return;
+  }
+
+  // Добавляем в первый пустой слот
   for (var i = 2; i <= count; i++) {
     var nameEl = document.getElementById(prefix + '-' + i + '-n');
     var nickEl = document.getElementById(prefix + '-' + i + '-k');
     var steamEl = document.getElementById(prefix + '-' + i + '-s');
     if (nameEl && (!nameEl.value || nameEl.value.trim() === '')) {
-      nameEl.value = agent.nickname; // ФИО скрыто — организатор сам верифицирует
+      nameEl.value = agent.nickname;
       if (nickEl) nickEl.value = agent.nickname;
       if (steamEl && agent.steam_url) steamEl.value = agent.steam_url;
-      // Помечаем игрока как добавленного
-      var row = document.getElementById('fa-' + idx);
-      if (row) {
-        var btn = row.querySelector('button');
-        if (btn) {
-          btn.textContent = '✓ Добавлен';
-          btn.style.background = 'rgba(74,222,128,.1)';
-          btn.style.color = 'var(--success)';
-          btn.style.borderColor = 'rgba(74,222,128,.3)';
-          btn.disabled = true;
-        }
+      addedAgents[idx] = i;
+      if (btn) {
+        btn.textContent = '✓ Убрать';
+        btn.style.background = 'rgba(74,222,128,.1)';
+        btn.style.color = 'var(--success)';
+        btn.style.borderColor = 'rgba(74,222,128,.3)';
       }
-      added = true;
-      // Скролл к форме
-      var playerCard = document.getElementById(prefix + '-' + i + '-n');
-      if (playerCard) playerCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      break;
+      var scrollEl = document.getElementById(prefix + '-' + i + '-n');
+      if (scrollEl) scrollEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
     }
   }
-  if (!added) {
-    alert('Все слоты заняты. Сначала очистите один из игроков.');
-  }
+  alert('Все слоты заняты. Сначала уберите одного из игроков.');
+}
+
+// Сбрасываем состояние при смене вкладки
+function resetFreeAgents() {
+  addedAgents = {};
+  document.querySelectorAll('[id^="fa-btn-"]').forEach(function(btn) {
+    btn.textContent = '+ В команду';
+    btn.style.background = 'var(--gold-dim)';
+    btn.style.color = 'var(--gold)';
+    btn.style.borderColor = 'rgba(240,192,64,.3)';
+    btn.disabled = false;
+  });
 }
 
 async function doSend(data) {
