@@ -150,7 +150,18 @@
 
     @media(max-width:900px){.overview-grid{grid-template-columns:1fr}.profile-header{padding:0 20px}.stats-row{padding:0 20px}.tabs{padding:0 20px}.panel{padding:20px 20px 60px}.clips-grid{grid-template-columns:1fr}}
     @media(max-width:600px){.avatar-wrap{flex-wrap:wrap}.profile-actions{width:100%}}
-  </style>
+  
+    /* Game tabs */
+    .game-tab {
+      font-family: 'Exo 2', sans-serif; font-size: 12px; font-weight: 600;
+      padding: 5px 14px; border-radius: 20px; border: 1px solid var(--border);
+      background: transparent; color: var(--text-dim); cursor: pointer; transition: .2s;
+      display: flex; align-items: center; gap: 6px; white-space: nowrap;
+    }
+    .game-tab:hover { border-color: var(--border-hi); color: var(--text); }
+    .game-tab.active { background: var(--gold-dim); border-color: rgba(240,192,64,.4); color: var(--gold); }
+    .game-tab .tab-wr { font-size: 10px; opacity: .7; }
+</style>
 </head>
 <body>
 <div class="grid-bg"></div>
@@ -183,11 +194,20 @@
 
   <!-- STATS -->
   <div class="stats-row">
-    <div class="stat"><div class="stat-val" id="stat-rating">—</div><div class="stat-key">Рейтинг</div></div>
-    <div class="stat"><div class="stat-val" id="stat-wins">—</div><div class="stat-key">Победы</div></div>
-    <div class="stat"><div class="stat-val" id="stat-losses">—</div><div class="stat-key">Поражения</div></div>
-    <div class="stat"><div class="stat-val" id="stat-tournaments">—</div><div class="stat-key">Турниров</div></div>
-    <div class="stat"><div class="stat-val" id="stat-clips">—</div><div class="stat-key">Клипов</div></div>
+    <!-- Вкладки игр -->
+    <div id="game-tabs-wrap" style="display:flex;flex-direction:column;gap:10px;flex:1;">
+      <div id="game-tabs" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+      <div id="game-stats" style="display:flex;gap:24px;flex-wrap:wrap;align-items:center;">
+        <div class="stat"><div class="stat-val" id="stat-rating">—</div><div class="stat-key">Рейтинг</div></div>
+        <div class="stat"><div class="stat-val" id="stat-wins">—</div><div class="stat-key">Победы</div></div>
+        <div class="stat"><div class="stat-val" id="stat-losses">—</div><div class="stat-key">Поражения</div></div>
+        <div class="stat"><div class="stat-val" id="stat-winrate">—</div><div class="stat-key">Винрейт</div></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:center;">
+      <div class="stat"><div class="stat-val" id="stat-tournaments">—</div><div class="stat-key">Турниров</div></div>
+      <div class="stat"><div class="stat-val" id="stat-clips">—</div><div class="stat-key">Клипов</div></div>
+    </div>
   </div>
 
   <!-- TABS -->
@@ -357,6 +377,70 @@ var IS_OWN = !TARGET_USER || (ME && (ME.username === TARGET_USER));
 var PROFILE = null;
 var CLIPS = [];
 
+
+var GAME_RATINGS = [];
+var currentGame = null;
+
+async function loadGameRatings() {
+  var targetUsername = TARGET_USER || (ME && ME.username);
+  if (!targetUsername) return;
+
+  try {
+    var res = await fetch('/api/users/' + targetUsername + '/ratings');
+    if (!res.ok) return;
+    GAME_RATINGS = await res.json();
+    renderGameTabs();
+  } catch(e) {
+    // Если endpoint нет — показываем из основного профиля
+    if (PROFILE) {
+      GAME_RATINGS = [{
+        game: PROFILE.game || 'CS2',
+        rating: PROFILE.rating || 1000,
+        wins: PROFILE.wins || 0,
+        losses: PROFILE.losses || 0
+      }];
+      renderGameTabs();
+    }
+  }
+}
+
+function renderGameTabs() {
+  var wrap = document.getElementById('game-tabs');
+  if (!wrap || !GAME_RATINGS.length) return;
+
+  var gameIcons = {'CS2':'🔫','Dota 2':'⚔️','Valorant':'🎯','FIFA 25':'⚽','Mobile Legends':'🗡️'};
+
+  wrap.innerHTML = GAME_RATINGS.map(function(r, i) {
+    var wr = (r.wins + r.losses) > 0 ? Math.round(r.wins / (r.wins + r.losses) * 100) : 0;
+    var isFirst = i === 0;
+    return '<button class="game-tab' + (isFirst ? ' active' : '') + '" onclick="selectGame(' + i + ', this)">' +
+      (gameIcons[r.game] || '🎮') + ' ' + r.game +
+      '<span class="tab-wr">' + wr + '%</span>' +
+      '</button>';
+  }).join('');
+
+  // Показываем первую игру
+  if (GAME_RATINGS.length > 0) selectGame(0, wrap.querySelector('.game-tab'));
+}
+
+function selectGame(idx, btn) {
+  var r = GAME_RATINGS[idx];
+  if (!r) return;
+
+  // Переключаем активную вкладку
+  document.querySelectorAll('.game-tab').forEach(function(b){ b.classList.remove('active'); });
+  if (btn) btn.classList.add('active');
+
+  // Обновляем статы
+  function set(id, val) { var el=document.getElementById(id); if(el) el.textContent=val; }
+  var wr = (r.wins + r.losses) > 0 ? Math.round(r.wins / (r.wins + r.losses) * 100) + '%' : '—';
+  set('stat-rating', (r.rating||0).toLocaleString('ru-RU'));
+  set('stat-wins', r.wins || 0);
+  set('stat-losses', r.losses || 0);
+  set('stat-winrate', wr);
+  currentGame = r.game;
+}
+
 // ── ЗАГРУЗКА ──
 async function loadProfile() {
   try {
@@ -409,6 +493,7 @@ async function loadProfile() {
 
     renderProfile();
     renderClips(CLIPS);
+    await loadGameRatings();
 
   } catch(e) {
     console.error(e);
