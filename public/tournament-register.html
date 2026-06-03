@@ -311,7 +311,7 @@ function mkPlayer(i, cap, pfx) {
       '<div class="pc-lbl ' + (cap?'cap':'') + '">' + (cap?'Капитан (вы)':'Игрок '+i) + '</div>' +
     '</div>' +
     '<div class="frow3">' +
-      '<div class="field"><label>ФИО <span class="req">*</span></label><input type="text" id="' + pfx+'-'+i+'-n" placeholder="' + (cap?'Ваше ФИО':'ФИО игрока') + '"></div>' +
+      '<div class="field"><label>ФИО <span class="req">*</span></label><input type="text" id="' + pfx+'-'+i+'-n" placeholder="' + (cap?'Ваше ФИО':'Никнейм или ФИО') + '"></div>' +
       '<div class="field"><label>Никнейм <span class="req">*</span></label><input type="text" id="' + pfx+'-'+i+'-k" placeholder="XShadow99"></div>' +
       '<div class="field"><label>Steam <span class="req">*</span></label><input type="url" id="' + pfx+'-'+i+'-s" placeholder="steamcommunity.com/id/..."></div>' +
     '</div>';
@@ -550,7 +550,7 @@ async function loadFreeAgents() {
         '<div class="fpa">' + ini + '</div>' +
         '<div style="flex:1;">' +
           '<div class="fpn">' + p.nickname + '</div>' +
-          '<div class="fps">' + (p.is_private ? '' : (p.full_name || '')) + (p.team ? ' · ' + p.team : '') + '</div>' +
+          '<div class="fps">' + (p.team ? p.team : '') + '</div>' +
         '</div>' +
         '<button onclick="addFreeAgent(' + i + ')" style="background:var(--gold-dim);border:1px solid rgba(240,192,64,.3);color:var(--gold);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px;font-weight:700;flex-shrink:0;">+ В команду</button>' +
       '</div>';
@@ -578,7 +578,7 @@ function addFreeAgent(idx) {
     var nickEl = document.getElementById(prefix + '-' + i + '-k');
     var steamEl = document.getElementById(prefix + '-' + i + '-s');
     if (nameEl && (!nameEl.value || nameEl.value.trim() === '')) {
-      nameEl.value = agent.is_private ? agent.nickname : (agent.full_name || agent.nickname);
+      nameEl.value = agent.nickname; // ФИО скрыто — организатор сам верифицирует
       if (nickEl) nickEl.value = agent.nickname;
       if (steamEl && agent.steam_url) steamEl.value = agent.steam_url;
       // Помечаем игрока как добавленного
