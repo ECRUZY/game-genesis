@@ -506,6 +506,26 @@ async function loadTournamentData() {
 
     // Название
     document.getElementById('t-name').textContent = t.name;
+
+    // Устанавливаем размер команды из турнира
+    if (t.team_size) {
+      var tsMatch = t.team_size.match(/(\d+)x/);
+      if (tsMatch) {
+        TS = parseInt(tsMatch[1]);
+        // Обновляем текст в кнопках режима
+        var fullBtn = document.getElementById('mc-full');
+        if (fullBtn) {
+          var fullLabel = fullBtn.querySelector('.mc-label');
+          if (fullLabel) fullLabel.textContent = 'Полная команда';
+          var fullSub = fullBtn.querySelector('.mc-sub');
+          if (fullSub) fullSub.textContent = 'Есть все ' + TS + ' игроков. Капитан регистрирует всю команду.';
+        }
+        // Обновляем заголовок формата
+        var fmt = document.getElementById('t-format-label');
+        if (fmt) fmt.textContent = 'Турнир формата ' + t.team_size + '. Выберите подходящий вариант участия.';
+      }
+    }
+
     // Студенческий блок
     if (t.is_student) {
       var sb = document.getElementById('student-reg-block');
