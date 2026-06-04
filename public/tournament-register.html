@@ -512,15 +512,16 @@ async function loadTournamentData() {
       var tsMatch = t.team_size.match(/(\d+)x/);
       if (tsMatch) {
         TS = parseInt(tsMatch[1]);
-        // Обновляем текст в кнопках режима
-        var fullBtn = document.getElementById('mc-full');
-        if (fullBtn) {
-          var fullLabel = fullBtn.querySelector('.mc-label');
-          if (fullLabel) fullLabel.textContent = 'Полная команда';
-          var fullSub = fullBtn.querySelector('.mc-sub');
-          if (fullSub) fullSub.textContent = 'Есть все ' + TS + ' игроков. Капитан регистрирует всю команду.';
-        }
-        // Обновляем заголовок формата
+
+        // Перестраиваем форму с правильным кол-вом игроков
+        buildFull();
+        if (typeof buildPartial === 'function') buildPartial(Math.min(partCnt, TS-1) || 2);
+
+        // Обновляем тексты
+        var descEl = document.querySelector('#mc-full .mc-desc');
+        if (descEl) descEl.textContent = 'Есть все ' + TS + ' игроков. Капитан регистрирует всю команду.';
+        var btnEl = document.getElementById('btn-sub-full');
+        if (btnEl) btnEl.textContent = 'Зарегистрировать команду (' + TS + '/' + TS + ')';
         var fmt = document.getElementById('t-format-label');
         if (fmt) fmt.textContent = 'Турнир формата ' + t.team_size + '. Выберите подходящий вариант участия.';
       }
