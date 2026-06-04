@@ -242,7 +242,7 @@
       </div>
     </div>
 
-class="custom-check" onclick="toggleCheck('full-ag')"><div class="check-box" id="full-ag-box"></div><input type="checkbox" id="full-ag"><span class="check-label">Все 5 игроков согласны участвовать и принимают <a href="#">правила турнира</a>.</span></div>
+<div class="custom-check" onclick="toggleCheck('full-ag')"><div class="check-box" id="full-ag-box"></div><input type="checkbox" id="full-ag"><span class="check-label">Все 5 игроков согласны участвовать и принимают <a href="#">правила турнира</a>.</span></div>
             <button class="btn-sub" onclick="submitFull()"><svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>Зарегистрировать команду (5/5)</button>
           </div>
         </div>
@@ -506,6 +506,11 @@ async function loadTournamentData() {
 
     // Название
     document.getElementById('t-name').textContent = t.name;
+    // Студенческий блок
+    if (t.is_student) {
+      var sb = document.getElementById('student-reg-block');
+      if (sb) sb.style.display = 'block';
+    }
     document.title = t.name + ' — Регистрация | Game Genesis';
 
     // Pills
