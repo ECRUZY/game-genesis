@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Админ панель — Game Genesis</title>
+  <script src="/nav.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Exo+2:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--gold:#f0c040;--gold-dim:rgba(240,192,64,0.1);--bg:#080c12;--bg-card:#0d1420;--bg-card2:#111928;--bg-input:#0a1018;--border:#1a2436;--border-hi:#253550;--text:#dde4ef;--text-dim:#5c7090;--text-muted:#2e3f58;--success:#4ade80;--red:#f87171;--blue:#60a5fa;--purple:#a78bfa}
+    ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:#1e2d42;border-radius:3px}
+    body{background:var(--bg);color:var(--text);font-family:'Exo 2',sans-serif;min-height:100vh}
+    .grid-bg{position:fixed;inset:0;z-index:0;pointer-events:none;background-image:linear-gradient(rgba(240,192,64,.015) 1px,transparent 1px),linear-gradient(90deg,rgba(240,192,64,.015) 1px,transparent 1px);background-size:60px 60px}
+    .page{position:relative;z-index:1;padding:28px 32px 80px}
+
+    /* HEADER */
+    .admin-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:12px}
+    .admin-title{font-family:'Rajdhani',sans-serif;font-size:28px;font-weight:700;color:#fff;display:flex;align-items:center;gap:10px}
+    .admin-badge{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--red);font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:3px 10px;border-radius:5px}
+    .admin-stats{display:flex;gap:16px;flex-wrap:wrap}
+    .astat{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:12px 20px;text-align:center;min-width:90px}
+    .astat-val{font-family:'Rajdhani',sans-serif;font-size:24px;font-weight:700;color:var(--gold)}
+    .astat-key{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+
+    /* TABS */
+    .tabs{display:flex;gap:2px;border-bottom:1px solid var(--border);margin-bottom:24px;overflow-x:auto}
+    .tabs::-webkit-scrollbar{height:0}
+    .tab{font-size:13px;font-weight:500;color:var(--text-dim);padding:11px 18px;border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-1px;cursor:pointer;transition:.2s;white-space:nowrap;display:flex;align-items:center;gap:7px}
+    .tab:hover{color:var(--text)}.tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+    .tab-badge{background:rgba(248,113,113,.2);color:var(--red);border-radius:10px;padding:1px 7px;font-size:10px;font-weight:700}
+    .tab-badge.ok{background:rgba(74,222,128,.15);color:var(--success)}
+
+    /* PANELS */
+    .panel{display:none}.panel.active{display:block}
+
+    /* TABLE */
+    .tbl{width:100%;border-collapse:collapse;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+    .tbl th{padding:10px 16px;text-align:left;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.7px;background:rgba(0,0,0,.2);border-bottom:1px solid var(--border)}
+    .tbl td{padding:12px 16px;font-size:13px;border-bottom:1px solid rgba(26,36,54,.4);vertical-align:middle}
+    .tbl tr:last-child td{border-bottom:none}
+    .tbl tr:hover td{background:rgba(255,255,255,.015)}
+
+    /* BADGES */
+    .badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+    .badge-pending{background:rgba(240,192,64,.1);color:var(--gold);border:1px solid rgba(240,192,64,.2)}
+    .badge-approved{background:rgba(74,222,128,.1);color:var(--success);border:1px solid rgba(74,222,128,.2)}
+    .badge-rejected{background:rgba(248,113,113,.1);color:var(--red);border:1px solid rgba(248,113,113,.2)}
+    .badge-open{background:rgba(74,222,128,.1);color:var(--success);border:1px solid rgba(74,222,128,.2)}
+    .badge-live{background:rgba(248,113,113,.1);color:var(--red);border:1px solid rgba(248,113,113,.2)}
+    .badge-done{background:rgba(92,112,144,.1);color:var(--text-dim);border:1px solid rgba(92,112,144,.2)}
+    .badge-student{background:rgba(96,165,250,.1);color:var(--blue);border:1px solid rgba(96,165,250,.2)}
+
+    /* BUTTONS */
+    .btn{font-family:'Exo 2',sans-serif;font-size:12px;font-weight:600;padding:6px 14px;border-radius:7px;border:none;cursor:pointer;transition:.2s;white-space:nowrap}
+    .btn-approve{background:rgba(74,222,128,.1);color:var(--success);border:1px solid rgba(74,222,128,.25)}.btn-approve:hover{background:var(--success);color:#080c12}
+    .btn-reject{background:rgba(248,113,113,.1);color:var(--red);border:1px solid rgba(248,113,113,.25)}.btn-reject:hover{background:var(--red);color:#fff}
+    .btn-delete{background:rgba(248,113,113,.08);color:var(--red);border:1px solid rgba(248,113,113,.2)}.btn-delete:hover{background:var(--red);color:#fff}
+    .btn-edit{background:var(--bg-card2);color:var(--text-dim);border:1px solid var(--border)}.btn-edit:hover{border-color:var(--gold);color:var(--gold)}
+    .btn-gold{background:var(--gold);color:#080c12;font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;letter-spacing:1px;padding:8px 18px;border-radius:8px;border:none;cursor:pointer}.btn-gold:hover{background:#ffd055}
+    .btn-outline{background:transparent;color:var(--text-dim);border:1px solid var(--border);font-size:13px;padding:8px 16px;border-radius:8px;cursor:pointer}.btn-outline:hover{border-color:var(--gold);color:var(--gold)}
+    .actions{display:flex;gap:6px;flex-wrap:wrap}
+
+    /* CARD */
+    .card{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px}
+    .card-title{font-family:'Rajdhani',sans-serif;font-size:17px;font-weight:700;color:#fff;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+
+    /* FEATURED SELECTOR */
+    .featured-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+    .ft-card{background:var(--bg-card2);border:2px solid var(--border);border-radius:12px;padding:16px;cursor:pointer;transition:.2s;position:relative}
+    .ft-card:hover{border-color:var(--border-hi)}
+    .ft-card.selected{border-color:var(--gold);background:rgba(240,192,64,.04)}
+    .ft-card.selected::after{content:'★ Главный';position:absolute;top:10px;right:10px;background:var(--gold);color:#080c12;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px}
+    .ft-name{font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;color:#fff;margin-bottom:4px}
+    .ft-meta{font-size:12px;color:var(--text-dim)}
+
+    /* MODAL */
+    .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:600;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .2s}
+    .modal-bg.open{opacity:1;pointer-events:all}
+    .modal{background:var(--bg-card);border:1px solid var(--border-hi);border-radius:16px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto}
+    .modal-head{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg-card);z-index:2}
+    .modal-title{font-family:'Rajdhani',sans-serif;font-size:19px;font-weight:700;color:#fff}
+    .modal-close{width:30px;height:30px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--text-dim);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px}.modal-close:hover{color:var(--red);border-color:var(--red)}
+    .modal-body{padding:22px}
+    .mfield{margin-bottom:14px}
+    .mfield label{display:block;font-size:11px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.7px;margin-bottom:5px}
+    .mfield input,.mfield select,.mfield textarea{width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:9px 13px;font-size:14px;color:var(--text);font-family:'Exo 2',sans-serif;outline:none;transition:border-color .2s}
+    .mfield input:focus,.mfield select:focus,.mfield textarea:focus{border-color:var(--gold)}
+    .mfield textarea{resize:vertical;min-height:70px}
+    .mfield select option{background:#0d1420}
+    .mrow{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+    /* PHOTO VIEWER */
+    .photo-viewer{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:700;display:flex;align-items:center;justify-content:center;display:none}
+    .photo-viewer.open{display:flex}
+    .photo-viewer img{max-width:90vw;max-height:90vh;border-radius:10px}
+    .photo-viewer-close{position:absolute;top:20px;right:20px;width:40px;height:40px;background:rgba(255,255,255,.1);border:none;color:#fff;font-size:20px;border-radius:50%;cursor:pointer}
+
+    /* EMPTY / LOADING */
+    .empty{text-align:center;padding:48px 20px;color:var(--text-dim)}
+    .empty-icon{font-size:40px;margin-bottom:12px}
+    .skel{height:52px;border-bottom:1px solid rgba(26,36,54,.4);animation:pulse 1.4s ease infinite}
+    .skel-inner{height:28px;background:rgba(255,255,255,.03);border-radius:6px;margin:12px 16px}
+    @keyframes pulse{0%,100%{opacity:.4}50%{opacity:.8}}
+
+    /* TOAST */
+    #toast{position:fixed;bottom:24px;right:24px;z-index:800;border-radius:10px;padding:12px 20px;font-size:14px;font-weight:500;opacity:0;transition:opacity .3s;pointer-events:none}
+    #toast.show.ok{opacity:1;background:#0d2010;border:1px solid rgba(74,222,128,.3);color:var(--success)}
+    #toast.show.err{opacity:1;background:#200d0d;border:1px solid rgba(248,113,113,.3);color:var(--red)}
+
+    @media(max-width:700px){.page{padding:16px 16px 60px}.tbl td,.tbl th{padding:8px 10px;font-size:12px}.mrow{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<div class="grid-bg"></div>
+<div class="page">
+
+  <div class="admin-header">
+    <div>
+      <div class="admin-title">
+        ⚙️ Админ панель
+        <span class="admin-badge">ADMIN</span>
+      </div>
+      <div style="font-size:13px;color:var(--text-dim);margin-top:4px;">Game Genesis · Управление платформой</div>
+    </div>
+    <div class="admin-stats">
+      <div class="astat"><div class="astat-val" id="st-users">—</div><div class="astat-key">Игроков</div></div>
+      <div class="astat"><div class="astat-val" id="st-tournaments">—</div><div class="astat-key">Турниров</div></div>
+      <div class="astat"><div class="astat-val" id="st-partners">—</div><div class="astat-key">Заявок</div></div>
+      <div class="astat"><div class="astat-val" id="st-teams">—</div><div class="astat-key">Команд</div></div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('tournaments',this)">🏆 Турниры</button>
+    <button class="tab" onclick="switchTab('featured',this)">⭐ Главная страница</button>
+    <button class="tab" onclick="switchTab('partners',this)">🤝 Заявки партнёров <span class="tab-badge" id="badge-partners">0</span></button>
+    <button class="tab" onclick="switchTab('users',this)">👥 Пользователи</button>
+    <button class="tab" onclick="switchTab('teams',this)">📋 Заявки на турниры</button>
+    <button class="tab" onclick="switchTab('student',this)">🎓 Студ. верификации <span class="tab-badge" id="badge-student">0</span></button>
+  </div>
+
+  <!-- ══ ТУРНИРЫ ══ -->
+  <div id="panel-tournaments" class="panel active">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <div style="font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;color:#fff;">Все турниры</div>
+      <a href="/create-tournament.html" class="btn-gold">+ Создать турнир</a>
+    </div>
+    <table class="tbl">
+      <thead><tr>
+        <th>Название</th><th>Игра</th><th>Статус</th><th>Тип</th><th>Участников</th><th>Создан</th><th>Действия</th>
+      </tr></thead>
+      <tbody id="tbl-tournaments">
+        <tr><td colspan="7"><div class="skel"><div class="skel-inner"></div></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ══ ГЛАВНАЯ СТРАНИЦА ══ -->
+  <div id="panel-featured" class="panel">
+    <div class="card">
+      <div class="card-title">
+        Главный турнир на главной странице
+        <button class="btn-gold" onclick="saveFeatured()">Сохранить</button>
+      </div>
+      <div style="font-size:13px;color:var(--text-dim);margin-bottom:16px;">Выберите турнир который будет показан первым в hero-секции главной страницы</div>
+      <div class="featured-grid" id="featured-grid">
+        <div class="skel" style="height:80px;border-radius:12px;"><div class="skel-inner"></div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Статистика на главной</div>
+      <div class="mrow" style="margin-bottom:14px;">
+        <div class="mfield"><label>Текст кнопки "Смотреть трансляцию"</label><input type="url" id="cfg-stream" placeholder="https://twitch.tv/..."></div>
+        <div class="mfield"><label>Текст объявления (если есть)</label><input type="text" id="cfg-announce" placeholder="Новый сезон начинается..."></div>
+      </div>
+      <button class="btn-gold" onclick="saveConfig()">Сохранить настройки</button>
+    </div>
+  </div>
+
+  <!-- ══ ЗАЯВКИ ПАРТНЁРОВ ══ -->
+  <div id="panel-partners" class="panel">
+    <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+      <button class="btn-outline active-filter" onclick="filterPartners('all',this)" data-filter="all">Все</button>
+      <button class="btn-outline" onclick="filterPartners('tournament',this)" data-filter="tournament">🏆 Спонсор турнира</button>
+      <button class="btn-outline" onclick="filterPartners('title',this)" data-filter="title">👑 Титульный</button>
+      <button class="btn-outline" onclick="filterPartners('media',this)" data-filter="media">📺 Реклама</button>
+      <button class="btn-outline" onclick="filterPartners('ambassador',this)" data-filter="ambassador">🤝 Амбассадор</button>
+    </div>
+    <table class="tbl">
+      <thead><tr>
+        <th>Тип</th><th>Компания / Имя</th><th>Email</th><th>Телефон</th><th>Статус</th><th>Дата</th><th>Действия</th>
+      </tr></thead>
+      <tbody id="tbl-partners">
+        <tr><td colspan="7"><div class="skel"><div class="skel-inner"></div></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ══ ПОЛЬЗОВАТЕЛИ ══ -->
+  <div id="panel-users" class="panel">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+      <input type="text" id="search-users" placeholder="Поиск по нику или email..." oninput="filterUsers()" style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:9px 14px;font-size:14px;color:var(--text);font-family:'Exo 2',sans-serif;outline:none;width:280px;">
+    </div>
+    <table class="tbl">
+      <thead><tr>
+        <th>Игрок</th><th>Email</th><th>Рейтинг</th><th>Роль</th><th>Верифицирован</th><th>Дата</th><th>Действия</th>
+      </tr></thead>
+      <tbody id="tbl-users">
+        <tr><td colspan="7"><div class="skel"><div class="skel-inner"></div></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ══ ЗАЯВКИ НА ТУРНИРЫ ══ -->
+  <div id="panel-teams" class="panel">
+    <div style="margin-bottom:14px;">
+      <select id="teams-filter-tournament" onchange="loadTeams()" style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:9px 14px;font-size:14px;color:var(--text);font-family:'Exo 2',sans-serif;outline:none;cursor:pointer;width:280px;">
+        <option value="">— Все турниры —</option>
+      </select>
+    </div>
+    <table class="tbl">
+      <thead><tr>
+        <th>Команда</th><th>Турнир</th><th>Игроки</th><th>Студ. данные</th><th>Статус</th><th>Дата</th><th>Действия</th>
+      </tr></thead>
+      <tbody id="tbl-teams">
+        <tr><td colspan="7"><div class="skel"><div class="skel-inner"></div></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ══ СТУД. ВЕРИФИКАЦИИ ══ -->
+  <div id="panel-student" class="panel">
+    <table class="tbl">
+      <thead><tr>
+        <th>Игрок</th><th>Университет</th><th>Факультет</th><th>Группа</th><th>Фото</th><th>Статус</th><th>Дата</th><th>Действия</th>
+      </tr></thead>
+      <tbody id="tbl-student">
+        <tr><td colspan="8"><div class="skel"><div class="skel-inner"></div></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<!-- MODAL РЕДАКТИРОВАНИЕ ТУРНИРА -->
+<div class="modal-bg" id="modal-tournament">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">Редактировать турнир</div>
+      <button class="modal-close" onclick="closeModal('tournament')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-tid">
+      <div class="mrow">
+        <div class="mfield"><label>Название</label><input type="text" id="edit-tname"></div>
+        <div class="mfield"><label>Статус</label>
+          <select id="edit-tstatus">
+            <option value="open">Открыта регистрация</option>
+            <option value="soon">Скоро</option>
+            <option value="live">Live</option>
+            <option value="done">Завершён</option>
+          </select>
+        </div>
+      </div>
+      <div class="mrow">
+        <div class="mfield"><label>Призовой фонд (₽)</label><input type="number" id="edit-tprize"></div>
+        <div class="mfield"><label>Макс. участников</label><input type="number" id="edit-tslots"></div>
+      </div>
+      <div class="mfield"><label>Описание</label><textarea id="edit-tdesc"></textarea></div>
+      <div style="display:flex;gap:10px;margin-top:4px;">
+        <button class="btn-outline" style="flex:1" onclick="closeModal('tournament')">Отмена</button>
+        <button class="btn-gold" style="flex:2" onclick="saveTournament()">Сохранить</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ПАРТНЁР ДЕТАЛИ -->
+<div class="modal-bg" id="modal-partner">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="modal-partner-title">Заявка партнёра</div>
+      <button class="modal-close" onclick="closeModal('partner')">✕</button>
+    </div>
+    <div class="modal-body" id="modal-partner-body"></div>
+  </div>
+</div>
+
+<!-- PHOTO VIEWER -->
+<div class="photo-viewer" id="photo-viewer" onclick="closePhoto()">
+  <button class="photo-viewer-close" onclick="closePhoto()">✕</button>
+  <img id="photo-viewer-img" src="" alt="">
+</div>
+
+<div id="toast"></div>
+
+<script>
+var TOKEN = localStorage.getItem('gg_token');
+var ME = null;
+try { ME = JSON.parse(localStorage.getItem('gg_user')); } catch(e) {}
+
+// Проверяем что admin
+if (!ME || ME.role !== 'admin') {
+  document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:16px;color:#f87171;font-family:Rajdhani,sans-serif;font-size:24px;">🚫 Нет доступа<div style="font-size:14px;color:#5c7090;">Эта страница только для администраторов</div><a href="/" style="font-size:14px;color:#f0c040;">← На главную</a></div>';
+}
+
+var ALL_TOURNAMENTS = [];
+var ALL_USERS = [];
+var ALL_PARTNERS = [];
+var FEATURED_ID = null;
+
+// ── ЗАГРУЗКА ──
+async function loadAll() {
+  await Promise.all([loadTournaments(), loadUsers(), loadPartners(), loadTeams(), loadStudentVerifications()]);
+  updateStats();
+}
+
+async function api(url, opts) {
+  var res = await fetch(url, Object.assign({ headers: { 'Authorization': 'Bearer ' + TOKEN, 'Content-Type': 'application/json' } }, opts));
+  return res.json();
+}
+
+// ── ТУРНИРЫ ──
+async function loadTournaments() {
+  try {
+    var data = await api('/api/tournaments?limit=100');
+    ALL_TOURNAMENTS = Array.isArray(data) ? data : (data.tournaments || []);
+    renderTournaments(ALL_TOURNAMENTS);
+    renderFeaturedGrid(ALL_TOURNAMENTS);
+    populateTournamentSelect();
+  } catch(e) { console.error(e); }
+}
+
+function renderTournaments(list) {
+  var tb = document.getElementById('tbl-tournaments');
+  if (!list.length) { tb.innerHTML = '<tr><td colspan="7"><div class="empty"><div class="empty-icon">🏆</div><div>Турниров нет</div></div></td></tr>'; return; }
+  var fmtDate = function(d) { return d ? new Date(d).toLocaleDateString('ru-RU') : '—'; };
+  var statusBadge = {open:'badge-open',live:'badge-live',done:'badge-done',soon:'badge-pending'};
+  var statusLabel = {open:'Открыта',live:'Live',soon:'Скоро',done:'Завершён'};
+  tb.innerHTML = list.map(function(t) {
+    return '<tr>' +
+      '<td><div style="font-weight:600;color:#fff;">' + t.name + '</div><div style="font-size:11px;color:var(--text-muted);">ID: ' + t.id + '</div></td>' +
+      '<td>' + t.game + '</td>' +
+      '<td><span class="badge ' + (statusBadge[t.status]||'badge-pending') + '">' + (statusLabel[t.status]||t.status) + '</span></td>' +
+      '<td>' + (t.is_student ? '<span class="badge badge-student">🎓 Студ.</span>' : '<span style="color:var(--text-muted);font-size:12px;">Открытый</span>') + '</td>' +
+      '<td>' + (t.filled_count||0) + ' / ' + (t.max_slots||16) + '</td>' +
+      '<td style="color:var(--text-dim);font-size:12px;">' + fmtDate(t.created_at||t.start_date) + '</td>' +
+      '<td><div class="actions">' +
+        '<button class="btn btn-edit" onclick="openEditTournament(' + t.id + ')">✏️</button>' +
+        '<a href="/tournament.html?id=' + t.id + '" class="btn btn-edit" target="_blank">👁</a>' +
+        '<a href="/organizer.html?id=' + t.id + '" class="btn btn-edit">⚙️</a>' +
+        '<button class="btn btn-delete" onclick="deleteTournament(' + t.id + ',\'' + t.name.replace(/'/g,"\\'") + '\')">🗑</button>' +
+      '</div></td>' +
+    '</tr>';
+  }).join('');
+}
+
+function openEditTournament(id) {
+  var t = ALL_TOURNAMENTS.find(function(x){ return x.id === id; });
+  if (!t) return;
+  document.getElementById('edit-tid').value = t.id;
+  document.getElementById('edit-tname').value = t.name;
+  document.getElementById('edit-tstatus').value = t.status;
+  document.getElementById('edit-tprize').value = t.prize_pool || 0;
+  document.getElementById('edit-tslots').value = t.max_slots || 16;
+  document.getElementById('edit-tdesc').value = t.description || '';
+  openModal('tournament');
+}
+
+async function saveTournament() {
+  var id = document.getElementById('edit-tid').value;
+  var data = {
+    name: document.getElementById('edit-tname').value,
+    status: document.getElementById('edit-tstatus').value,
+    prize_pool: parseInt(document.getElementById('edit-tprize').value)||0,
+    max_slots: parseInt(document.getElementById('edit-tslots').value)||16,
+    description: document.getElementById('edit-tdesc').value
+  };
+  try {
+    await api('/api/tournaments/' + id, { method: 'PUT', body: JSON.stringify(data) });
+    toast('Турнир обновлён ✓');
+    closeModal('tournament');
+    loadTournaments();
+  } catch(e) { toast('Ошибка', 'err'); }
+}
+
+async function deleteTournament(id, name) {
+  if (!confirm('Удалить турнир "' + name + '"? Это действие нельзя отменить.')) return;
+  try {
+    await api('/api/tournaments/' + id, { method: 'DELETE' });
+    toast('Турнир удалён');
+    loadTournaments();
+  } catch(e) { toast('Ошибка удаления', 'err'); }
+}
+
+// ── FEATURED ──
+var selectedFeatured = null;
+
+function renderFeaturedGrid(list) {
+  var grid = document.getElementById('featured-grid');
+  if (!list.length) { grid.innerHTML = '<div style="color:var(--text-dim);">Турниров нет</div>'; return; }
+  grid.innerHTML = list.filter(function(t){ return t.status !== 'done'; }).map(function(t) {
+    var isSel = selectedFeatured === t.id;
+    return '<div class="ft-card' + (isSel?' selected':'') + '" onclick="selectFeatured(' + t.id + ')" id="fc-' + t.id + '">' +
+      '<div class="ft-name">' + t.name + '</div>' +
+      '<div class="ft-meta">' + t.game + ' · ' + (t.filled_count||0) + '/' + (t.max_slots||16) + ' уч.</div>' +
+    '</div>';
+  }).join('');
+}
+
+function selectFeatured(id) {
+  selectedFeatured = id;
+  document.querySelectorAll('.ft-card').forEach(function(c){ c.classList.remove('selected'); });
+  var el = document.getElementById('fc-' + id);
+  if (el) el.classList.add('selected');
+}
+
+async function saveFeatured() {
+  if (!selectedFeatured) { toast('Выберите турнир', 'err'); return; }
+  try {
+    await api('/api/admin/featured', { method: 'POST', body: JSON.stringify({ tournament_id: selectedFeatured }) });
+    toast('Главный турнир обновлён ✓');
+  } catch(e) {
+    // Если endpoint нет — просто сохраняем в localStorage как временное решение
+    localStorage.setItem('gg_featured_id', selectedFeatured);
+    toast('Сохранено локально (добавьте API endpoint)');
+  }
+}
+
+async function saveConfig() {
+  var stream = document.getElementById('cfg-stream').value;
+  var announce = document.getElementById('cfg-announce').value;
+  localStorage.setItem('gg_stream_url', stream);
+  localStorage.setItem('gg_announce', announce);
+  toast('Настройки сохранены ✓');
+}
+
+// ── ПАРТНЁРЫ ──
+async function loadPartners() {
+  try {
+    var data = await api('/api/partners/requests');
+    ALL_PARTNERS = Array.isArray(data) ? data : [];
+    renderPartners(ALL_PARTNERS);
+    var pending = ALL_PARTNERS.filter(function(p){ return p.status === 'pending'; }).length;
+    document.getElementById('badge-partners').textContent = pending;
+    if (pending > 0) document.getElementById('badge-partners').classList.remove('ok');
+  } catch(e) {}
+}
+
+var partnerFilter = 'all';
+function filterPartners(f, btn) {
+  partnerFilter = f;
+  document.querySelectorAll('[data-filter]').forEach(function(b){ b.style.borderColor=''; b.style.color=''; });
+  if (btn) { btn.style.borderColor='var(--gold)'; btn.style.color='var(--gold)'; }
+  var list = f === 'all' ? ALL_PARTNERS : ALL_PARTNERS.filter(function(p){ return p.type === f; });
+  renderPartners(list);
+}
+
+var typeLabel = {tournament:'🏆 Спонсор турнира', title:'👑 Титульный', media:'📺 Реклама', ambassador:'🤝 Амбассадор'};
+
+function renderPartners(list) {
+  var tb = document.getElementById('tbl-partners');
+  if (!list.length) { tb.innerHTML = '<tr><td colspan="7"><div class="empty"><div class="empty-icon">🤝</div><div>Заявок нет</div></div></td></tr>'; return; }
+  var fmtDate = function(d) { return d ? new Date(d).toLocaleDateString('ru-RU') : '—'; };
+  tb.innerHTML = list.map(function(p) {
+    var d = p.data || {};
+    var name = d.company || d.name || '—';
+    var email = d.email || '—';
+    var phone = d.phone || '—';
+    return '<tr>' +
+      '<td><span class="badge badge-pending">' + (typeLabel[p.type]||p.type) + '</span></td>' +
+      '<td style="font-weight:600;">' + name + '</td>' +
+      '<td><a href="mailto:' + email + '" style="color:var(--blue);">' + email + '</a></td>' +
+      '<td style="color:var(--text-dim);">' + phone + '</td>' +
+      '<td><span class="badge ' + (p.status==='approved'?'badge-approved':p.status==='rejected'?'badge-rejected':'badge-pending') + '">' + (p.status==='approved'?'✓ Одобрен':p.status==='rejected'?'✗ Отклонён':'На рассмотрении') + '</span></td>' +
+      '<td style="font-size:12px;color:var(--text-dim);">' + fmtDate(p.created_at) + '</td>' +
+      '<td><div class="actions">' +
+        '<button class="btn btn-edit" onclick="viewPartner(' + p.id + ')">👁 Детали</button>' +
+        (p.status==='pending'?'<button class="btn btn-approve" onclick="updatePartner(' + p.id + ',\'approved\')">✓</button><button class="btn btn-reject" onclick="updatePartner(' + p.id + ',\'rejected\')">✗</button>':'') +
+      '</div></td>' +
+    '</tr>';
+  }).join('');
+}
+
+function viewPartner(id) {
+  var p = ALL_PARTNERS.find(function(x){ return x.id === id; });
+  if (!p) return;
+  var d = p.data || {};
+  var rows = Object.entries(d).map(function(kv) {
+    return '<div style="display:flex;gap:12px;padding:8px 0;border-bottom:1px solid rgba(26,36,54,.4);font-size:13px;">' +
+      '<span style="color:var(--text-dim);min-width:140px;">' + kv[0] + '</span>' +
+      '<span style="color:var(--text);">' + (kv[1]||'—') + '</span></div>';
+  }).join('');
+  document.getElementById('modal-partner-title').textContent = typeLabel[p.type]||p.type;
+  document.getElementById('modal-partner-body').innerHTML = rows +
+    '<div style="display:flex;gap:10px;margin-top:16px;">' +
+    (p.status==='pending'?'<button class="btn btn-approve" style="flex:1;padding:10px;" onclick="updatePartner('+p.id+',\'approved\');closeModal(\'partner\')">✓ Одобрить</button><button class="btn btn-reject" style="flex:1;padding:10px;" onclick="updatePartner('+p.id+',\'rejected\');closeModal(\'partner\')">✗ Отклонить</button>':'') +
+    '</div>';
+  openModal('partner');
+}
+
+async function updatePartner(id, status) {
+  try {
+    await api('/api/partners/requests/' + id, { method: 'PUT', body: JSON.stringify({ status }) });
+    toast(status === 'approved' ? '✓ Заявка одобрена' : '✗ Заявка отклонена', status==='approved'?'ok':'err');
+    loadPartners();
+  } catch(e) { toast('Ошибка', 'err'); }
+}
+
+// ── ПОЛЬЗОВАТЕЛИ ──
+async function loadUsers() {
+  try {
+    var data = await api('/api/admin/users');
+    ALL_USERS = Array.isArray(data) ? data : [];
+    renderUsers(ALL_USERS);
+  } catch(e) { console.error('users:', e); }
+}
+
+function filterUsers() {
+  var q = document.getElementById('search-users').value.toLowerCase();
+  renderUsers(ALL_USERS.filter(function(u){ return u.username.toLowerCase().includes(q) || (u.email||'').toLowerCase().includes(q); }));
+}
+
+function renderUsers(list) {
+  var tb = document.getElementById('tbl-users');
+  if (!list.length) { tb.innerHTML = '<tr><td colspan="7"><div class="empty"><div class="empty-icon">👥</div><div>Пользователей нет</div></div></td></tr>'; return; }
+  var fmtDate = function(d) { return d ? new Date(d).toLocaleDateString('ru-RU') : '—'; };
+  tb.innerHTML = list.map(function(u) {
+    return '<tr>' +
+      '<td><div style="font-weight:600;">' + u.username + '</div><div style="font-size:11px;color:var(--text-muted);">' + (u.full_name||'') + '</div></td>' +
+      '<td style="font-size:12px;color:var(--text-dim);">' + (u.email||'—') + '</td>' +
+      '<td style="font-family:Rajdhani,sans-serif;font-size:16px;font-weight:700;color:var(--gold);">' + (u.rating||1000) + '</td>' +
+      '<td><span class="badge ' + (u.role==='admin'?'badge-live':'badge-approved') + '">' + u.role + '</span></td>' +
+      '<td>' + (u.verified ? '<span style="color:var(--success);">✓</span>' : '<span style="color:var(--red);">✗</span>') + '</td>' +
+      '<td style="font-size:12px;color:var(--text-dim);">' + fmtDate(u.created_at) + '</td>' +
+      '<td><div class="actions">' +
+        '<a href="/profile.html?user=' + u.username + '" class="btn btn-edit" target="_blank">👁</a>' +
+        (u.role !== 'admin' ? '<button class="btn btn-delete" onclick="banUser(' + u.id + ',\'' + u.username + '\')">🚫 Бан</button>' : '') +
+      '</div></td>' +
+    '</tr>';
+  }).join('');
+}
+
+async function banUser(id, username) {
+  if (!confirm('Заблокировать пользователя ' + username + '?')) return;
+  try {
+    await api('/api/admin/users/' + id + '/ban', { method: 'POST' });
+    toast('Пользователь заблокирован');
+    loadUsers();
+  } catch(e) { toast('Ошибка', 'err'); }
+}
+
+// ── ЗАЯВКИ НА ТУРНИРЫ ──
+function populateTournamentSelect() {
+  var sel = document.getElementById('teams-filter-tournament');
+  sel.innerHTML = '<option value="">— Все турниры —</option>' +
+    ALL_TOURNAMENTS.map(function(t){ return '<option value="' + t.id + '">' + t.name + '</option>'; }).join('');
+}
+
+async function loadTeams() {
+  var tid = document.getElementById('teams-filter-tournament').value;
+  var url = tid ? '/api/tournaments/' + tid + '/teams' : '/api/admin/teams';
+  try {
+    var data = await api(url);
+    var list = Array.isArray(data) ? data : [];
+    renderTeams(list, tid);
+  } catch(e) { console.error(e); }
+}
+
+function renderTeams(list, tid) {
+  var tb = document.getElementById('tbl-teams');
+  if (!list.length) { tb.innerHTML = '<tr><td colspan="7"><div class="empty"><div class="empty-icon">📋</div><div>Заявок нет</div></div></td></tr>'; return; }
+  var fmtDate = function(d) { return d ? new Date(d).toLocaleDateString('ru-RU') : '—'; };
+  tb.innerHTML = list.map(function(t) {
+    var players = t.players ? JSON.parse(typeof t.players === 'string' ? t.players : JSON.stringify(t.players)) : [];
+    var hasStudent = t.student_photo || t.student_data;
+    return '<tr>' +
+      '<td><div style="font-weight:600;">' + (t.name||'Без названия') + '</div><div style="font-size:11px;color:var(--text-muted);">ID: ' + t.id + '</div></td>' +
+      '<td style="font-size:12px;color:var(--text-dim);">' + (t.tournament_name||tid||'—') + '</td>' +
+      '<td style="font-size:12px;">' + (Array.isArray(players) ? players.length : '—') + ' чел.</td>' +
+      '<td>' + (hasStudent ? '<button class="btn btn-edit" onclick="viewStudentData(' + t.id + ')">📷 Фото</button>' : '<span style="color:var(--text-muted);font-size:12px;">—</span>') + '</td>' +
+      '<td><span class="badge ' + (t.status==='accepted'?'badge-approved':t.status==='rejected'?'badge-rejected':'badge-pending') + '">' + (t.status==='accepted'?'✓ Принята':t.status==='rejected'?'✗ Отклонена':'На рассмотрении') + '</span></td>' +
+      '<td style="font-size:12px;color:var(--text-dim);">' + fmtDate(t.created_at) + '</td>' +
+      '<td><div class="actions">' +
+        (t.status==='pending'?'<button class="btn btn-approve" onclick="updateTeam('+t.id+',\'accepted\',\''+tid+'\')">✓</button><button class="btn btn-reject" onclick="updateTeam('+t.id+',\'rejected\',\''+tid+'\')">✗</button>':'') +
+        '<button class="btn btn-delete" onclick="deleteTeam('+t.id+',\''+tid+'\')">🗑</button>' +
+      '</div></td>' +
+    '</tr>';
+  }).join('');
+}
+
+async function updateTeam(id, status, tid) {
+  try {
+    await api('/api/tournaments/' + (tid||0) + '/teams/' + id, { method: 'PUT', body: JSON.stringify({ status }) });
+    toast(status === 'accepted' ? '✓ Заявка принята' : '✗ Заявка отклонена');
+    loadTeams();
+  } catch(e) { toast('Ошибка', 'err'); }
+}
+
+async function deleteTeam(id, tid) {
+  if (!confirm('Удалить заявку?')) return;
+  try {
+    await api('/api/tournaments/' + (tid||0) + '/teams/' + id, { method: 'DELETE' });
+    toast('Заявка удалена');
+    loadTeams();
+  } catch(e) { toast('Ошибка', 'err'); }
+}
+
+function viewStudentData(teamId) {
+  // Найдём команду и покажем фото
+  var url = '/api/admin/teams/' + teamId + '/student-photo';
+  fetch(url, { headers: { 'Authorization': 'Bearer ' + TOKEN } })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (d.photo) openPhoto(d.photo);
+      else toast('Фото не найдено', 'err');
+    })
+    .catch(function(){ toast('Ошибка загрузки', 'err'); });
+}
+
+// ── СТУД. ВЕРИФИКАЦИИ ──
+async function loadStudentVerifications() {
+  try {
+    var data = await api('/api/users/student-verifications');
+    var list = Array.isArray(data) ? data : [];
+    renderStudentVerifications(list);
+    var pending = list.filter(function(v){ return v.status === 'pending'; }).length;
+    document.getElementById('badge-student').textContent = pending;
+    if (pending > 0) document.getElementById('badge-student').classList.remove('ok');
+  } catch(e) {}
+}
+
+function renderStudentVerifications(list) {
+  var tb = document.getElementById('tbl-student');
+  if (!list.length) { tb.innerHTML = '<tr><td colspan="8"><div class="empty"><div class="empty-icon">🎓</div><div>Верификаций нет</div></div></td></tr>'; return; }
+  var fmtDate = function(d) { return d ? new Date(d).toLocaleDateString('ru-RU') : '—'; };
+  tb.innerHTML = list.map(function(v) {
+    return '<tr>' +
+      '<td style="font-weight:600;">' + v.username + '</td>' +
+      '<td>' + (v.university||'—') + '</td>' +
+      '<td>' + (v.faculty||'—') + '</td>' +
+      '<td>' + (v.group_name||'—') + '</td>' +
+      '<td>' + (v.student_id_photo ? '<button class="btn btn-edit" onclick="openPhoto(\'' + v.student_id_photo.substring(0,50) + '...\')">📷 Смотреть</button>'.replace('...', '') + '" onclick="openPhoto(this.dataset.photo)" data-photo="' + v.student_id_photo + '">📷 Смотреть</button>' : '—') + '</td>' +
+      '<td><span class="badge ' + (v.status==='approved'?'badge-approved':v.status==='rejected'?'badge-rejected':'badge-pending') + '">' + (v.status==='approved'?'✓ Верифицирован':v.status==='rejected'?'✗ Отклонён':'Ожидает') + '</span></td>' +
+      '<td style="font-size:12px;color:var(--text-dim);">' + fmtDate(v.created_at) + '</td>' +
+      '<td><div class="actions">' +
+        (v.status==='pending'?'<button class="btn btn-approve" onclick="updateStudentVerification('+v.id+',\'approved\')">✓</button><button class="btn btn-reject" onclick="updateStudentVerification('+v.id+',\'rejected\')">✗</button>':'') +
+      '</div></td>' +
+    '</tr>';
+  }).join('');
+}
+
+async function updateStudentVerification(id, status) {
+  try {
+    await api('/api/admin/student-verification/' + id, { method: 'PUT', body: JSON.stringify({ status }) });
+    toast(status === 'approved' ? '✓ Верифицирован' : '✗ Отклонён');
+    loadStudentVerifications();
+  } catch(e) { toast('Ошибка', 'err'); }
+}
+
+// ── STATS ──
+function updateStats() {
+  document.getElementById('st-users').textContent = ALL_USERS.length || '—';
+  document.getElementById('st-tournaments').textContent = ALL_TOURNAMENTS.length || '—';
+  document.getElementById('st-partners').textContent = ALL_PARTNERS.length || '—';
+}
+
+// ── UI ──
+function switchTab(id, btn) {
+  document.querySelectorAll('.panel').forEach(function(p){ p.classList.remove('active'); });
+  document.querySelectorAll('.tab').forEach(function(b){ b.classList.remove('active'); });
+  document.getElementById('panel-' + id).classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (id === 'teams') loadTeams();
+}
+
+function openModal(id) { document.getElementById('modal-' + id).classList.add('open'); }
+function closeModal(id) { document.getElementById('modal-' + id).classList.remove('open'); }
+document.querySelectorAll('.modal-bg').forEach(function(m){ m.addEventListener('click', function(e){ if(e.target===m) m.classList.remove('open'); }); });
+
+function openPhoto(src) {
+  document.getElementById('photo-viewer-img').src = src;
+  document.getElementById('photo-viewer').classList.add('open');
+}
+function closePhoto() { document.getElementById('photo-viewer').classList.remove('open'); }
+
+function toast(msg, type) {
+  var el = document.getElementById('toast');
+  el.textContent = (type==='err'?'✗ ':'✓ ') + msg;
+  el.className = 'show ' + (type==='err'?'err':'ok');
+  clearTimeout(el._t);
+  el._t = setTimeout(function(){ el.classList.remove('show'); }, 3000);
+}
+
+// ── INIT ──
+if (ME && ME.role === 'admin') loadAll();
+</script>
+</body>
+</html>
