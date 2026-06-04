@@ -6,7 +6,7 @@ const auth = require('../middleware/auth')
 // ── ВСЕ ТУРНИРЫ ──
 router.get('/', async (req, res) => {
   const { game, status, limit = 20 } = req.query
-  let q = `SELECT t.*, u.username as organizer_name, COALESCE(reg.cnt,0)::int as filled_count FROM tournaments t LEFT JOIN users u ON t.organizer_id = u.id LEFT JOIN (SELECT tournament_id, COUNT(*) as cnt FROM teams GROUP BY tournament_id) reg ON reg.tournament_id = t.id WHERE 1=1`
+  let q = `SELECT t.*, t.is_student, u.username as organizer_name, COALESCE(reg.cnt,0)::int as filled_count FROM tournaments t LEFT JOIN users u ON t.organizer_id = u.id LEFT JOIN (SELECT tournament_id, COUNT(*) as cnt FROM teams GROUP BY tournament_id) reg ON reg.tournament_id = t.id WHERE 1=1`
   const params = []
   if (game) { params.push(game); q += ` AND t.game = $${params.length}` }
   if (status) { params.push(status); q += ` AND t.status = $${params.length}` }
@@ -20,7 +20,7 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const t = await db.query(
-      `SELECT t.*, u.username as organizer_name, u.full_name as organizer_fullname
+      `SELECT t.*, t.is_student, u.username as organizer_name, u.full_name as organizer_fullname
        FROM tournaments t LEFT JOIN users u ON t.organizer_id = u.id WHERE t.id = $1`,
       [req.params.id]
     )
