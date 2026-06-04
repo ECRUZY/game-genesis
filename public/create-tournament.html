@@ -1,8 +1,6 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <script src="/nav.js"></script>
-  <script src="/api.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Создать турнир — Game Genesis</title>
@@ -69,7 +67,7 @@
     .sb-sep { width: 28px; height: 1px; background: var(--border); margin: 6px 0; }
 
     /* PAGE */
-    .page { margin-left: 220px; padding-top: 20px; min-height: 100vh; position: relative; z-index: 1; transition: margin-left .3s; }
+    .page { margin-left: 60px; padding-top: 64px; min-height: 100vh; position: relative; z-index: 1; }
 
     /* WIZARD LAYOUT */
     .wizard-wrap {
@@ -288,10 +286,34 @@
 <div class="grid-bg"></div>
 
 <!-- HEADER -->
-
+<header>
+  <a href="index.html" class="logo">
+    <div class="logo-hex"><svg viewBox="0 0 18 18" fill="none"><polygon points="9,1 16,4.5 16,13.5 9,17 2,13.5 2,4.5" stroke="#080c12" stroke-width="1.5"/><circle cx="9" cy="9" r="2.5" fill="#080c12"/></svg></div>
+    <span class="logo-name">GAME GENESIS</span>
+  </a>
+  <nav>
+    <a href="index.html" class="nav-a">Главная</a>
+    <a href="tournament.html" class="nav-a">Турниры</a>
+    <a href="#" class="nav-a active">Создать турнир</a>
+    <a href="#" class="nav-a">Рейтинг</a>
+  </nav>
+  <div style="display:flex;align-items:center;gap:8px;margin-left:auto;margin-right:12px;">
+    <button onclick="location.href='auth.html'" style="font-family:'Exo 2',sans-serif;font-size:13px;font-weight:500;padding:7px 18px;border-radius:7px;border:1px solid #253550;background:transparent;color:#5c7090;cursor:pointer;" onmouseover="this.style.borderColor='#f0c040';this.style.color='#f0c040'" onmouseout="this.style.borderColor='#253550';this.style.color='#5c7090'">Войти</button>
+  </div>
+  <button class="btn-back" onclick="location.href='index.html'">
+    <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+    Назад
+  </button>
+</header>
 
 <!-- SIDEBAR -->
-
+<aside class="sidebar">
+  <div class="sb-item" onclick="location.href='index.html'"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span class="tip">Главная</span></div>
+  <div class="sb-item"><svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/></svg><span class="tip">Турниры</span></div>
+  <div class="sb-item active"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg><span class="tip">Создать</span></div>
+  <div class="sb-sep"></div>
+  <div class="sb-item"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span class="tip">Профиль</span></div>
+</aside>
 
 <div class="page">
   <div class="wizard-wrap" id="wizard-wrap">
@@ -393,7 +415,25 @@
           </select>
         </div>
 
-        <div class="form-nav">
+        
+        <!-- ТИП ТУРНИРА -->
+        <div style="margin-bottom:24px;">
+          <div style="font-size:11px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;">Тип турнира</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div id="tc-open" onclick="setTournamentType('open')" style="background:var(--bg-card2);border:2px solid var(--gold);border-radius:12px;padding:16px;cursor:pointer;transition:.2s;text-align:center;">
+              <div style="font-size:28px;margin-bottom:6px;">🏆</div>
+              <div style="font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;color:#fff;margin-bottom:3px;">Открытый</div>
+              <div style="font-size:12px;color:var(--text-dim);">Для всех желающих</div>
+            </div>
+            <div id="tc-student" onclick="setTournamentType('student')" style="background:var(--bg-card2);border:2px solid var(--border);border-radius:12px;padding:16px;cursor:pointer;transition:.2s;text-align:center;">
+              <div style="font-size:28px;margin-bottom:6px;">🎓</div>
+              <div style="font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;color:#fff;margin-bottom:3px;">Студенческий</div>
+              <div style="font-size:12px;color:var(--text-dim);">Только для студентов</div>
+            </div>
+          </div>
+        </div>
+
+<div class="form-nav">
           <div></div>
           <button class="btn-next" onclick="nextStep(1)">
             Далее
@@ -747,17 +787,16 @@
   }
   function prevStep(from) { goToStep(from - 1); }
 
-  function goToStep(n) {
+  
+  var tournamentType = 'open';
+  function setTournamentType(type) {
+    tournamentType = type;
+    document.getElementById('tc-open').style.borderColor = type === 'open' ? 'var(--gold)' : 'var(--border)';
+    document.getElementById('tc-student').style.borderColor = type === 'student' ? 'var(--blue)' : 'var(--border)';
+  }
+
+function goToStep(n) {
     if (n < 1 || n > totalSteps) return;
-    // Запрещаем переход вперёд без валидации
-    if (n > currentStep) {
-      // Валидируем все шаги до n-1
-      for (let i = currentStep; i < n; i++) {
-        if (!validateStep(i)) {
-          return; // Стоп — шаг не заполнен
-        }
-      }
-    }
     // mark done
     for (let i = 1; i < n; i++) {
       document.getElementById('si-' + i).className = 'step-item done';
