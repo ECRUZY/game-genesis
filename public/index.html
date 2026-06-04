@@ -832,13 +832,26 @@
 async function loadIndexData() {
   try {
     // Загружаем турниры
-    var tres = await fetch('/api/tournaments?limit=4');
+    var tres = await fetch('/api/tournaments?limit=20');
     var tournaments = await tres.json();
 
-    // Берём первый открытый/live турнир для hero
-    var main = tournaments.find(function(t) {
-      return t.status === 'open' || t.status === 'live';
-    }) || tournaments[0];
+    // Берём featured турнир из настроек админа
+    var featuredId = localStorage.getItem('gg_featured_id');
+    try {
+      var fcfg = await fetch('/api/admin/featured');
+      var fcfgData = await fcfg.json();
+      if (fcfgData.tournament_id) featuredId = fcfgData.tournament_id;
+    } catch(e) {}
+
+    var main = null;
+    if (featuredId) {
+      main = tournaments.find(function(t){ return String(t.id) === String(featuredId); });
+    }
+    if (!main) {
+      main = tournaments.find(function(t) {
+        return t.status === 'open' || t.status === 'live';
+      }) || tournaments[0];
+    }
 
     if (main) {
       // Hero заголовок
