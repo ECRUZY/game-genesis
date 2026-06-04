@@ -19,6 +19,7 @@ app.use('/api/users', require('./routes/users'))
 app.use('/api/tournaments', require('./routes/tournaments'))
 app.use('/api/tournaments', require('./routes/bracket'))
 app.use('/api/partners', require('./routes/partners'))
+app.use('/api/admin', require('./routes/admin'))
 
 // ── HEALTH CHECK (Railway использует это) ──
 app.get('/health', (req, res) => res.json({ status: 'ok', time: new Date() }))
