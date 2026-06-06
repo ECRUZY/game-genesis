@@ -733,7 +733,8 @@ var studentPhotos = {};
 var IS_STUDENT_TOURNAMENT = false;
 
 function mkStudentBlock(idx) {
-  // Возвращает HTML строку студенческого блока для игрока idx
+  // idx может быть числом (1,2,3...) или строкой ('solo')
+  var idxJs = (typeof idx === 'string') ? ("'" + idx + "'") : idx;
   var inputStyle = 'width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text);font-family:\'Exo 2\',sans-serif;outline:none;transition:border-color .2s;box-sizing:border-box;';
   var labelStyle = 'display:block;font-size:11px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;';
   return '<div class="sd-block" style="margin-top:14px;background:rgba(96,165,250,.04);border:1px solid rgba(96,165,250,.2);border-radius:12px;padding:16px;">' +
@@ -756,7 +757,7 @@ function mkStudentBlock(idx) {
         '</select></div>' +
     '</div>' +
     '<div><label style="' + labelStyle + '">Фото студенческого билета <span style="color:var(--gold)">*</span></label>' +
-      '<div id="sd-drop-' + idx + '" onclick="triggerStudentPhoto(' + idx + ')" ' +
+      '<div id="sd-drop-' + idx + '" onclick="triggerStudentPhoto(' + idxJs + ')" ' +
         'style="border:2px dashed var(--border-hi);border-radius:10px;padding:16px;text-align:center;cursor:pointer;transition:.2s;">' +
         '<div id="sd-preview-' + idx + '" style="display:none;">' +
           '<img id="sd-img-' + idx + '" src="" style="max-width:100%;max-height:120px;border-radius:8px;object-fit:contain;">' +
@@ -768,7 +769,7 @@ function mkStudentBlock(idx) {
           '<div style="font-size:11px;color:var(--text-muted);margin-top:2px;">JPG, PNG до 5 МБ</div>' +
         '</div>' +
       '</div>' +
-      '<input type="file" id="sd-file-' + idx + '" accept="image/*" style="display:none;" onchange="handleStudentPhoto(this,' + idx + ')">' +
+      '<input type="file" id="sd-file-' + idx + '" accept="image/*" style="display:none;" onchange="handleStudentPhoto(this,' + idxJs + ')">' +
     '</div>' +
   '</div>';
 }
