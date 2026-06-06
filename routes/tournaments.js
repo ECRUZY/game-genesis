@@ -109,18 +109,52 @@ router.post('/', auth, async (req, res) => {
 router.put('/:id', auth, async (req, res) => {
   const t = await db.query('SELECT organizer_id FROM tournaments WHERE id=$1', [req.params.id])
   if (!t.rows[0]) return res.status(404).json({ error: 'Не найден' })
-  if (t.rows[0].organizer_id !== req.user.id) return res.status(403).json({ error: 'Нет прав' })
+  const userRes = await db.query('SELECT role FROM users WHERE id=$1', [req.user.id])
+  const role = userRes.rows[0]?.role || 'player'
+  if (t.rows[0].organizer_id !== req.user.id && role !== 'admin') return res.status(403).json({ error: 'Нет прав' })
 
-  const { name, status, description } = req.body
-  const result = await db.query(
-    `UPDATE tournaments SET
-      name = COALESCE($1, name),
-      status = COALESCE($2, status),
-      description = COALESCE($3, description)
-     WHERE id = $4 RETURNING *`,
-    [name, status, description, req.params.id]
-  )
-  res.json(result.rows[0])
+  const { name, status, description, game, team_size, max_slots, start_date, reg_start, reg_end, is_student } = req.body
+  try {
+    const result = await db.query(
+      `UPDATE tournaments SET
+        name        = COALESCE($1, name),
+        status      = COALESCE($2, status),
+        description = COALESCE($3, description),
+        game        = COALESCE($4, game),
+        team_size   = COALESCE($5, team_size),
+        max_slots   = COALESCE($6, max_slots),
+        start_date  = COALESCE($7::date, start_date),
+        reg_start   = COALESCE($8::date, reg_start),
+        reg_end     = COALESCE($9::date, reg_end),
+        is_student  = COALESCE($10, is_student)
+       WHERE id = $11 RETURNING *`,
+      [name, status, description, game, team_size, max_slots||null,
+       start_date||null, reg_start||null, reg_end||null,
+       is_student !== undefined ? is_student : null,
+       req.params.id]
+    )
+    res.json(result.rows[0])
+  } catch(e) {
+    console.error(e)
+    res.status(500).json({ error: 'Ошибка обновления' })
+  }
+})
+
+// ── УДАЛИТЬ КОМАНДУ ──
+router.delete('/:tid/teams/:id', auth, async (req, res) => {
+  try {
+    const t = await db.query('SELECT organizer_id FROM tournaments WHERE id=$1', [req.params.tid])
+    if (!t.rows[0]) return res.status(404).json({ error: 'Турнир не найден' })
+    const userRes = await db.query('SELECT role FROM users WHERE id=$1', [req.user.id])
+    const role = userRes.rows[0]?.role || 'player'
+    if (t.rows[0].organizer_id !== req.user.id && role !== 'admin') return res.status(403).json({ error: 'Нет прав' })
+    await db.query('DELETE FROM team_players WHERE team_id=$1', [req.params.id])
+    await db.query('DELETE FROM teams WHERE id=$1 AND tournament_id=$2', [req.params.id, req.params.tid])
+    res.json({ success: true })
+  } catch(e) {
+    console.error(e)
+    res.status(500).json({ error: 'Ошибка удаления' })
+  }
 })
 
 // ── ЗАРЕГИСТРИРОВАТЬСЯ НА ТУРНИР ──
