@@ -124,6 +124,14 @@ async function initDB() {
         BEGIN ALTER TABLE matches ADD COLUMN match_number INT; EXCEPTION WHEN duplicate_column THEN NULL; END;
         BEGIN ALTER TABLE tournaments ADD COLUMN bracket_generated BOOLEAN DEFAULT false; EXCEPTION WHEN duplicate_column THEN NULL; END;
         BEGIN ALTER TABLE tournaments ADD COLUMN bracket_published BOOLEAN DEFAULT false; EXCEPTION WHEN duplicate_column THEN NULL; END;
+        BEGIN ALTER TABLE tournaments ADD COLUMN is_student BOOLEAN DEFAULT false; EXCEPTION WHEN duplicate_column THEN NULL; END;
+        BEGIN ALTER TABLE tournaments ADD COLUMN cover_image TEXT; EXCEPTION WHEN duplicate_column THEN NULL; END;
+        BEGIN ALTER TABLE teams ADD COLUMN players JSONB; EXCEPTION WHEN duplicate_column THEN NULL; END;
+        BEGIN ALTER TABLE teams ADD COLUMN needs_players INT DEFAULT 0; EXCEPTION WHEN duplicate_column THEN NULL; END;
+        BEGIN ALTER TABLE teams ADD COLUMN team_type VARCHAR(20) DEFAULT 'full'; EXCEPTION WHEN duplicate_column THEN NULL; END;
+        BEGIN ALTER TABLE teams ADD COLUMN student_data JSONB; EXCEPTION WHEN duplicate_column THEN NULL; END;
+        BEGIN ALTER TABLE teams ADD COLUMN student_photo TEXT; EXCEPTION WHEN duplicate_column THEN NULL; END;
+        BEGIN ALTER TABLE users ADD COLUMN avatar TEXT; EXCEPTION WHEN duplicate_column THEN NULL; END;
       END $$;
 
     CREATE TABLE IF NOT EXISTS matches (
