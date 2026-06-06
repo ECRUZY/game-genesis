@@ -779,15 +779,17 @@
   const totalSteps = 5;
   let selectedType = 'se';
   let payType = 'free';
+  // Храним какие шаги реально прошли валидацию
+  const completedSteps = new Set();
 
   // ── NAVIGATION ──
   function nextStep(from) {
     if (!validateStep(from)) return;
+    completedSteps.add(from);
     goToStep(from + 1);
   }
   function prevStep(from) { goToStep(from - 1); }
 
-  
   var tournamentType = 'open';
   function setTournamentType(type) {
     tournamentType = type;
@@ -797,16 +799,28 @@
 
 function goToStep(n) {
     if (n < 1 || n > totalSteps) return;
-    // mark done
-    for (let i = 1; i < n; i++) {
-      document.getElementById('si-' + i).className = 'step-item done';
+    // Запретить прыжок вперёд через клик на боковой панели если шаг не завершён
+    if (n > currentStep && !completedSteps.has(currentStep)) {
+      // Разрешить только если все промежуточные шаги пройдены
+      for (let i = currentStep; i < n; i++) {
+        if (!completedSteps.has(i)) {
+          // Подсветить текущий как требующий внимания
+          if (typeof validateStep === 'function') validateStep(currentStep);
+          return;
+        }
+      }
     }
-    // mark active
-    document.getElementById('si-' + n).className = 'step-item active';
-    // mark future
-    for (let i = n + 1; i <= totalSteps; i++) {
+    // Обновляем индикаторы — только реально завершённые шаги получают done
+    for (let i = 1; i <= totalSteps; i++) {
       const el = document.getElementById('si-' + i);
-      if (el) el.className = 'step-item';
+      if (!el) continue;
+      if (i === n) {
+        el.className = 'step-item active';
+      } else if (completedSteps.has(i)) {
+        el.className = 'step-item done';
+      } else {
+        el.className = 'step-item';
+      }
     }
     // show section
     document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
@@ -992,6 +1006,7 @@ function goToStep(n) {
       reg_start: (document.getElementById('t-reg-start')||{value:''}).value,
       reg_end: (document.getElementById('t-reg-end')||{value:''}).value,
       start_time: (document.getElementById('t-start-time')||{value:'18:00'}).value,
+      is_student: tournamentType === 'student',
     };
 
     try {
