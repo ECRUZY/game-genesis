@@ -254,11 +254,12 @@ router.post('/:id/teams', auth, async (req, res) => {
 
     // Создаём команду
     const team = await db.query(
-      `INSERT INTO teams (tournament_id, name, status, players, needs_players, team_type, student_data, student_photo)
-       VALUES ($1,$2,'pending',$3,$4,$5,$6,$7) RETURNING *`,
+      `INSERT INTO teams (tournament_id, name, captain_id, status, players, needs_players, team_type, student_data, student_photo)
+       VALUES ($1,$2,$3,'pending',$4,$5,$6,$7,$8) RETURNING *`,
       [
         req.params.id,
         team_name,
+        req.user.id,
         JSON.stringify(players),
         needs_players || 0,
         team_type || 'full',
