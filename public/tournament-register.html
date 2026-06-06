@@ -930,15 +930,23 @@ async function doSend(data) {
       };
     });
 
+    // Собираем team_id свободных агентов которых включаем — их solo-команды надо удалить
+    var mergedTeamIds = [];
+    Object.keys(addedAgents).forEach(function(faIdx) {
+      var agent = window.FREE_AGENTS && window.FREE_AGENTS[faIdx];
+      if (agent && agent.team_id) mergedTeamIds.push(agent.team_id);
+    });
+
     // Общие студ. данные команды — берём от первого игрока
     var firstSd = playersWithStudent[0];
     var body = {
-      team_name:     data.team_name || ('Команда #' + Date.now()),
-      players:       playersWithStudent,
-      team_type:     data.type,
-      needs_players: data.needs || 0,
-      student_data:  firstSd && firstSd.student_data ? firstSd.student_data : null,
-      student_photo: firstSd && firstSd.student_photo ? firstSd.student_photo : null
+      team_name:        data.team_name || ('Команда #' + Date.now()),
+      players:          playersWithStudent,
+      team_type:        data.type,
+      needs_players:    data.needs || 0,
+      student_data:     firstSd && firstSd.student_data ? firstSd.student_data : null,
+      student_photo:    firstSd && firstSd.student_photo ? firstSd.student_photo : null,
+      merged_team_ids:  mergedTeamIds
     };
 
     var resp = await API.post('/tournaments/' + TOURNAMENT_ID + '/teams', body);
