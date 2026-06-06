@@ -472,17 +472,45 @@ function renderTeams() {
       : (t.needs_players > 0 ? ' <span style="font-size:10px;font-weight:600;color:var(--gold);background:var(--gold-dim);border-radius:10px;padding:1px 7px;">ИЩЕТ ' + t.needs_players + '</span>' : '');
 
     var playersHtml = players.map(function(p) {
-      return '<div class="player-row">' +
-        (p.is_captain ? '<span class="cap-badge">КАП</span>' : '<span style="width:30px;display:inline-block;"></span>') +
-        '<span style="font-weight:500;min-width:160px;">' + (p.full_name || '—') + '</span>' +
-        '<span style="color:var(--text-dim);min-width:120px;">' + (p.nickname || '—') + '</span>' +
-        (p.steam_url ? '<a href="' + p.steam_url + '" target="_blank" style="color:var(--blue);font-size:11px;">Steam →</a>' : '') +
-      '</div>';
+      var sd = p.student_data;
+      // Парсим если строка
+      if (typeof sd === 'string') { try { sd = JSON.parse(sd); } catch(e) { sd = null; } }
+
+      var playerRow = '<div style="border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px;background:rgba(0,0,0,.15);">' +
+        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:' + (sd || p.student_photo ? '10px' : '0') + ';">' +
+          (p.is_captain ? '<span class="cap-badge">КАП</span>' : '<span style="font-size:10px;color:var(--text-muted);font-weight:600;padding:1px 6px;">ИГР</span>') +
+          '<span style="font-weight:600;color:#fff;min-width:150px;">' + (p.full_name || '—') + '</span>' +
+          '<span style="color:var(--text-dim);min-width:110px;">' + (p.nickname || '—') + '</span>' +
+          (p.steam_url ? '<a href="' + p.steam_url + '" target="_blank" style="color:var(--blue);font-size:11px;margin-left:4px;">Steam →</a>' : '') +
+        '</div>';
+
+      // Студ. данные игрока
+      if (sd) {
+        playerRow +=
+          '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;background:rgba(96,165,250,.05);border:1px solid rgba(96,165,250,.15);border-radius:8px;padding:10px;">' +
+            (sd.university ? '<div><div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px;">Университет</div><div style="font-size:12px;color:var(--text);">' + sd.university + '</div></div>' : '') +
+            (sd.faculty ? '<div><div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px;">Факультет</div><div style="font-size:12px;color:var(--text);">' + sd.faculty + '</div></div>' : '') +
+            (sd.group ? '<div><div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px;">Группа</div><div style="font-size:12px;color:var(--text);">' + sd.group + '</div></div>' : '') +
+            (sd.year ? '<div><div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px;">Курс</div><div style="font-size:12px;color:var(--text);">' + sd.year + '</div></div>' : '') +
+          '</div>';
+      }
+
+      // Фото студбилета игрока
+      if (p.student_photo) {
+        playerRow += '<div style="margin-top:8px;">' +
+          '<div style="font-size:10px;font-weight:600;color:var(--blue);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;">📎 Студ. билет</div>' +
+          '<img src="' + p.student_photo + '" style="max-width:200px;max-height:140px;border-radius:8px;border:1px solid var(--border);object-fit:contain;cursor:pointer;" onclick="window.open(this.src)" title="Нажмите чтобы открыть">' +
+        '</div>';
+      }
+
+      playerRow += '</div>';
+      return playerRow;
     }).join('') || '<div style="color:var(--text-muted);font-size:12px;padding:8px 0;">Нет данных</div>';
 
-    var studentHtml = t.student_photo
+    // Фото студбилета команды (капитан, если нет per-player данных)
+    var studentHtml = (!players.some(function(p){ return p.student_photo; }) && t.student_photo)
       ? '<div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);">' +
-          '<div style="font-size:11px;font-weight:600;color:var(--blue);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;">📎 Студ. билет</div>' +
+          '<div style="font-size:11px;font-weight:600;color:var(--blue);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;">📎 Студ. билет (команда)</div>' +
           '<img src="' + t.student_photo + '" style="max-width:220px;max-height:160px;border-radius:8px;border:1px solid var(--border);object-fit:contain;cursor:pointer;" onclick="window.open(this.src)">' +
         '</div>'
       : '';
