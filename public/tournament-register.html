@@ -191,54 +191,6 @@
             </div>
           </div>
           <div id="full-wrap"></div>
-          <!-- СТУДЕНЧЕСКИЕ ДАННЫЕ (показывается только для студ. турниров) -->
-          <div id="student-reg-block" style="display:none;background:rgba(96,165,250,.04);border:1px solid rgba(96,165,250,.2);border-radius:14px;padding:20px;margin-bottom:16px;">
-      <div style="font-family:'Rajdhani',sans-serif;font-size:17px;font-weight:700;color:var(--blue);margin-bottom:16px;display:flex;align-items:center;gap:8px;">
-        <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
-        Подтверждение студенческого статуса
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
-        <div>
-          <label style="display:block;font-size:11px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;">Университет <span style="color:var(--gold)">*</span></label>
-          <input type="text" id="sr-university" placeholder="ЧГУ им. Кадырова" style="width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text);font-family:'Exo 2',sans-serif;outline:none;transition:border-color .2s;">
-        </div>
-        <div>
-          <label style="display:block;font-size:11px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;">Факультет <span style="color:var(--gold)">*</span></label>
-          <input type="text" id="sr-faculty" placeholder="ИМФИТ" style="width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text);font-family:'Exo 2',sans-serif;outline:none;transition:border-color .2s;">
-        </div>
-        <div>
-          <label style="display:block;font-size:11px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;">Группа</label>
-          <input type="text" id="sr-group" placeholder="ИСТб-22" style="width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text);font-family:'Exo 2',sans-serif;outline:none;transition:border-color .2s;">
-        </div>
-        <div>
-          <label style="display:block;font-size:11px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;">Курс</label>
-          <select id="sr-year" style="width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text);font-family:'Exo 2',sans-serif;outline:none;cursor:pointer;">
-            <option value="">— Выберите —</option>
-            <option>1 курс</option><option>2 курс</option><option>3 курс</option>
-            <option>4 курс</option><option>5 курс</option><option>Магистратура</option>
-          </select>
-        </div>
-      </div>
-      <!-- Фото студбилета -->
-      <div>
-        <label style="display:block;font-size:11px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;">Фото студенческого билета <span style="color:var(--gold)">*</span></label>
-        <div id="sr-drop" onclick="document.getElementById('sr-file').click()" style="border:2px dashed var(--border-hi);border-radius:10px;padding:20px;text-align:center;cursor:pointer;transition:.2s;">
-          <div id="sr-preview" style="display:none;">
-            <img id="sr-img" src="" style="max-width:100%;max-height:160px;border-radius:8px;object-fit:contain;">
-            <div style="font-size:12px;color:var(--success);margin-top:8px;">✓ Фото загружено. Нажмите чтобы изменить</div>
-          </div>
-          <div id="sr-placeholder">
-            <div style="font-size:28px;margin-bottom:6px;">📷</div>
-            <div style="font-size:13px;color:var(--text-dim);">Нажмите чтобы загрузить фото</div>
-            <div style="font-size:11px;color:var(--text-muted);margin-top:3px;">JPG, PNG до 5 МБ</div>
-          </div>
-        </div>
-        <input type="file" id="sr-file" accept="image/*" style="display:none;" onchange="previewStudentPhoto(this)">
-      </div>
-      <div style="margin-top:12px;font-size:12px;color:var(--text-dim);line-height:1.5;">
-        ℹ️ Фото будет проверено организатором. Заявка подтверждается после верификации.
-      </div>
-    </div>
 
           <div class="fb">
             <div class="custom-check" onclick="toggleCheck('full-ag')"><div class="check-box" id="full-ag-box"></div><input type="checkbox" id="full-ag"><span class="check-label">Все игроки согласны участвовать и принимают <a href="#">правила турнира</a>.</span></div>
@@ -399,7 +351,8 @@ function mkPlayer(i, cap, pfx) {
       '<div class="field"><label>ФИО <span class="req">*</span></label><input type="text" id="' + pfx+'-'+i+'-n" placeholder="' + (cap?'Ваше ФИО':'Никнейм или ФИО') + '"></div>' +
       '<div class="field"><label>Никнейм <span class="req">*</span></label><input type="text" id="' + pfx+'-'+i+'-k" placeholder="XShadow99"></div>' +
       '<div class="field"><label>Steam <span class="req">*</span></label><input type="url" id="' + pfx+'-'+i+'-s" placeholder="steamcommunity.com/id/..."></div>' +
-    '</div>';
+    '</div>' +
+    (IS_STUDENT_TOURNAMENT ? mkStudentBlock(i) : '');
   return div;
 }
 
@@ -549,6 +502,10 @@ async function loadTournamentData() {
       }
     }
 
+    // Студенческий турнир — ставим флаг ДО buildFull чтобы mkPlayer знал
+    IS_STUDENT_TOURNAMENT = !!t.is_student;
+    studentPhotos = {};
+
     // Перестраиваем форму под правильный состав
     buildFull();
     buildPartialButtons();
@@ -560,11 +517,6 @@ async function loadTournamentData() {
     var fmt = document.getElementById('t-format-label');
     if (fmt) fmt.textContent = 'Турнир формата ' + (t.team_size||'5x5') + '. Выберите подходящий вариант участия.';
 
-    // Студенческий блок
-    if (t.is_student) {
-      var sb = document.getElementById('student-reg-block');
-      if (sb) sb.style.display = 'block';
-    }
     document.title = t.name + ' — Регистрация | Game Genesis';
 
     // Pills
@@ -743,11 +695,62 @@ function resetFreeAgents() {
 }
 
 
-var studentPhotoBase64 = null;
+// Хранилище фото по индексу игрока: { '1': base64, '2': base64, ... }
+var studentPhotos = {};
 
-function previewStudentPhoto(input) {
+// Глобальный флаг — показывать ли студ. блоки (ставится при загрузке турнира)
+var IS_STUDENT_TOURNAMENT = false;
+
+function mkStudentBlock(idx) {
+  // Возвращает HTML строку студенческого блока для игрока idx
+  var inputStyle = 'width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text);font-family:\'Exo 2\',sans-serif;outline:none;transition:border-color .2s;box-sizing:border-box;';
+  var labelStyle = 'display:block;font-size:11px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;';
+  return '<div class="sd-block" style="margin-top:14px;background:rgba(96,165,250,.04);border:1px solid rgba(96,165,250,.2);border-radius:12px;padding:16px;">' +
+    '<div style="font-family:Rajdhani,sans-serif;font-size:14px;font-weight:700;color:var(--blue);margin-bottom:12px;display:flex;align-items:center;gap:6px;">' +
+      '<svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>' +
+      'Студенческий статус' +
+    '</div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">' +
+      '<div><label style="' + labelStyle + '">Университет <span style="color:var(--gold)">*</span></label>' +
+        '<input type="text" id="sd-uni-' + idx + '" placeholder="ЧГУ им. Кадырова" style="' + inputStyle + '"></div>' +
+      '<div><label style="' + labelStyle + '">Факультет <span style="color:var(--gold)">*</span></label>' +
+        '<input type="text" id="sd-fac-' + idx + '" placeholder="ИМФИТ" style="' + inputStyle + '"></div>' +
+      '<div><label style="' + labelStyle + '">Группа <span style="color:var(--gold)">*</span></label>' +
+        '<input type="text" id="sd-grp-' + idx + '" placeholder="ИСТб-22" style="' + inputStyle + '"></div>' +
+      '<div><label style="' + labelStyle + '">Курс</label>' +
+        '<select id="sd-year-' + idx + '" style="' + inputStyle + 'cursor:pointer;">' +
+          '<option value="">— Выберите —</option>' +
+          '<option>1 курс</option><option>2 курс</option><option>3 курс</option>' +
+          '<option>4 курс</option><option>5 курс</option><option>Магистратура</option>' +
+        '</select></div>' +
+    '</div>' +
+    '<div><label style="' + labelStyle + '">Фото студенческого билета <span style="color:var(--gold)">*</span></label>' +
+      '<div id="sd-drop-' + idx + '" onclick="triggerStudentPhoto(' + idx + ')" ' +
+        'style="border:2px dashed var(--border-hi);border-radius:10px;padding:16px;text-align:center;cursor:pointer;transition:.2s;">' +
+        '<div id="sd-preview-' + idx + '" style="display:none;">' +
+          '<img id="sd-img-' + idx + '" src="" style="max-width:100%;max-height:120px;border-radius:8px;object-fit:contain;">' +
+          '<div style="font-size:12px;color:var(--success);margin-top:6px;">✓ Фото загружено. Нажмите чтобы изменить</div>' +
+        '</div>' +
+        '<div id="sd-ph-' + idx + '">' +
+          '<div style="font-size:22px;margin-bottom:4px;">📷</div>' +
+          '<div style="font-size:12px;color:var(--text-dim);">Нажмите чтобы загрузить</div>' +
+          '<div style="font-size:11px;color:var(--text-muted);margin-top:2px;">JPG, PNG до 5 МБ</div>' +
+        '</div>' +
+      '</div>' +
+      '<input type="file" id="sd-file-' + idx + '" accept="image/*" style="display:none;" onchange="handleStudentPhoto(this,' + idx + ')">' +
+    '</div>' +
+  '</div>';
+}
+
+function triggerStudentPhoto(idx) {
+  var inp = document.getElementById('sd-file-' + idx);
+  if (inp) inp.click();
+}
+
+function handleStudentPhoto(input, idx) {
   var file = input.files[0];
-  if (!file || file.size > 5*1024*1024) { alert('Максимум 5 МБ'); return; }
+  if (!file) return;
+  if (file.size > 5*1024*1024) { alert('Максимум 5 МБ'); return; }
   var reader = new FileReader();
   reader.onload = function(e) {
     var img = new Image();
@@ -756,40 +759,52 @@ function previewStudentPhoto(input) {
       var maxW = 1200, ratio = Math.min(maxW/img.width, maxW/img.height, 1);
       canvas.width = img.width*ratio; canvas.height = img.height*ratio;
       canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-      studentPhotoBase64 = canvas.toDataURL('image/jpeg', 0.85);
-      document.getElementById('sr-img').src = studentPhotoBase64;
-      document.getElementById('sr-preview').style.display = 'block';
-      document.getElementById('sr-placeholder').style.display = 'none';
-      document.getElementById('sr-drop').style.borderColor = 'var(--success)';
+      studentPhotos[idx] = canvas.toDataURL('image/jpeg', 0.85);
+      var imgEl = document.getElementById('sd-img-' + idx);
+      if (imgEl) imgEl.src = studentPhotos[idx];
+      var prev = document.getElementById('sd-preview-' + idx);
+      var ph = document.getElementById('sd-ph-' + idx);
+      var drop = document.getElementById('sd-drop-' + idx);
+      if (prev) prev.style.display = 'block';
+      if (ph) ph.style.display = 'none';
+      if (drop) drop.style.borderColor = 'var(--success)';
     };
     img.src = e.target.result;
   };
   reader.readAsDataURL(file);
 }
 
-function getStudentData() {
-  var block = document.getElementById('student-reg-block');
-  if (!block || block.style.display === 'none') return null;
+function getPlayerStudentData(idx) {
+  // Возвращает данные студ. верификации для игрока idx или null
+  if (!IS_STUDENT_TOURNAMENT) return null;
   return {
-    university: document.getElementById('sr-university').value.trim(),
-    faculty: document.getElementById('sr-faculty').value.trim(),
-    group: document.getElementById('sr-group').value.trim(),
-    year: document.getElementById('sr-year').value,
-    photo: studentPhotoBase64
+    university: (document.getElementById('sd-uni-' + idx)||{value:''}).value.trim(),
+    faculty:    (document.getElementById('sd-fac-' + idx)||{value:''}).value.trim(),
+    group:      (document.getElementById('sd-grp-' + idx)||{value:''}).value.trim(),
+    year:       (document.getElementById('sd-year-' + idx)||{value:''}).value,
+    photo:      studentPhotos[idx] || null
   };
 }
 
 function validateStudentData() {
-  var block = document.getElementById('student-reg-block');
-  if (!block || block.style.display === 'none') return true;
-  var uni = document.getElementById('sr-university').value.trim();
-  var fac = document.getElementById('sr-faculty').value.trim();
-  var grp = document.getElementById('sr-group').value.trim();
-  if (!uni) { alert('Заполните университет'); return false; }
-  if (!fac) { alert('Заполните факультет'); return false; }
-  if (!grp) { alert('Заполните номер группы'); return false; }
-  if (!studentPhotoBase64) { alert('Загрузите фото студенческого билета'); return false; }
+  if (!IS_STUDENT_TOURNAMENT) return true;
+  // Валидируем для всех игроков полного состава
+  for (var i = 1; i <= TS; i++) {
+    var uni = (document.getElementById('sd-uni-' + i)||{value:''}).value.trim();
+    var fac = (document.getElementById('sd-fac-' + i)||{value:''}).value.trim();
+    var grp = (document.getElementById('sd-grp-' + i)||{value:''}).value.trim();
+    var playerLabel = i === 1 ? 'Капитан' : 'Игрок ' + i;
+    if (!uni) { alert(playerLabel + ': заполните университет'); return false; }
+    if (!fac) { alert(playerLabel + ': заполните факультет'); return false; }
+    if (!grp) { alert(playerLabel + ': заполните группу'); return false; }
+    if (!studentPhotos[i]) { alert(playerLabel + ': загрузите фото студенческого билета'); return false; }
+  }
   return true;
+}
+
+function getStudentData() {
+  // Совместимость — возвращает данные капитана (игрок 1)
+  return getPlayerStudentData(1);
 }
 
 async function doSend(data) {
@@ -805,21 +820,27 @@ async function doSend(data) {
   try {
     // Отправляем команду через реальный API
     var studentData = getStudentData();
+    // Собираем студ. данные для каждого игрока
+    var playersWithStudent = data.players.map(function(p, idx) {
+      var sd = getPlayerStudentData(idx + 1);
+      return {
+        full_name:    p.name  || p.full_name  || '',
+        nickname:     p.nick  || p.nickname   || '',
+        steam_url:    p.steam || p.steam_url  || '',
+        is_captain:   p.is_captain || false,
+        student_data: sd ? { university: sd.university, faculty: sd.faculty, group: sd.group, year: sd.year } : null,
+        student_photo: sd ? sd.photo : null
+      };
+    });
     var res = await fetch('/api/tournaments/' + TOURNAMENT_ID + '/teams', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         team_name: data.team_name || ('Команда #' + Date.now()),
-        players: data.players.map(function(p) {
-          return {
-            full_name:  p.name  || '',
-            nickname:   p.nick  || p.nickname || '',
-            steam_url:  p.steam || p.steam_url || '',
-            is_captain: p.is_captain || false
-          };
-        }),
+        players: playersWithStudent,
         team_type: data.type,
         needs_players: data.needs || 0,
+        // Общие студ. данные команды (для совместимости) — берём от капитана
         student_data: studentData ? {
           university: studentData.university,
           faculty:    studentData.faculty,
