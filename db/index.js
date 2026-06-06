@@ -132,6 +132,8 @@ async function initDB() {
         BEGIN ALTER TABLE teams ADD COLUMN student_data JSONB; EXCEPTION WHEN duplicate_column THEN NULL; END;
         BEGIN ALTER TABLE teams ADD COLUMN student_photo TEXT; EXCEPTION WHEN duplicate_column THEN NULL; END;
         BEGIN ALTER TABLE users ADD COLUMN avatar TEXT; EXCEPTION WHEN duplicate_column THEN NULL; END;
+        BEGIN ALTER TABLE team_players ADD COLUMN student_data JSONB; EXCEPTION WHEN duplicate_column THEN NULL; END;
+        BEGIN ALTER TABLE team_players ADD COLUMN student_photo TEXT; EXCEPTION WHEN duplicate_column THEN NULL; END;
       END $$;
 
     CREATE TABLE IF NOT EXISTS matches (
