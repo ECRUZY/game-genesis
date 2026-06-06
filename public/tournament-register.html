@@ -433,10 +433,18 @@ function getPlayers(pfx, cnt) {
 }
 
 function okPlayers(pfx, cnt) {
+  // Слоты занятые free agents — Steam у них может быть пустым, пропускаем строгую проверку
+  var agentSlots = {};
+  Object.keys(addedAgents).forEach(function(k){ agentSlots[addedAgents[k]] = true; });
   for (var i=1; i<=cnt; i++) {
     var n=(document.getElementById(pfx+'-'+i+'-n')||{value:''}).value.trim();
     var k=(document.getElementById(pfx+'-'+i+'-k')||{value:''}).value.trim();
     var s=(document.getElementById(pfx+'-'+i+'-s')||{value:''}).value.trim();
+    if (i > 1 && agentSlots[i]) {
+      // Для агента достаточно ника
+      if (!n && !k) return false;
+      continue;
+    }
     if (!n||!k||!s) return false;
   }
   return true;
@@ -708,7 +716,7 @@ function toggleFreeAgent(idx) {
     if (nameEl && (!nameEl.value || nameEl.value.trim() === '')) {
       nameEl.value = agent.nickname;
       if (nickEl) nickEl.value = agent.nickname;
-      if (steamEl && agent.steam_url) steamEl.value = agent.steam_url;
+      if (steamEl) steamEl.value = agent.steam_url || 'https://steamcommunity.com/id/' + agent.nickname;
       addedAgents[idx] = i;
 
       // Скрыть студ. блок — у чужого игрока мы не можем заполнить его данные
