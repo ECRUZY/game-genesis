@@ -486,7 +486,9 @@ async function loadTournamentData() {
   }
 
   try {
-    var res = await fetch('/api/tournaments/' + TOURNAMENT_ID);
+    var res = await fetch('/api/tournaments/' + TOURNAMENT_ID, {
+      headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('gg_token') || '') }
+    });
     if (!res.ok) throw new Error('Турнир не найден');
     var data = await res.json();
     var t = data.tournament;
@@ -579,7 +581,9 @@ async function loadFreeAgents() {
 
   try {
     // Загружаем команды турнира и берём тех кто solo
-    var res = await fetch('/api/tournaments/' + TOURNAMENT_ID + '/teams');
+    var res = await fetch('/api/tournaments/' + TOURNAMENT_ID + '/teams', {
+      headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('gg_token') || '') }
+    });
     var teams = await res.json();
 
     // Свободные агенты — команды с типом solo или needs_players > 0
@@ -832,28 +836,21 @@ async function doSend(data) {
         student_photo: sd ? sd.photo : null
       };
     });
-    var res = await fetch('/api/tournaments/' + TOURNAMENT_ID + '/teams', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        team_name: data.team_name || ('Команда #' + Date.now()),
-        players: playersWithStudent,
-        team_type: data.type,
-        needs_players: data.needs || 0,
-        // Общие студ. данные команды (для совместимости) — берём от капитана
-        student_data: studentData ? {
-          university: studentData.university,
-          faculty:    studentData.faculty,
-          group:      studentData.group,
-          year:       studentData.year
-        } : null,
-        student_photo: studentData ? studentData.photo : null
-      })
-    });
+    var body = {
+      team_name: data.team_name || ('Команда #' + Date.now()),
+      players: playersWithStudent,
+      team_type: data.type,
+      needs_players: data.needs || 0,
+      student_data: studentData ? {
+        university: studentData.university,
+        faculty:    studentData.faculty,
+        group:      studentData.group,
+        year:       studentData.year
+      } : null,
+      student_photo: studentData ? studentData.photo : null
+    };
 
-    var resp = await res.json();
-    if (!res.ok) throw new Error(resp.error || 'Ошибка сервера');
-
+    var resp = await API.post('/tournaments/' + TOURNAMENT_ID + '/teams', body);
     showSuccess(data);
   } catch(e) {
     if (btn) { btn.disabled = false; btn.textContent = 'Отправить заявку'; }
@@ -862,6 +859,12 @@ async function doSend(data) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+  // Проверка авторизации
+  if (!localStorage.getItem('gg_token')) {
+    var id = new URLSearchParams(location.search).get('id');
+    location.href = '/auth.html' + (id ? '?redirect=/tournament-register.html?id=' + id : '');
+    return;
+  }
   buildFull();
   buildPartialButtons();
   updateModeCards();
