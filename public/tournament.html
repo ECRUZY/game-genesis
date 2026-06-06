@@ -611,7 +611,12 @@ async function loadTournament() {
     document.getElementById('t-name').textContent = t.name;
 
     function set(id, val) { var el=document.getElementById(id); if(el) el.textContent=val; }
-    set('hp-participants', participants.length + ' / ' + (t.max_slots||16));
+
+    // Счётчик команд: participants — это команды, max_slots / team_size = макс команд
+    var teamSize = parseInt((t.team_size||'1x1').split('x')[0]) || 1;
+    var maxTeams = teamSize > 1 ? Math.floor((t.max_slots||16) / teamSize) : (t.max_slots||16);
+    var acceptedTeams = participants.filter(function(p){ return p.status !== 'rejected'; });
+    set('hp-participants', acceptedTeams.length + ' / ' + maxTeams);
     set('hp-prize', t.prize_pool>0 ? t.prize_pool.toLocaleString('ru-RU')+' ₽' : 'Без призов');
     set('hp-date', fmtDate(t.start_date));
     set('hp-status', {live:'Live',open:'Открыта',soon:'Скоро',done:'Завершён'}[t.status]||t.status);
@@ -641,20 +646,50 @@ async function loadTournament() {
 function renderParticipants(list) {
   var wrap = document.getElementById('participants-wrap');
   if (!wrap) return;
-  if (!list.length) { wrap.innerHTML='<div style="text-align:center;padding:40px;color:var(--text-muted);">Участников пока нет</div>'; return; }
-  var html = '<table style="width:100%;border-collapse:collapse;"><thead><tr>' +
-    '<th style="padding:10px 16px;text-align:left;font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--text-dim);border-bottom:1px solid var(--border);">#</th>' +
-    '<th style="padding:10px 16px;text-align:left;font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--text-dim);border-bottom:1px solid var(--border);">Игрок</th>' +
-    '<th style="padding:10px 16px;text-align:left;font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--text-dim);border-bottom:1px solid var(--border);">Никнейм</th>' +
-    '</tr></thead><tbody>';
-  list.forEach(function(p,i){
-    html += '<tr style="border-bottom:1px solid rgba(26,36,54,.4);">' +
-      '<td style="padding:10px 16px;color:var(--text-muted);font-family:Rajdhani,sans-serif;font-size:15px;font-weight:700;">'+(i+1)+'</td>' +
-      '<td style="padding:10px 16px;font-size:13px;color:var(--text);">'+(p.full_name||p.username||'—')+'</td>' +
-      '<td style="padding:10px 16px;font-size:13px;color:var(--text-dim);">'+(p.nickname||p.nick||'—')+'</td>' +
-      '</tr>';
+  var teams = list.filter(function(t){ return t.status !== 'rejected'; });
+  if (!teams.length) {
+    wrap.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);">Участников пока нет</div>';
+    return;
+  }
+
+  var statusLabel = { pending: 'На проверке', accepted: 'Принята', rejected: 'Отклонена' };
+  var statusColor = { pending: 'var(--gold)', accepted: 'var(--success)', rejected: 'var(--red)' };
+
+  var html = '';
+  teams.forEach(function(team, i) {
+    var players = team.players || [];
+    // Убираем null-записи (LEFT JOIN без игроков)
+    players = players.filter(function(p){ return p && p.nickname; });
+    var status = team.status || 'pending';
+
+    html += '<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:10px;">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:' + (players.length ? '12px' : '0') + ';">' +
+        '<div style="display:flex;align-items:center;gap:10px;">' +
+          '<div style="font-family:Rajdhani,sans-serif;font-size:14px;font-weight:700;color:var(--text-dim);min-width:24px;">#' + (i+1) + '</div>' +
+          '<div style="font-family:Rajdhani,sans-serif;font-size:16px;font-weight:700;color:#fff;">' + (team.team_name || 'Команда') + '</div>' +
+        '</div>' +
+        '<span style="font-size:11px;font-weight:600;color:' + (statusColor[status]||'var(--text-dim)') + ';background:rgba(0,0,0,.3);border:1px solid currentColor;border-radius:20px;padding:2px 10px;">' +
+          (statusLabel[status] || status) +
+        '</span>' +
+      '</div>';
+
+    if (players.length) {
+      html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;">';
+      players.forEach(function(p) {
+        var cap = p.is_captain;
+        html += '<div style="display:flex;align-items:center;gap:8px;background:var(--bg-card2);border-radius:8px;padding:8px 12px;">' +
+          (cap ? '<span style="font-size:11px;color:var(--gold);">★</span>' : '<span style="font-size:11px;color:var(--text-muted);">·</span>') +
+          '<div>' +
+            '<div style="font-size:13px;font-weight:600;color:' + (cap?'#fff':'var(--text)') + ';">' + (p.nickname || '—') + '</div>' +
+            (p.full_name ? '<div style="font-size:11px;color:var(--text-muted);">' + p.full_name + '</div>' : '') +
+          '</div>' +
+        '</div>';
+      });
+      html += '</div>';
+    }
+    html += '</div>';
   });
-  wrap.innerHTML = html + '</tbody></table>';
+  wrap.innerHTML = html;
 }
 
 function renderInfo(t, participants) {
@@ -674,7 +709,7 @@ function renderInfo(t, participants) {
       row('Дата начала', fmtDate(t.start_date)) +
       row('Взнос', t.entry_fee>0?t.entry_fee.toLocaleString('ru-RU')+' ₽':'Бесплатно', t.entry_fee>0?'':'var(--success)') +
       row('Статус', statusMap[t.status]||t.status, t.status==='live'?'var(--red)':t.status==='open'?'var(--success)':'') +
-      row('Участников', participants.length+' / '+(t.max_slots||16)) +
+      row('Участников', (function(){ var ts=parseInt((t.team_size||'1x1').split('x')[0])||1; var mt=ts>1?Math.floor((t.max_slots||16)/ts):(t.max_slots||16); var ac=participants.filter(function(p){return p.status!=='rejected';}).length; return ac+' / '+mt; })()) +
     '</div>' +
     '<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;">' +
       '<div style="font-family:Rajdhani,sans-serif;font-size:16px;font-weight:700;color:#fff;margin-bottom:14px;">О турнире</div>' +
