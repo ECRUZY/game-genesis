@@ -224,7 +224,7 @@ router.put('/:tid/matches/:mid', auth, async (req, res) => {
 
 // ── РЕГИСТРАЦИЯ КОМАНДЫ ──
 router.post('/:id/teams', auth, async (req, res) => {
-  const { team_name, players, student_data, student_photo, team_type, needs_players } = req.body
+  const { team_name, players, student_data, student_photo, team_type, needs_players, merged_team_ids } = req.body
   if (!team_name || !players || players.length === 0) {
     return res.status(400).json({ error: 'Укажите название команды и игроков' })
   }
@@ -244,12 +244,23 @@ router.post('/:id/teams', auth, async (req, res) => {
       }
     }
 
-    // Считаем сколько команд уже есть
+    // Считаем сколько команд уже есть (не считая solo-команды которые сливаются)
+    const mergedIds = Array.isArray(merged_team_ids) ? merged_team_ids.map(Number).filter(Boolean) : []
     const teamCount = await db.query('SELECT COUNT(*) FROM teams WHERE tournament_id=$1 AND status!=\'rejected\'', [req.params.id])
     const teamSize = parseInt((t.rows[0].team_size || '5x5').split('x')[0])
     const maxTeams = Math.floor((t.rows[0].max_slots || 40) / teamSize)
-    if (parseInt(teamCount.rows[0].count) >= maxTeams) {
+    // Вычитаем solo-команды которые сливаются (они уже посчитаны)
+    const effectiveCount = parseInt(teamCount.rows[0].count) - mergedIds.length
+    if (effectiveCount >= maxTeams) {
       return res.status(400).json({ error: 'Все места заняты' })
+    }
+
+    // Удаляем solo-команды агентов (они вливаются в новую команду)
+    if (mergedIds.length > 0) {
+      await db.query(
+        `DELETE FROM teams WHERE id = ANY($1::int[]) AND tournament_id=$2 AND team_type='solo'`,
+        [mergedIds, req.params.id]
+      )
     }
 
     // Создаём команду
