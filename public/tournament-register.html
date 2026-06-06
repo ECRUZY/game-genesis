@@ -540,7 +540,10 @@ async function loadTournamentData() {
       '<div class="ic-row"><span class="ick">Организатор</span><span class="icv">' + (t.organizer_name || '—') + '</span></div>';
 
     // Прогресс-бар участников
-    var filled = data.participants ? data.participants.length : 0;
+    var filled = data.participants ? data.participants.reduce(function(sum, team) {
+      if (team.status === 'rejected') return sum;
+      return sum + ((team.players||[]).filter(function(p){ return p && p.nickname; }).length);
+    }, 0) : 0;
     var max = t.max_slots || 16;
     var pct = max > 0 ? Math.round(filled / max * 100) : 0;
     document.getElementById('t-slots-text').textContent = filled + ' / ' + max;
@@ -580,27 +583,29 @@ async function loadFreeAgents() {
   if (!fpool || !TOURNAMENT_ID) return;
 
   try {
-    // Загружаем команды турнира и берём тех кто solo
     var res = await fetch('/api/tournaments/' + TOURNAMENT_ID + '/teams', {
       headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('gg_token') || '') }
     });
     var teams = await res.json();
 
-    // Свободные агенты — команды с типом solo или needs_players > 0
+    // Свободные агенты — только solo команды или команды ищущие игроков
     var freeAgents = [];
     teams.forEach(function(t) {
-      if (t.status === 'pending' || t.status === 'accepted') {
-        var players = t.players || [];
-        players.forEach(function(p) {
-          if (p && p.nickname) {
-            freeAgents.push({
-              nickname: p.nickname,
-              full_name: p.full_name || '',
-              team: t.name
-            });
-          }
+      var isSolo = t.team_type === 'solo';
+      var isPartial = t.team_type === 'partial' || (t.needs_players && t.needs_players > 0);
+      if (!isSolo && !isPartial) return;
+      if (t.status === 'rejected') return;
+
+      var players = (t.players || []).filter(function(p){ return p && p.nickname; });
+      players.forEach(function(p) {
+        freeAgents.push({
+          nickname: p.nickname,
+          full_name: p.full_name || '',
+          team: isSolo ? null : t.name,
+          team_id: t.id,
+          needs: t.needs_players || 0
         });
-      }
+      });
     });
 
     if (fc) fc.textContent = freeAgents.length;
@@ -612,12 +617,12 @@ async function loadFreeAgents() {
 
     window.FREE_AGENTS = freeAgents;
     fpool.innerHTML = freeAgents.map(function(p, i) {
-      var ini = (p.full_name || p.nickname || '?').split(' ').map(function(w){return w[0]||'';}).join('').toUpperCase().slice(0,2);
+      var ini = (p.nickname || '?').slice(0,2).toUpperCase();
       return '<div class="fpi" id="fa-' + i + '" style="display:flex;align-items:center;gap:8px;">' +
         '<div class="fpa">' + ini + '</div>' +
         '<div style="flex:1;">' +
           '<div class="fpn">' + p.nickname + '</div>' +
-          '<div class="fps">' + (p.team ? p.team : '') + '</div>' +
+          (p.team ? '<div class="fps">' + p.team + ' (ищет ' + p.needs + ')</div>' : '<div class="fps">Без команды</div>') +
         '</div>' +
         '<button onclick="toggleFreeAgent(' + i + ')" id="fa-btn-' + i + '" style="background:var(--gold-dim);border:1px solid rgba(240,192,64,.3);color:var(--gold);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px;font-weight:700;flex-shrink:0;">+ В команду</button>' +
       '</div>';
