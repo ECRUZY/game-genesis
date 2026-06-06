@@ -289,10 +289,39 @@ router.post('/:id/teams', auth, async (req, res) => {
       return res.status(400).json({ error: 'Все места заняты' })
     }
 
-    // Удаляем solo-команды агентов (они вливаются в новую команду)
+    // Удаляем solo-команды агентов — их игроки уже будут добавлены через players[]
+    // НО сначала берём student_data и student_photo из solo-команд агентов
+    // чтобы не потерять их данные
+    var agentStudentData = {};
     if (mergedIds.length > 0) {
+      const agentTeams = await db.query(
+        `SELECT t.id, t.student_data, t.student_photo, 
+                json_agg(json_build_object('nickname', p.nickname, 'student_data', p.student_data, 'student_photo', p.student_photo)) as player_data
+         FROM teams t
+         LEFT JOIN team_players p ON p.team_id = t.id
+         WHERE t.id = ANY($1::int[]) AND t.tournament_id = $2`,
+        [mergedIds, req.params.id]
+      )
+      // Строим словарь: nickname -> {student_data, student_photo}
+      agentTeams.rows.forEach(function(at) {
+        var sd = at.student_data;
+        var sp = at.student_photo;
+        // Также проверяем данные из team_players
+        if (at.player_data) {
+          at.player_data.forEach(function(pd) {
+            if (pd && pd.nickname) {
+              agentStudentData[pd.nickname.toLowerCase()] = {
+                student_data: pd.student_data || sd,
+                student_photo: pd.student_photo || sp
+              };
+            }
+          });
+        }
+      });
+
+      // Удаляем solo-команды
       await db.query(
-        `DELETE FROM teams WHERE id = ANY($1::int[]) AND tournament_id=$2 AND team_type='solo'`,
+        `DELETE FROM teams WHERE id = ANY($1::int[]) AND tournament_id=$2`,
         [mergedIds, req.params.id]
       )
     }
@@ -314,10 +343,17 @@ router.post('/:id/teams', auth, async (req, res) => {
     )
 
     // Добавляем игроков в team_players
+    // Для агентов подставляем их сохранённые студ. данные из solo-команды
     for (const p of players) {
+      const nick = (p.nickname || '').toLowerCase();
+      const agentSd = agentStudentData && agentStudentData[nick];
+      const finalStudentData = p.student_data || (agentSd ? agentSd.student_data : null);
+      const finalStudentPhoto = p.student_photo || (agentSd ? agentSd.student_photo : null);
       await db.query(
-        'INSERT INTO team_players (team_id, full_name, nickname, steam_url, is_captain) VALUES ($1,$2,$3,$4,$5)',
-        [team.rows[0].id, p.full_name || '', p.nickname || '', p.steam_url || '', p.is_captain || false]
+        'INSERT INTO team_players (team_id, full_name, nickname, steam_url, is_captain, student_data, student_photo) VALUES ($1,$2,$3,$4,$5,$6,$7) ON CONFLICT DO NOTHING',
+        [team.rows[0].id, p.full_name || '', p.nickname || '', p.steam_url || '', p.is_captain || false,
+         finalStudentData ? JSON.stringify(finalStudentData) : null,
+         finalStudentPhoto || null]
       )
     }
 
