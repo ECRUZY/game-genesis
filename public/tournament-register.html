@@ -191,10 +191,8 @@
             </div>
           </div>
           <div id="full-wrap"></div>
-          <div class="fb">
-            <div 
-    <!-- СТУДЕНЧЕСКИЕ ДАННЫЕ (показывается только для студ. турниров) -->
-    <div id="student-reg-block" style="display:none;background:rgba(96,165,250,.04);border:1px solid rgba(96,165,250,.2);border-radius:14px;padding:20px;margin-bottom:16px;">
+          <!-- СТУДЕНЧЕСКИЕ ДАННЫЕ (показывается только для студ. турниров) -->
+          <div id="student-reg-block" style="display:none;background:rgba(96,165,250,.04);border:1px solid rgba(96,165,250,.2);border-radius:14px;padding:20px;margin-bottom:16px;">
       <div style="font-family:'Rajdhani',sans-serif;font-size:17px;font-weight:700;color:var(--blue);margin-bottom:16px;display:flex;align-items:center;gap:8px;">
         <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
         Подтверждение студенческого статуса
@@ -242,8 +240,9 @@
       </div>
     </div>
 
-<div class="custom-check" onclick="toggleCheck('full-ag')"><div class="check-box" id="full-ag-box"></div><input type="checkbox" id="full-ag"><span class="check-label">Все 5 игроков согласны участвовать и принимают <a href="#">правила турнира</a>.</span></div>
-            <button class="btn-sub" onclick="submitFull()"><svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>Зарегистрировать команду (5/5)</button>
+          <div class="fb">
+            <div class="custom-check" onclick="toggleCheck('full-ag')"><div class="check-box" id="full-ag-box"></div><input type="checkbox" id="full-ag"><span class="check-label">Все игроки согласны участвовать и принимают <a href="#">правила турнира</a>.</span></div>
+            <button class="btn-sub" id="btn-submit-full" onclick="submitFull()"><svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>Зарегистрировать команду</button>
           </div>
         </div>
 
@@ -258,10 +257,8 @@
             </div>
             <div class="cnt-row">
               <span class="cnt-lbl">Сколько игроков:</span>
-              <div class="cnt-btns">
-                <button class="cb sel" onclick="setCnt(2,this)">2</button>
-                <button class="cb" onclick="setCnt(3,this)">3</button>
-                <button class="cb" onclick="setCnt(4,this)">4</button>
+              <div class="cnt-btns" id="partial-cnt-btns">
+                <!-- строится динамически в buildPartialButtons() -->
               </div>
             </div>
           </div>
@@ -344,6 +341,43 @@ var TS = 5;
 var mode = 'full';
 var partCnt = 2;
 
+function buildPartialButtons() {
+  var container = document.getElementById('partial-cnt-btns');
+  if (!container) return;
+  // Кнопки от 1 до TS-1 (неполный = хотя бы 1 игрок, но меньше полного состава)
+  container.innerHTML = '';
+  var defaultN = Math.min(partCnt, TS - 1);
+  if (defaultN < 1) defaultN = 1;
+  for (var i = 1; i <= TS - 1; i++) {
+    var btn = document.createElement('button');
+    btn.className = 'cb' + (i === defaultN ? ' sel' : '');
+    btn.textContent = i;
+    btn.setAttribute('onclick', 'setCnt(' + i + ',this)');
+    container.appendChild(btn);
+  }
+  partCnt = defaultN;
+  buildPartial(partCnt);
+}
+
+function updateModeCards() {
+  // Скрыть "Неполный состав" если TS <= 1 (1x1 или нет смысла)
+  var mcPartial = document.getElementById('mc-partial');
+  if (mcPartial) {
+    if (TS <= 1) {
+      mcPartial.style.display = 'none';
+      if (mode === 'partial') setMode('solo');
+    } else {
+      mcPartial.style.display = '';
+    }
+  }
+  // Обновить описание в карточке "Полная команда"
+  var fullDesc = document.querySelector('#mc-full .mc-desc');
+  if (fullDesc) fullDesc.textContent = 'Есть все ' + TS + ' игроков. Капитан регистрирует всю команду.';
+  // Обновить описание в карточке "Неполный состав"
+  var partDesc = document.querySelector('#mc-partial .mc-desc');
+  if (partDesc && TS > 1) partDesc.textContent = (TS > 2 ? '1–' + (TS-1) : '1') + ' игрок(а). Организатор добавит недостающих.';
+}
+
 function setMode(m) {
   mode = m;
   resetFreeAgents();
@@ -393,7 +427,7 @@ function buildPartial(n) {
     '</div>';
   wrap.appendChild(notice);
   var btn = document.getElementById('partial-btn');
-  if (btn) btn.innerHTML = 'Отправить заявку (' + n + '/5, ищем ' + miss + ')';
+  if (btn) btn.innerHTML = '<svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>Отправить заявку (' + n + '/' + TS + ', ищем ' + miss + ')';
 }
 
 function setCnt(n, btn) {
@@ -512,20 +546,19 @@ async function loadTournamentData() {
       var tsMatch = t.team_size.match(/(\d+)x/);
       if (tsMatch) {
         TS = parseInt(tsMatch[1]);
-
-        // Перестраиваем форму с правильным кол-вом игроков
-        buildFull();
-        if (typeof buildPartial === 'function') buildPartial(Math.min(partCnt, TS-1) || 2);
-
-        // Обновляем тексты
-        var descEl = document.querySelector('#mc-full .mc-desc');
-        if (descEl) descEl.textContent = 'Есть все ' + TS + ' игроков. Капитан регистрирует всю команду.';
-        var btnEl = document.getElementById('btn-sub-full');
-        if (btnEl) btnEl.textContent = 'Зарегистрировать команду (' + TS + '/' + TS + ')';
-        var fmt = document.getElementById('t-format-label');
-        if (fmt) fmt.textContent = 'Турнир формата ' + t.team_size + '. Выберите подходящий вариант участия.';
       }
     }
+
+    // Перестраиваем форму под правильный состав
+    buildFull();
+    buildPartialButtons();
+    updateModeCards();
+
+    // Обновляем кнопку сабмита
+    var btnEl = document.getElementById('btn-submit-full');
+    if (btnEl) btnEl.textContent = 'Зарегистрировать команду (' + TS + '/' + TS + ')';
+    var fmt = document.getElementById('t-format-label');
+    if (fmt) fmt.textContent = 'Турнир формата ' + (t.team_size||'5x5') + '. Выберите подходящий вариант участия.';
 
     // Студенческий блок
     if (t.is_student) {
@@ -751,7 +784,10 @@ function validateStudentData() {
   if (!block || block.style.display === 'none') return true;
   var uni = document.getElementById('sr-university').value.trim();
   var fac = document.getElementById('sr-faculty').value.trim();
-  if (!uni || !fac) { alert('Заполните университет и факультет'); return false; }
+  var grp = document.getElementById('sr-group').value.trim();
+  if (!uni) { alert('Заполните университет'); return false; }
+  if (!fac) { alert('Заполните факультет'); return false; }
+  if (!grp) { alert('Заполните номер группы'); return false; }
   if (!studentPhotoBase64) { alert('Загрузите фото студенческого билета'); return false; }
   return true;
 }
@@ -768,6 +804,7 @@ async function doSend(data) {
 
   try {
     // Отправляем команду через реальный API
+    var studentData = getStudentData();
     var res = await fetch('/api/tournaments/' + TOURNAMENT_ID + '/teams', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -782,7 +819,14 @@ async function doSend(data) {
           };
         }),
         team_type: data.type,
-        needs_players: data.needs || 0
+        needs_players: data.needs || 0,
+        student_data: studentData ? {
+          university: studentData.university,
+          faculty:    studentData.faculty,
+          group:      studentData.group,
+          year:       studentData.year
+        } : null,
+        student_photo: studentData ? studentData.photo : null
       })
     });
 
@@ -798,7 +842,8 @@ async function doSend(data) {
 
 document.addEventListener('DOMContentLoaded', function() {
   buildFull();
-  buildPartial(2);
+  buildPartialButtons();
+  updateModeCards();
   loadTournamentData();
 });
 </script>
