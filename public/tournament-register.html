@@ -250,6 +250,8 @@
               </select>
               <div class="hint">Поможет организатору подобрать команду по уровню</div>
             </div>
+            <!-- Студенческий блок для solo (показывается только для студ. турниров) -->
+            <div id="solo-student-block" style="display:none;"></div>
           </div>
           <div class="fb">
             <div class="custom-check" onclick="toggleCheck('solo-ag')"><div class="check-box" id="solo-ag-box"></div><input type="checkbox" id="solo-ag"><span class="check-label">Принимаю <a href="#">правила турнира</a> и согласен что организатор распределит меня в команду.</span></div>
@@ -344,6 +346,17 @@ function updateModeCards() {
   if (fullDesc) fullDesc.textContent = 'Есть все ' + TS + ' игроков. Капитан регистрирует всю команду.';
   var partDesc = document.querySelector('#mc-partial .mc-desc');
   if (partDesc) partDesc.textContent = '1–' + (TS-1) + ' игрок(а). Организатор добавит недостающих.';
+
+  // Показать студ. блок в solo панели если студ. турнир
+  var soloStudentBlock = document.getElementById('solo-student-block');
+  if (soloStudentBlock) {
+    if (IS_STUDENT_TOURNAMENT) {
+      soloStudentBlock.style.display = 'block';
+      soloStudentBlock.innerHTML = mkStudentBlock('solo');
+    } else {
+      soloStudentBlock.style.display = 'none';
+    }
+  }
 }
 
 function setMode(m) {
@@ -457,11 +470,16 @@ function submitSolo() {
   chk('s-fn',fn.length>=2); chk('s-ln',ln.length>=2); chk('s-nick',nk.length>=2);
   chk('s-steam',st.indexOf('steam')>=0); chk('s-email',/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em));
   if (!ok) return;
+  if (IS_STUDENT_TOURNAMENT && !validateSoloStudent()) return;
   if (!document.getElementById('solo-ag').checked) { alert('Примите правила турнира'); return; }
+  var soloSd = getSoloStudentData();
   doSend({ type:'solo', team_name:null, needs:0,
     players:[{name:fn+' '+ln, nick:nk, steam:st, email:em,
       phone:document.getElementById('s-phone').value,
-      level:document.getElementById('s-lvl').value, is_captain:true}]
+      level:document.getElementById('s-lvl').value, is_captain:true,
+      student_data: soloSd ? {university:soloSd.university,faculty:soloSd.faculty,group:soloSd.group,year:soloSd.year} : null,
+      student_photo: soloSd ? soloSd.photo : null
+    }]
   });
 }
 
@@ -796,6 +814,29 @@ function getPlayerStudentData(idx) {
     group:      (document.getElementById('sd-grp-' + idx)||{value:''}).value.trim(),
     year:       (document.getElementById('sd-year-' + idx)||{value:''}).value,
     photo:      studentPhotos[idx] || null
+  };
+}
+
+function validateSoloStudent() {
+  if (!IS_STUDENT_TOURNAMENT) return true;
+  var uni = (document.getElementById('sd-uni-solo')||{value:''}).value.trim();
+  var fac = (document.getElementById('sd-fac-solo')||{value:''}).value.trim();
+  var grp = (document.getElementById('sd-grp-solo')||{value:''}).value.trim();
+  if (!uni) { alert('Заполните университет'); return false; }
+  if (!fac) { alert('Заполните факультет'); return false; }
+  if (!grp) { alert('Заполните группу'); return false; }
+  if (!studentPhotos['solo']) { alert('Загрузите фото студенческого билета'); return false; }
+  return true;
+}
+
+function getSoloStudentData() {
+  if (!IS_STUDENT_TOURNAMENT) return null;
+  return {
+    university: (document.getElementById('sd-uni-solo')||{value:''}).value.trim(),
+    faculty:    (document.getElementById('sd-fac-solo')||{value:''}).value.trim(),
+    group:      (document.getElementById('sd-grp-solo')||{value:''}).value.trim(),
+    year:       (document.getElementById('sd-year-solo')||{value:''}).value,
+    photo:      studentPhotos['solo'] || null
   };
 }
 
