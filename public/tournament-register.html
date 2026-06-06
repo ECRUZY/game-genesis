@@ -433,8 +433,9 @@ function submitFull() {
   var tn = document.getElementById('fn-team').value.trim();
   if (!tn) { document.getElementById('err-fn-team').classList.add('show'); return; }
   document.getElementById('err-fn-team').classList.remove('show');
+  if (!okPlayers('f',TS)) { alert('Заполните ФИО, никнейм и Steam всех игроков'); return; }
+  if (!validateStudentData()) return;
   if (!document.getElementById('full-ag').checked) { alert('Подтвердите согласие участников'); return; }
-  if (!okPlayers('f',TS)) { alert('Заполните ФИО, никнейм и Steam всех 5 игроков'); return; }
   doSend({ type:'full', team_name:tn, players:getPlayers('f',TS), needs:0 });
 }
 
@@ -456,7 +457,6 @@ function submitSolo() {
   chk('s-fn',fn.length>=2); chk('s-ln',ln.length>=2); chk('s-nick',nk.length>=2);
   chk('s-steam',st.indexOf('steam')>=0); chk('s-email',/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em));
   if (!ok) return;
-  if (!validateStudentData()) return;
   if (!document.getElementById('solo-ag').checked) { alert('Примите правила турнира'); return; }
   doSend({ type:'solo', team_name:null, needs:0,
     players:[{name:fn+' '+ln, nick:nk, steam:st, email:em,
