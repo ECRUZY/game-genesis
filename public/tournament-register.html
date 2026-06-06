@@ -312,22 +312,38 @@ function buildPartialButtons() {
 }
 
 function updateModeCards() {
-  // Скрыть "Неполный состав" если TS <= 1 (1x1 или нет смысла)
+  var mcFull    = document.getElementById('mc-full');
   var mcPartial = document.getElementById('mc-partial');
-  if (mcPartial) {
-    if (TS <= 1) {
-      mcPartial.style.display = 'none';
-      if (mode === 'partial') setMode('solo');
-    } else {
-      mcPartial.style.display = '';
-    }
+  var mcSolo    = document.getElementById('mc-solo');
+  var modeCards = document.getElementById('fw');
+
+  if (TS <= 1) {
+    // 1х1 — скрыть весь блок выбора, сразу solo форма
+    if (modeCards) modeCards.style.display = 'none';
+    setMode('solo');
+    document.getElementById('t-format-desc').textContent = 'Индивидуальный турнир. Регистрируйтесь лично.';
+  } else if (TS === 2) {
+    // 2х2 — только "Полная команда" и "Без команды"
+    if (modeCards) modeCards.style.display = '';
+    if (mcFull)    mcFull.style.display    = '';
+    if (mcPartial) mcPartial.style.display = 'none';
+    if (mcSolo)    mcSolo.style.display    = '';
+    if (mode === 'partial') setMode('full');
+    document.getElementById('t-format-desc').textContent = 'Турнир формата 2x2. Выберите вариант участия.';
+  } else {
+    // 3х3, 5х5 и больше — все три варианта
+    if (modeCards) modeCards.style.display = '';
+    if (mcFull)    mcFull.style.display    = '';
+    if (mcPartial) mcPartial.style.display = '';
+    if (mcSolo)    mcSolo.style.display    = '';
+    document.getElementById('t-format-desc').textContent = 'Турнир формата ' + TS + 'x' + TS + '. Выберите подходящий вариант участия.';
   }
-  // Обновить описание в карточке "Полная команда"
+
+  // Обновить описания карточек
   var fullDesc = document.querySelector('#mc-full .mc-desc');
   if (fullDesc) fullDesc.textContent = 'Есть все ' + TS + ' игроков. Капитан регистрирует всю команду.';
-  // Обновить описание в карточке "Неполный состав"
   var partDesc = document.querySelector('#mc-partial .mc-desc');
-  if (partDesc && TS > 1) partDesc.textContent = (TS > 2 ? '1–' + (TS-1) : '1') + ' игрок(а). Организатор добавит недостающих.';
+  if (partDesc) partDesc.textContent = '1–' + (TS-1) + ' игрок(а). Организатор добавит недостающих.';
 }
 
 function setMode(m) {
@@ -550,21 +566,9 @@ async function loadTournamentData() {
     var fill = document.getElementById('t-slots-fill');
     if (fill) fill.style.width = pct + '%';
 
-    // Описание формата
+    // Описание формата и режимы участия — через updateModeCards()
     var teamSize = parseInt((t.team_size||'1').split('x')[0]) || 1;
-    TS = teamSize; // обновляем глобальную переменную
-    if (teamSize > 1) {
-      document.getElementById('t-format-desc').textContent =
-        'Турнир формата ' + t.team_size + '. Выберите подходящий вариант участия.';
-      // Показываем все 3 режима для командных турниров
-      document.getElementById('mc-partial').style.display = '';
-    } else {
-      // Соло турнир — только solo режим
-      document.getElementById('t-format-desc').textContent = 'Индивидуальный турнир. Регистрируйтесь лично.';
-      document.getElementById('mc-full').style.display = 'none';
-      document.getElementById('mc-partial').style.display = 'none';
-      setMode('solo');
-    }
+    TS = teamSize;
 
     // Свободные игроки из реальных регистраций
     loadFreeAgents();
