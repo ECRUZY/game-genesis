@@ -228,7 +228,7 @@ router.put('/:tid/matches/:mid', auth, async (req, res) => {
 
 // ── РЕГИСТРАЦИЯ КОМАНДЫ ──
 router.post('/:id/teams', auth, async (req, res) => {
-  const { team_name, players } = req.body
+  const { team_name, players, student_data, student_photo, team_type, needs_players } = req.body
   if (!team_name || !players || players.length === 0) {
     return res.status(400).json({ error: 'Укажите название команды и игроков' })
   }
@@ -237,6 +237,16 @@ router.post('/:id/teams', auth, async (req, res) => {
     const t = await db.query('SELECT * FROM tournaments WHERE id=$1', [req.params.id])
     if (!t.rows[0]) return res.status(404).json({ error: 'Турнир не найден' })
     if (t.rows[0].status !== 'open') return res.status(400).json({ error: 'Регистрация закрыта' })
+
+    // Студенческий турнир — требуем данные
+    if (t.rows[0].is_student) {
+      if (!student_data || !student_data.university || !student_data.faculty || !student_data.group) {
+        return res.status(400).json({ error: 'Для студенческого турнира заполните данные студенческого билета' })
+      }
+      if (!student_photo) {
+        return res.status(400).json({ error: 'Для студенческого турнира загрузите фото студенческого билета' })
+      }
+    }
 
     // Считаем сколько команд уже есть
     const teamCount = await db.query('SELECT COUNT(*) FROM teams WHERE tournament_id=$1 AND status!=\'rejected\'', [req.params.id])
@@ -248,15 +258,24 @@ router.post('/:id/teams', auth, async (req, res) => {
 
     // Создаём команду
     const team = await db.query(
-      'INSERT INTO teams (tournament_id, name, captain_id, status) VALUES ($1,$2,$3,\'pending\') RETURNING *',
-      [req.params.id, team_name, req.user.id]
+      `INSERT INTO teams (tournament_id, name, status, players, needs_players, team_type, student_data, student_photo)
+       VALUES ($1,$2,'pending',$3,$4,$5,$6,$7) RETURNING *`,
+      [
+        req.params.id,
+        team_name,
+        JSON.stringify(players),
+        needs_players || 0,
+        team_type || 'full',
+        student_data ? JSON.stringify(student_data) : null,
+        student_photo || null
+      ]
     )
 
-    // Добавляем игроков
+    // Добавляем игроков в team_players
     for (const p of players) {
       await db.query(
         'INSERT INTO team_players (team_id, full_name, nickname, steam_url, is_captain) VALUES ($1,$2,$3,$4,$5)',
-        [team.rows[0].id, p.name || '', p.nick || '', p.steam || '', p.is_captain || false]
+        [team.rows[0].id, p.full_name || '', p.nickname || '', p.steam_url || '', p.is_captain || false]
       )
     }
 
