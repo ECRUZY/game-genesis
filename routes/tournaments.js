@@ -368,9 +368,16 @@ router.post('/:id/teams', auth, async (req, res) => {
 router.get('/:id/teams', async (req, res) => {
   try {
     const teams = await db.query(
-      `SELECT t.*, 
-        json_agg(json_build_object('id',p.id,'full_name',p.full_name,'nickname',p.nickname,'steam_url',p.steam_url,'is_captain',p.is_captain) 
-          ORDER BY p.is_captain DESC, p.id) as players
+      `SELECT t.*,
+        json_agg(json_build_object(
+          'id', p.id,
+          'full_name', p.full_name,
+          'nickname', p.nickname,
+          'steam_url', p.steam_url,
+          'is_captain', p.is_captain,
+          'student_data', p.student_data,
+          'student_photo', p.student_photo
+        ) ORDER BY p.is_captain DESC, p.id) as players
        FROM teams t
        LEFT JOIN team_players p ON p.team_id = t.id
        WHERE t.tournament_id = $1
