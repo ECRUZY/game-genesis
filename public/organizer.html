@@ -209,6 +209,10 @@
       <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
       Сетка и матчи
     </button>
+    <button class="tab" onclick="switchTab('settings',this)">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Настройки
+    </button>
   </div>
 
   <!-- TEAMS PANEL -->
@@ -249,6 +253,67 @@
       </div>
       <div id="bracket-content">
         <div class="empty"><div class="empty-icon">⚙️</div><h3>Сетка не сгенерирована</h3><p>Примите заявки команд и нажмите «Сгенерировать сетку»</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS PANEL -->
+  <div id="panel-settings" class="panel">
+    <div class="blk">
+      <div class="blk-head"><div class="blk-title"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/></svg>Настройки турнира</div></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:20px;">
+        <div>
+          <label style="display:block;font-size:11px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;">Название</label>
+          <input id="set-name" type="text" style="width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text);font-family:'Exo 2',sans-serif;outline:none;box-sizing:border-box;">
+        </div>
+        <div>
+          <label style="display:block;font-size:11px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;">Игра</label>
+          <select id="set-game" style="width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text);font-family:'Exo 2',sans-serif;outline:none;cursor:pointer;box-sizing:border-box;">
+            <option>CS2</option><option>Dota 2</option><option>Valorant</option><option>FIFA 25</option><option>Mobile Legends</option>
+          </select>
+        </div>
+        <div>
+          <label style="display:block;font-size:11px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;">Статус</label>
+          <select id="set-status" style="width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text);font-family:'Exo 2',sans-serif;outline:none;cursor:pointer;box-sizing:border-box;">
+            <option value="open">Открыта регистрация</option>
+            <option value="soon">Скоро</option>
+            <option value="live">Идёт</option>
+            <option value="done">Завершён</option>
+          </select>
+        </div>
+        <div>
+          <label style="display:block;font-size:11px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;">Формат</label>
+          <select id="set-team-size" style="width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text);font-family:'Exo 2',sans-serif;outline:none;cursor:pointer;box-sizing:border-box;">
+            <option value="1x1">1x1 (Соло)</option><option value="2x2">2x2</option><option value="3x3">3x3</option><option value="5x5">5x5</option>
+          </select>
+        </div>
+        <div>
+          <label style="display:block;font-size:11px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;">Макс. слотов</label>
+          <input id="set-max-slots" type="number" min="2" max="256" style="width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text);font-family:'Exo 2',sans-serif;outline:none;box-sizing:border-box;">
+        </div>
+        <div>
+          <label style="display:block;font-size:11px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;">Дата начала</label>
+          <input id="set-start" type="date" style="width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text);font-family:'Exo 2',sans-serif;outline:none;box-sizing:border-box;">
+        </div>
+        <div>
+          <label style="display:block;font-size:11px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;">Начало регистрации</label>
+          <input id="set-reg-start" type="date" style="width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text);font-family:'Exo 2',sans-serif;outline:none;box-sizing:border-box;">
+        </div>
+        <div>
+          <label style="display:block;font-size:11px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;">Конец регистрации</label>
+          <input id="set-reg-end" type="date" style="width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text);font-family:'Exo 2',sans-serif;outline:none;box-sizing:border-box;">
+        </div>
+        <div style="grid-column:1/-1;">
+          <label style="display:block;font-size:11px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;">Описание</label>
+          <textarea id="set-desc" rows="3" style="width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text);font-family:'Exo 2',sans-serif;outline:none;resize:vertical;box-sizing:border-box;"></textarea>
+        </div>
+        <div style="grid-column:1/-1;display:flex;align-items:center;gap:10px;">
+          <input type="checkbox" id="set-is-student" style="width:18px;height:18px;cursor:pointer;">
+          <label for="set-is-student" style="font-size:14px;color:var(--text);cursor:pointer;">Студенческий турнир</label>
+        </div>
+        <div style="grid-column:1/-1;">
+          <button onclick="saveTournamentSettings()" style="background:var(--gold);border:none;border-radius:8px;padding:12px 28px;font-family:Rajdhani,sans-serif;font-size:15px;font-weight:700;color:#080c12;cursor:pointer;">Сохранить изменения</button>
+        </div>
       </div>
     </div>
   </div>
@@ -351,6 +416,8 @@ async function loadTournament(tid) {
   await loadTeams();
   // Загружаем сетку
   await loadBracket();
+  // Загружаем настройки
+  await loadTournamentSettings(tid);
 }
 
 async function loadTeams() {
@@ -386,38 +453,58 @@ function renderTeams() {
     return;
   }
 
-  var html = '<table class="tbl"><thead><tr><th>#</th><th>Команда</th><th>Игроков</th><th>Статус</th><th>Дата</th><th>Действия</th></tr></thead><tbody>';
+  var soloTeams = currentTeams.filter(function(t){ return t.team_type === 'solo' && t.status !== 'rejected'; });
+  var mergeBar = soloTeams.length >= 2
+    ? '<div style="background:rgba(96,165,250,.08);border:1px solid rgba(96,165,250,.2);border-radius:10px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;gap:12px;">' +
+        '<span style="font-size:13px;color:var(--text-dim);flex:1;">🔗 Есть свободные агенты — выберите нескольких и объедините в команду</span>' +
+        '<button onclick="mergeSelectedAgents()" style="background:var(--blue);border:none;border-radius:7px;padding:8px 16px;font-family:Rajdhani,sans-serif;font-size:13px;font-weight:700;color:#fff;cursor:pointer;">Объединить (' + selectedForMerge.length + ')</button>' +
+      '</div>'
+    : '';
+
+  var html = mergeBar + '<table class="tbl"><thead><tr><th></th><th>#</th><th>Команда</th><th></th><th>Статус</th><th>Дата</th><th>Действия</th></tr></thead><tbody>';
   currentTeams.forEach(function(t, i) {
     var ini = t.name.split(' ').map(function(w){return w[0];}).join('').toUpperCase().slice(0,2);
     var players = t.players ? t.players.filter(function(p){return p && p.nickname;}) : [];
-    html += '<tr>' +
+    var isSolo = t.team_type === 'solo';
+    var isSelected = selectedForMerge.indexOf(t.id) >= 0;
+    var typeTag = isSolo
+      ? ' <span style="font-size:10px;font-weight:600;color:var(--blue);background:rgba(96,165,250,.1);border:1px solid rgba(96,165,250,.2);border-radius:10px;padding:1px 7px;">SOLO</span>'
+      : (t.needs_players > 0 ? ' <span style="font-size:10px;font-weight:600;color:var(--gold);background:var(--gold-dim);border-radius:10px;padding:1px 7px;">ИЩЕТ ' + t.needs_players + '</span>' : '');
+
+    var playersHtml = players.map(function(p) {
+      return '<div class="player-row">' +
+        (p.is_captain ? '<span class="cap-badge">КАП</span>' : '<span style="width:30px;display:inline-block;"></span>') +
+        '<span style="font-weight:500;min-width:160px;">' + (p.full_name || '—') + '</span>' +
+        '<span style="color:var(--text-dim);min-width:120px;">' + (p.nickname || '—') + '</span>' +
+        (p.steam_url ? '<a href="' + p.steam_url + '" target="_blank" style="color:var(--blue);font-size:11px;">Steam →</a>' : '') +
+      '</div>';
+    }).join('') || '<div style="color:var(--text-muted);font-size:12px;padding:8px 0;">Нет данных</div>';
+
+    var studentHtml = t.student_photo
+      ? '<div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);">' +
+          '<div style="font-size:11px;font-weight:600;color:var(--blue);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;">📎 Студ. билет</div>' +
+          '<img src="' + t.student_photo + '" style="max-width:220px;max-height:160px;border-radius:8px;border:1px solid var(--border);object-fit:contain;cursor:pointer;" onclick="window.open(this.src)">' +
+        '</div>'
+      : '';
+
+    html += '<tr style="' + (isSelected ? 'background:rgba(96,165,250,.07);' : '') + '">' +
+      '<td>' + (isSolo && t.status !== 'rejected'
+        ? '<input type="checkbox" ' + (isSelected ? 'checked' : '') + ' onchange="toggleMergeSelect(' + t.id + ')" style="width:16px;height:16px;cursor:pointer;accent-color:var(--blue);">'
+        : '') + '</td>' +
       '<td style="color:var(--text-muted);font-family:Rajdhani,sans-serif;font-size:15px;font-weight:700;">' + (i+1) + '</td>' +
-      '<td><div class="av"><div class="av-ic">' + ini + '</div><div><div class="av-name">' + t.name + '</div>' +
+      '<td><div class="av"><div class="av-ic">' + ini + '</div><div><div class="av-name">' + t.name + typeTag + '</div>' +
         '<div class="av-sub">' + players.length + ' игроков</div></div></div></td>' +
-      '<td>' +
-        '<button class="expand-btn" id="eb-' + t.id + '" onclick="togglePlayers(' + t.id + ')">' +
-          '<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>' +
-        '</button>' +
-      '</td>' +
-      '<td><span class="pill pill-' + t.status + '">' + {pending:'Ожидает',accepted:'Принята',rejected:'Отклонена'}[t.status] + '</span></td>' +
+      '<td><button class="expand-btn" id="eb-' + t.id + '" onclick="togglePlayers(' + t.id + ')"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></button></td>' +
+      '<td><span class="pill pill-' + t.status + '">' + ({pending:'Ожидает',accepted:'Принята',rejected:'Отклонена'}[t.status]||t.status) + '</span></td>' +
       '<td style="font-size:12px;color:var(--text-dim);">' + new Date(t.created_at).toLocaleDateString('ru-RU') + '</td>' +
       '<td><div class="act-btns">' +
         (t.status !== 'accepted' ? '<button class="btn-green" onclick="setTeamStatus(' + t.id + ',\'accepted\')">Принять</button>' : '') +
         (t.status !== 'rejected' ? '<button class="btn-red" onclick="setTeamStatus(' + t.id + ',\'rejected\')">Отклонить</button>' : '') +
-        '<button class="btn-red" onclick="deleteTeam(' + t.id + ')" style="padding:7px 10px;">' +
-          '<svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;display:block"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>' +
-        '</button>' +
+        '<button class="btn-red" onclick="deleteTeam(' + t.id + ')" style="padding:7px 10px;"><svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;display:block"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></button>' +
       '</div></td>' +
     '</tr>' +
-    '<tr id="pr-' + t.id + '" style="display:none;"><td colspan="6"><div class="team-players open" id="players-' + t.id + '">' +
-      (players.map(function(p) {
-        return '<div class="player-row">' +
-          (p.is_captain ? '<span class="cap-badge">КАП</span>' : '<span style="width:30px;display:inline-block;"></span>') +
-          '<span style="font-weight:500;min-width:160px;">' + (p.full_name || '—') + '</span>' +
-          '<span style="color:var(--text-dim);min-width:120px;">' + (p.nickname || '—') + '</span>' +
-          (p.steam_url ? '<a href="' + p.steam_url + '" target="_blank" style="color:var(--blue);font-size:11px;">Steam →</a>' : '') +
-        '</div>';
-      }).join('') || '<div style="color:var(--text-muted);font-size:12px;padding:8px 0;">Нет данных об игроках</div>') +
+    '<tr id="pr-' + t.id + '" style="display:none;"><td colspan="7"><div class="team-players open" id="players-' + t.id + '">' +
+      playersHtml + studentHtml +
     '</div></td></tr>';
   });
   html += '</tbody></table>';
@@ -745,6 +832,110 @@ async function uploadCover(input) {
     }
   };
   reader.readAsDataURL(file);
+}
+
+// ── НАСТРОЙКИ ТУРНИРА ──
+var currentTournamentData = null;
+
+async function loadTournamentSettings(tid) {
+  try {
+    var res = await fetch('/api/tournaments/' + tid, { headers: { 'Authorization': 'Bearer ' + TOKEN } });
+    var data = await res.json();
+    currentTournamentData = data.tournament;
+    var t = data.tournament;
+    var el = function(id){ return document.getElementById(id); };
+    if (el('set-name'))       el('set-name').value       = t.name || '';
+    if (el('set-game'))       el('set-game').value       = t.game || 'CS2';
+    if (el('set-status'))     el('set-status').value     = t.status || 'open';
+    if (el('set-start'))      el('set-start').value      = (t.start_date||'').slice(0,10);
+    if (el('set-reg-start'))  el('set-reg-start').value  = (t.reg_start||'').slice(0,10);
+    if (el('set-reg-end'))    el('set-reg-end').value    = (t.reg_end||'').slice(0,10);
+    if (el('set-is-student')) el('set-is-student').checked = !!t.is_student;
+    if (el('set-desc'))       el('set-desc').value       = t.description || '';
+    if (el('set-max-slots'))  el('set-max-slots').value  = t.max_slots || 16;
+    if (el('set-team-size'))  el('set-team-size').value  = t.team_size || '5x5';
+  } catch(e) { toast('Ошибка загрузки настроек', 'err'); }
+}
+
+async function saveTournamentSettings() {
+  var el = function(id){ var e=document.getElementById(id); return e?e.value:''; };
+  var body = {
+    name:        el('set-name'),
+    game:        el('set-game'),
+    status:      el('set-status'),
+    start_date:  el('set-start'),
+    reg_start:   el('set-reg-start'),
+    reg_end:     el('set-reg-end'),
+    description: el('set-desc'),
+    max_slots:   parseInt(el('set-max-slots'))||16,
+    team_size:   el('set-team-size'),
+    is_student:  document.getElementById('set-is-student') ? document.getElementById('set-is-student').checked : false
+  };
+  try {
+    var res = await fetch('/api/tournaments/' + currentTid, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + TOKEN },
+      body: JSON.stringify(body)
+    });
+    if (!res.ok) throw new Error('Ошибка');
+    toast('✓ Настройки сохранены');
+    // Обновить список турниров
+    var opt = document.querySelector('#t-sel option[value="' + currentTid + '"]');
+    if (opt) opt.textContent = body.name + ' (' + body.game + ')';
+  } catch(e) { toast('Ошибка сохранения: ' + e.message, 'err'); }
+}
+
+// ── ОБЪЕДИНЕНИЕ СВОБОДНЫХ АГЕНТОВ ──
+var selectedForMerge = [];
+
+function toggleMergeSelect(teamId) {
+  var team = currentTeams.find(function(t){ return t.id === teamId; });
+  if (!team || team.team_type !== 'solo') return;
+  var idx = selectedForMerge.indexOf(teamId);
+  if (idx >= 0) {
+    selectedForMerge.splice(idx, 1);
+  } else {
+    selectedForMerge.push(teamId);
+  }
+  renderTeams();
+}
+
+async function mergeSelectedAgents() {
+  if (selectedForMerge.length < 2) { toast('Выберите минимум 2 свободных агента', 'err'); return; }
+  var name = prompt('Название новой команды:');
+  if (!name) return;
+
+  // Собираем всех игроков из выбранных solo-команд
+  var allPlayers = [];
+  selectedForMerge.forEach(function(tid) {
+    var team = currentTeams.find(function(t){ return t.id === tid; });
+    if (team) {
+      var players = (team.players || []).filter(function(p){ return p && p.nickname; });
+      players.forEach(function(p, i) {
+        allPlayers.push({ full_name: p.full_name||'', nickname: p.nickname||'', steam_url: p.steam_url||'', is_captain: allPlayers.length===0 });
+      });
+    }
+  });
+
+  try {
+    // Удаляем solo-команды
+    for (var i = 0; i < selectedForMerge.length; i++) {
+      await fetch('/api/tournaments/' + currentTid + '/teams/' + selectedForMerge[i], {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer ' + TOKEN }
+      });
+    }
+    // Создаём объединённую команду
+    var res = await fetch('/api/tournaments/' + currentTid + '/teams', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + TOKEN },
+      body: JSON.stringify({ team_name: name, players: allPlayers, team_type: 'full', needs_players: 0 })
+    });
+    if (!res.ok) throw new Error((await res.json()).error || 'Ошибка');
+    toast('✓ Агенты объединены в команду «' + name + '»');
+    selectedForMerge = [];
+    loadTeams();
+  } catch(e) { toast('Ошибка: ' + e.message, 'err'); }
 }
 
 // Загрузка
