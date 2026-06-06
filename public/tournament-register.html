@@ -497,7 +497,7 @@ function showSuccess(d) {
   document.getElementById('fw').style.display='none';
   document.getElementById('ss').classList.add('show');
   var icons={full:'🏆',partial:'⚡',solo:'🧩'};
-  var titles={full:'Команда зарегистрирована!',partial:'Заявка принята!',solo:'Вы в списке!'};\
+  var titles={full:'Команда зарегистрирована!',partial:'Заявка принята!',solo:'Вы в списке!'};
   document.getElementById('s-ic').textContent = icons[d.type]||'✅';
   document.getElementById('s-t').textContent = titles[d.type];
   var tl={
