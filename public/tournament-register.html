@@ -675,9 +675,20 @@ function toggleFreeAgent(idx) {
     var nameEl = document.getElementById(prefix + '-' + slot + '-n');
     var nickEl = document.getElementById(prefix + '-' + slot + '-k');
     var steamEl = document.getElementById(prefix + '-' + slot + '-s');
-    if (nameEl) nameEl.value = '';
-    if (nickEl) nickEl.value = '';
-    if (steamEl) steamEl.value = '';
+    if (nameEl) { nameEl.value = ''; nameEl.readOnly = false; }
+    if (nickEl) { nickEl.value = ''; nickEl.readOnly = false; }
+    if (steamEl) { steamEl.value = ''; steamEl.readOnly = false; }
+
+    // Показать студ. блок обратно
+    var pc = nameEl && nameEl.closest('.pc');
+    if (pc) {
+      var sdBlock = pc.querySelector('.sd-block');
+      if (sdBlock && sdBlock.dataset.hiddenByAgent) {
+        sdBlock.style.display = '';
+        delete sdBlock.dataset.hiddenByAgent;
+      }
+    }
+
     delete addedAgents[idx];
     if (btn) {
       btn.textContent = '+ В команду';
@@ -699,6 +710,21 @@ function toggleFreeAgent(idx) {
       if (nickEl) nickEl.value = agent.nickname;
       if (steamEl && agent.steam_url) steamEl.value = agent.steam_url;
       addedAgents[idx] = i;
+
+      // Скрыть студ. блок — у чужого игрока мы не можем заполнить его данные
+      var sdBlock = document.querySelector('#' + prefix + '-' + i + '-n')
+        && document.getElementById(prefix + '-' + i + '-n').closest('.pc')
+        && document.getElementById(prefix + '-' + i + '-n').closest('.pc').querySelector('.sd-block');
+      if (sdBlock) {
+        sdBlock.style.display = 'none';
+        sdBlock.dataset.hiddenByAgent = '1';
+      }
+
+      // Пометить поля как readonly
+      if (nameEl) nameEl.readOnly = true;
+      if (nickEl) nickEl.readOnly = true;
+      if (steamEl) steamEl.readOnly = true;
+
       if (btn) {
         btn.textContent = '✓ Убрать';
         btn.style.background = 'rgba(74,222,128,.1)';
@@ -843,8 +869,12 @@ function getSoloStudentData() {
 
 function validateStudentData() {
   if (!IS_STUDENT_TOURNAMENT) return true;
-  // Валидируем для всех игроков полного состава
+  // Слоты занятые free agents — пропускаем
+  var agentSlots = {};
+  Object.keys(addedAgents).forEach(function(k){ agentSlots[addedAgents[k]] = true; });
+
   for (var i = 1; i <= TS; i++) {
+    if (i > 1 && agentSlots[i]) continue; // агент — его данных у нас нет, пропускаем
     var uni = (document.getElementById('sd-uni-' + i)||{value:''}).value.trim();
     var fac = (document.getElementById('sd-fac-' + i)||{value:''}).value.trim();
     var grp = (document.getElementById('sd-grp-' + i)||{value:''}).value.trim();
