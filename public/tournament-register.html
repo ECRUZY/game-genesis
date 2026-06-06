@@ -683,13 +683,17 @@ function toggleFreeAgent(idx) {
     var nameEl = document.getElementById(prefix + '-' + slot + '-n');
     var nickEl = document.getElementById(prefix + '-' + slot + '-k');
     var steamEl = document.getElementById(prefix + '-' + slot + '-s');
-    if (nameEl) { nameEl.value = ''; nameEl.readOnly = false; }
-    if (nickEl) { nickEl.value = ''; nickEl.readOnly = false; }
-    if (steamEl) { steamEl.value = ''; steamEl.readOnly = false; }
+    var unlockedStyle = '';
+    if (nameEl) { nameEl.value = ''; nameEl.readOnly = false; nameEl.style.opacity = ''; nameEl.style.pointerEvents = ''; nameEl.style.cursor = ''; nameEl.style.background = ''; }
+    if (nickEl) { nickEl.value = ''; nickEl.readOnly = false; nickEl.style.opacity = ''; nickEl.style.pointerEvents = ''; nickEl.style.cursor = ''; nickEl.style.background = ''; }
+    if (steamEl) { steamEl.value = ''; steamEl.readOnly = false; steamEl.style.opacity = ''; steamEl.style.pointerEvents = ''; steamEl.style.cursor = ''; steamEl.style.background = ''; }
 
-    // Показать студ. блок обратно
+    // Убрать бейдж агента
     var pc = nameEl && nameEl.closest('.pc');
     if (pc) {
+      var badge = pc.querySelector('.agent-badge');
+      if (badge) badge.remove();
+      // Показать студ. блок обратно
       var sdBlock = pc.querySelector('.sd-block');
       if (sdBlock && sdBlock.dataset.hiddenByAgent) {
         sdBlock.style.display = '';
@@ -719,19 +723,27 @@ function toggleFreeAgent(idx) {
       if (steamEl) steamEl.value = agent.steam_url || 'https://steamcommunity.com/id/' + agent.nickname;
       addedAgents[idx] = i;
 
-      // Скрыть студ. блок — у чужого игрока мы не можем заполнить его данные
-      var sdBlock = document.querySelector('#' + prefix + '-' + i + '-n')
-        && document.getElementById(prefix + '-' + i + '-n').closest('.pc')
-        && document.getElementById(prefix + '-' + i + '-n').closest('.pc').querySelector('.sd-block');
-      if (sdBlock) {
-        sdBlock.style.display = 'none';
-        sdBlock.dataset.hiddenByAgent = '1';
-      }
+      // Блокируем поля визуально
+      var lockedStyle = 'opacity:0.5;pointer-events:none;cursor:not-allowed;background:rgba(0,0,0,.3);';
+      if (nameEl) { nameEl.readOnly = true; nameEl.style.cssText += lockedStyle; }
+      if (nickEl) { nickEl.readOnly = true; nickEl.style.cssText += lockedStyle; }
+      if (steamEl) { steamEl.readOnly = true; steamEl.style.cssText += lockedStyle; }
 
-      // Пометить поля как readonly
-      if (nameEl) nameEl.readOnly = true;
-      if (nickEl) nickEl.readOnly = true;
-      if (steamEl) steamEl.readOnly = true;
+      // Добавляем бейдж "Свободный агент" на карточку игрока
+      var pc = nameEl.closest('.pc');
+      if (pc) {
+        var head = pc.querySelector('.pc-head');
+        if (head && !head.querySelector('.agent-badge')) {
+          var badge = document.createElement('span');
+          badge.className = 'agent-badge';
+          badge.style.cssText = 'font-size:10px;font-weight:700;color:var(--gold);background:var(--gold-dim);border:1px solid rgba(240,192,64,.3);border-radius:10px;padding:2px 8px;margin-left:8px;';
+          badge.textContent = '🔗 Свободный агент';
+          head.appendChild(badge);
+        }
+        // Скрыть студ. блок — у чужого игрока нет возможности заполнить данные
+        var sdBlock = pc.querySelector('.sd-block');
+        if (sdBlock) { sdBlock.style.display = 'none'; sdBlock.dataset.hiddenByAgent = '1'; }
+      }
 
       if (btn) {
         btn.textContent = '✓ Убрать';
