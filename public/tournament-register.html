@@ -497,21 +497,23 @@ function showSuccess(d) {
   document.getElementById('fw').style.display='none';
   document.getElementById('ss').classList.add('show');
   var icons={full:'🏆',partial:'⚡',solo:'🧩'};
-  var titles={full:'Команда зарегистрирована!',partial:'Заявка принята!',solo:'Вы в списке!'};
+  var titles={full:'Команда зарегистрирована!',partial:'Заявка принята!',solo:'Вы в списке!'};\
   document.getElementById('s-ic').textContent = icons[d.type]||'✅';
   document.getElementById('s-t').textContent = titles[d.type];
-  var tl={full:'Полная команда (5/5)',partial:'Неполный состав ('+d.players.length+'/5)',solo:'Свободный агент'};
+  var tl={
+    full: 'Полная команда (' + TS + '/' + TS + ')',
+    partial: 'Неполный состав (' + d.players.length + '/' + TS + ')',
+    solo: 'Свободный агент'
+  };
   var html = '<div class="ss-lbl">Данные заявки</div>' +
     '<div class="ss-row"><span>Тип</span><span>'+tl[d.type]+'</span></div>' +
     (d.team_name?'<div class="ss-row"><span>Команда</span><span>'+d.team_name+'</span></div>':'') +
-    '<div class="ss-row"><span>Капитан</span><span>'+d.players[0].nick+' — '+d.players[0].name+'</span></div>' +
-    (d.players.length>1?'<div class="ss-row"><span>Состав</span><span>'+d.players.map(function(p){return p.nick;}).join(', ')+'</span></div>':'') +
+    '<div class="ss-row"><span>Капитан</span><span>'+(d.players[0].nick||d.players[0].nickname)+' — '+(d.players[0].name||d.players[0].full_name)+'</span></div>' +
+    (d.players.length>1?'<div class="ss-row"><span>Состав</span><span>'+d.players.map(function(p){return p.nick||p.nickname;}).join(', ')+'</span></div>':'') +
     (d.needs>0?'<div class="ss-row"><span>Ищем</span><span style="color:var(--gold)">'+d.needs+' игр.</span></div>':'');
   document.getElementById('s-c').innerHTML = html;
   if (d.type==='solo') {
-    var fc=document.getElementById('fc'); if(fc) fc.textContent=parseInt(fc.textContent)+1;
-    var pool=document.getElementById('fpool');
-    if(pool){var el=document.createElement('div');el.className='fpi';var ini=d.players[0].name.split(' ').map(function(w){return w[0];}).join('').toUpperCase();el.innerHTML='<div class="fpa" style="background:rgba(240,192,64,.1);border-color:rgba(240,192,64,.2);color:var(--gold);">'+ini+'</div><div><div class="fpn">'+d.players[0].nick+'</div><div class="fps">'+d.players[0].name+'</div></div>';pool.appendChild(el);}
+    loadFreeAgents(); // перезагружаем пул
   }
 }
 
