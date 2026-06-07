@@ -499,9 +499,14 @@ function updateCounters() {
   ['cnt-prize','hs-prize'].forEach(function(id){ set(id, prize > 0 ? prize.toLocaleString('ru-RU') + ' ₽' : '0 ₽'); });
 
   // Tab счётчики
-  set('tab-all-cnt',  total);
-  set('tab-live-cnt', live);
-  set('tab-edu-cnt',  0);
+  var student = ALL_TOURNAMENTS.filter(function(t){ return t.is_student === true || t.is_student === 't'; }).length;
+  var me2 = null;
+  try { var t2=localStorage.getItem('token'); if(t2){var p2=JSON.parse(atob(t2.split('.')[1]));me2=p2.id||p2.userId;} } catch(e){}
+  var mine = me2 ? ALL_TOURNAMENTS.filter(function(t){ return String(t.organizer_id)===String(me2); }).length : 0;
+  set('tab-all-cnt',     total);
+  set('tab-live-cnt',    live);
+  set('tab-edu-cnt',     student);
+  set('tab-mine-cnt',    mine);
 
   // Игровые счётчики
   var games = ['CS2','Dota 2','Valorant','FIFA 25','Mobile Legends'];
@@ -586,21 +591,32 @@ function renderFeatured() {
 }
 
 // ── ФИЛЬТРЫ ──
-var filterGame   = 'all';
-var filterStatus = {};
-var filterSort   = 'date';
+var filterGame    = 'all';
+var filterStatus  = {};
+var filterSort    = 'date';
+var filterStudent = false;
+var filterMine    = false;
 
-function setTab(tab, btn) {
-  document.querySelectorAll('.tab-btn, [id^="tab-"]').forEach(function(b){ b.classList.remove('active'); });
+function setTab(elOrStr) {
+  var tab = (elOrStr && elOrStr.dataset) ? elOrStr.dataset.tab : elOrStr;
+  var btn = (elOrStr && elOrStr.dataset) ? elOrStr : null;
+
+  document.querySelectorAll('.tab-main').forEach(function(b){ b.classList.remove('active'); });
   if (btn) btn.classList.add('active');
-  if (tab === 'live') { filterStatus = {live:true}; }
-  else if (tab === 'edu') { filterStatus = {}; }  // TODO: когда добавим edu поле
-  else { filterStatus = {}; }
+
+  filterStudent = false;
+  filterMine    = false;
+  filterStatus  = {};
+
+  if (tab === 'live')    { filterStatus = {live: true}; }
+  else if (tab === 'student') { filterStudent = true; }
+  else if (tab === 'mine')    { filterMine = true; }
+  // tab === 'all' — без фильтра
+
   filterCards();
 }
 
 function setGame(gameOrEl, btn) {
-  // Поддерживаем два варианта вызова: setGame(element) и setGame('CS2', btn)
   var el = (gameOrEl && gameOrEl.dataset) ? gameOrEl : btn;
   var game = (gameOrEl && gameOrEl.dataset) ? gameOrEl.dataset.game : gameOrEl;
   filterGame = game || 'all';
@@ -638,8 +654,16 @@ function filterCards() {
   var sel = document.getElementById('sort-select');
   filterSort = sel ? sel.value : 'date';
 
+  var me = null;
+  try {
+    var tok = localStorage.getItem('token');
+    if (tok) { var pl = JSON.parse(atob(tok.split('.')[1])); me = pl.id || pl.userId; }
+  } catch(e){}
+
   var list = ALL_TOURNAMENTS.filter(function(t) {
     if (filterGame !== 'all' && t.game !== filterGame) return false;
+    if (filterStudent && t.is_student !== true && t.is_student !== 't') return false;
+    if (filterMine && me && String(t.organizer_id) !== String(me)) return false;
     var statKeys = Object.keys(filterStatus);
     if (statKeys.length > 0 && !filterStatus[t.status]) return false;
     if (q && t.name.toLowerCase().indexOf(q) < 0 && t.game.toLowerCase().indexOf(q) < 0) return false;
@@ -786,9 +810,14 @@ function updateCounters() {
   ['cnt-prize','hs-prize'].forEach(function(id){ set(id, prize > 0 ? prize.toLocaleString('ru-RU') + ' ₽' : '0 ₽'); });
 
   // Tab счётчики
-  set('tab-all-cnt',  total);
-  set('tab-live-cnt', live);
-  set('tab-edu-cnt',  0);
+  var student = ALL_TOURNAMENTS.filter(function(t){ return t.is_student === true || t.is_student === 't'; }).length;
+  var me2 = null;
+  try { var t2=localStorage.getItem('token'); if(t2){var p2=JSON.parse(atob(t2.split('.')[1]));me2=p2.id||p2.userId;} } catch(e){}
+  var mine = me2 ? ALL_TOURNAMENTS.filter(function(t){ return String(t.organizer_id)===String(me2); }).length : 0;
+  set('tab-all-cnt',     total);
+  set('tab-live-cnt',    live);
+  set('tab-edu-cnt',     student);
+  set('tab-mine-cnt',    mine);
 
   // Игровые счётчики
   var games = ['CS2','Dota 2','Valorant','FIFA 25','Mobile Legends'];
@@ -873,21 +902,32 @@ function renderFeatured() {
 }
 
 // ── ФИЛЬТРЫ ──
-var filterGame   = 'all';
-var filterStatus = {};
-var filterSort   = 'date';
+var filterGame    = 'all';
+var filterStatus  = {};
+var filterSort    = 'date';
+var filterStudent = false;
+var filterMine    = false;
 
-function setTab(tab, btn) {
-  document.querySelectorAll('.tab-btn, [id^="tab-"]').forEach(function(b){ b.classList.remove('active'); });
+function setTab(elOrStr) {
+  var tab = (elOrStr && elOrStr.dataset) ? elOrStr.dataset.tab : elOrStr;
+  var btn = (elOrStr && elOrStr.dataset) ? elOrStr : null;
+
+  document.querySelectorAll('.tab-main').forEach(function(b){ b.classList.remove('active'); });
   if (btn) btn.classList.add('active');
-  if (tab === 'live') { filterStatus = {live:true}; }
-  else if (tab === 'edu') { filterStatus = {}; }  // TODO: когда добавим edu поле
-  else { filterStatus = {}; }
+
+  filterStudent = false;
+  filterMine    = false;
+  filterStatus  = {};
+
+  if (tab === 'live')    { filterStatus = {live: true}; }
+  else if (tab === 'student') { filterStudent = true; }
+  else if (tab === 'mine')    { filterMine = true; }
+  // tab === 'all' — без фильтра
+
   filterCards();
 }
 
 function setGame(gameOrEl, btn) {
-  // Поддерживаем два варианта вызова: setGame(element) и setGame('CS2', btn)
   var el = (gameOrEl && gameOrEl.dataset) ? gameOrEl : btn;
   var game = (gameOrEl && gameOrEl.dataset) ? gameOrEl.dataset.game : gameOrEl;
   filterGame = game || 'all';
@@ -925,8 +965,16 @@ function filterCards() {
   var sel = document.getElementById('sort-select');
   filterSort = sel ? sel.value : 'date';
 
+  var me = null;
+  try {
+    var tok = localStorage.getItem('token');
+    if (tok) { var pl = JSON.parse(atob(tok.split('.')[1])); me = pl.id || pl.userId; }
+  } catch(e){}
+
   var list = ALL_TOURNAMENTS.filter(function(t) {
     if (filterGame !== 'all' && t.game !== filterGame) return false;
+    if (filterStudent && t.is_student !== true && t.is_student !== 't') return false;
+    if (filterMine && me && String(t.organizer_id) !== String(me)) return false;
     var statKeys = Object.keys(filterStatus);
     if (statKeys.length > 0 && !filterStatus[t.status]) return false;
     if (q && t.name.toLowerCase().indexOf(q) < 0 && t.game.toLowerCase().indexOf(q) < 0) return false;
