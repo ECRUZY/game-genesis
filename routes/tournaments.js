@@ -28,13 +28,18 @@ router.get('/:id', async (req, res) => {
 
     // Участники — из teams + team_players (новая система)
     const teamsRes = await db.query(
-      `SELECT t.id, t.name as team_name, t.status, t.created_at,
-        json_agg(json_build_object(
-          'nickname', tp.nickname,
-          'full_name', tp.full_name,
-          'steam_url', tp.steam_url,
-          'is_captain', tp.is_captain
-        ) ORDER BY tp.is_captain DESC) as players
+      `SELECT t.id, t.name as team_name, t.status, t.team_type, t.created_at,
+        COALESCE(
+          json_agg(
+            json_build_object(
+              'nickname', tp.nickname,
+              'full_name', tp.full_name,
+              'steam_url', tp.steam_url,
+              'is_captain', tp.is_captain
+            ) ORDER BY tp.is_captain DESC
+          ) FILTER (WHERE tp.id IS NOT NULL),
+          '[]'
+        ) as players
        FROM teams t
        LEFT JOIN team_players tp ON tp.team_id = t.id
        WHERE t.tournament_id = $1
