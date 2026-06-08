@@ -186,7 +186,26 @@
     .bracket-title { font-family: 'Rajdhani', sans-serif; font-size: 28px; font-weight: 700; color: #fff; text-align: center; margin-bottom: 8px; }
     .bracket-sub { font-size: 13px; color: var(--text-dim); text-align: center; margin-bottom: 40px; }
 
-    .bracket-wrap {
+    .bracket-wrap { overflow-x: auto; padding: 16px 0; }
+    .b-section { margin-bottom: 28px; }
+    .b-section-title { font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; padding: 0 0 10px; display: flex; align-items: center; gap: 8px; }
+    .b-section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+    .b-section-title.upper { color: var(--gold); }
+    .b-section-title.lower { color: var(--blue); }
+    .b-round-label { font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .8px; text-align: center; padding-bottom: 10px; width: 180px; }
+    .bm { width: 180px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+    .bm.done { border-color: rgba(74,222,128,.35); }
+    .bm.grand { border-color: rgba(96,165,250,.4); background: rgba(96,165,250,.04); }
+    .bm.third { border-color: rgba(240,192,64,.3); background: rgba(240,192,64,.04); }
+    .bm-num { font-size: 9px; color: var(--text-muted); background: var(--bg-card2); padding: 2px 8px; letter-spacing: .3px; }
+    .bm-slot { display: flex; align-items: center; padding: 5px 8px; gap: 6px; height: 26px; }
+    .bm-slot + .bm-slot { border-top: 1px solid rgba(26,36,54,.5); }
+    .bm-seed { font-size: 10px; color: var(--text-muted); min-width: 14px; font-family: 'Rajdhani', sans-serif; font-weight: 700; }
+    .bm-name { flex: 1; font-size: 12px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .bm-name.tbd { color: var(--text-muted); font-style: italic; }
+    .bm-name.win { font-weight: 700; color: var(--success); }
+    .bm-score { font-size: 12px; font-weight: 700; color: var(--text-dim); min-width: 18px; text-align: right; }
+    .bm-score.win { color: var(--success); }
       overflow-x: auto; padding-bottom: 20px;
     }
     .bracket {
@@ -611,14 +630,7 @@ async function loadTournament() {
     document.getElementById('t-name').textContent = t.name;
 
     function set(id, val) { var el=document.getElementById(id); if(el) el.textContent=val; }
-
-    // Счётчик: кол-во игроков / max_slots
-    var acceptedTeams = participants.filter(function(p){ return p.status === 'accepted'; });
-    var totalPlayers = acceptedTeams.reduce(function(sum, team){
-      var pl = (team.players||[]).filter(function(p){ return p && p.nickname; });
-      return sum + pl.length;
-    }, 0);
-    set('hp-participants', totalPlayers + ' / ' + (t.max_slots||16));
+    set('hp-participants', participants.length + ' / ' + (t.max_slots||16));
     set('hp-prize', t.prize_pool>0 ? t.prize_pool.toLocaleString('ru-RU')+' ₽' : 'Без призов');
     set('hp-date', fmtDate(t.start_date));
     set('hp-status', {live:'Live',open:'Открыта',soon:'Скоро',done:'Завершён'}[t.status]||t.status);
@@ -648,34 +660,20 @@ async function loadTournament() {
 function renderParticipants(list) {
   var wrap = document.getElementById('participants-wrap');
   if (!wrap) return;
-  var teams = list.filter(function(t){ return t.status === 'accepted'; });
-  if (!teams.length) {
-    wrap.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);">Принятых участников пока нет</div>';
-    return;
-  }
-
-  var html = '';
-  teams.forEach(function(team, i) {
-    var players = (team.players||[]).filter(function(p){ return p && p.nickname; });
-
-    html += '<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:10px;">' +
-      '<div style="font-family:Rajdhani,sans-serif;font-size:15px;font-weight:700;color:#fff;margin-bottom:' + (players.length ? '12px' : '0') + ';">' +
-        '<span style="color:var(--text-dim);margin-right:8px;">#' + (i+1) + '</span>' + (team.team_name || 'Команда') +
-      '</div>';
-
-    if (players.length) {
-      html += '<div style="display:flex;flex-wrap:wrap;gap:8px;">';
-      players.forEach(function(p) {
-        html += '<div style="display:flex;align-items:center;gap:6px;background:var(--bg-card2);border-radius:8px;padding:6px 12px;">' +
-          (p.is_captain ? '<span style="font-size:11px;color:var(--gold);">★</span>' : '') +
-          '<span style="font-size:13px;color:' + (p.is_captain ? '#fff' : 'var(--text)') + ';">' + p.nickname + '</span>' +
-        '</div>';
-      });
-      html += '</div>';
-    }
-    html += '</div>';
+  if (!list.length) { wrap.innerHTML='<div style="text-align:center;padding:40px;color:var(--text-muted);">Участников пока нет</div>'; return; }
+  var html = '<table style="width:100%;border-collapse:collapse;"><thead><tr>' +
+    '<th style="padding:10px 16px;text-align:left;font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--text-dim);border-bottom:1px solid var(--border);">#</th>' +
+    '<th style="padding:10px 16px;text-align:left;font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--text-dim);border-bottom:1px solid var(--border);">Игрок</th>' +
+    '<th style="padding:10px 16px;text-align:left;font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--text-dim);border-bottom:1px solid var(--border);">Никнейм</th>' +
+    '</tr></thead><tbody>';
+  list.forEach(function(p,i){
+    html += '<tr style="border-bottom:1px solid rgba(26,36,54,.4);">' +
+      '<td style="padding:10px 16px;color:var(--text-muted);font-family:Rajdhani,sans-serif;font-size:15px;font-weight:700;">'+(i+1)+'</td>' +
+      '<td style="padding:10px 16px;font-size:13px;color:var(--text);">'+(p.full_name||p.username||'—')+'</td>' +
+      '<td style="padding:10px 16px;font-size:13px;color:var(--text-dim);">'+(p.nickname||p.nick||'—')+'</td>' +
+      '</tr>';
   });
-  wrap.innerHTML = html;
+  wrap.innerHTML = html + '</tbody></table>';
 }
 
 function renderInfo(t, participants) {
@@ -695,7 +693,7 @@ function renderInfo(t, participants) {
       row('Дата начала', fmtDate(t.start_date)) +
       row('Взнос', t.entry_fee>0?t.entry_fee.toLocaleString('ru-RU')+' ₽':'Бесплатно', t.entry_fee>0?'':'var(--success)') +
       row('Статус', statusMap[t.status]||t.status, t.status==='live'?'var(--red)':t.status==='open'?'var(--success)':'') +
-      row('Участников', (function(){ var ac=participants.filter(function(p){return p.status==='accepted';}); var n=ac.reduce(function(s,t){return s+((t.players||[]).filter(function(p){return p&&p.nickname;}).length);},0); return n+' / '+(t.max_slots||16); })()) +
+      row('Участников', participants.length+' / '+(t.max_slots||16)) +
     '</div>' +
     '<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;">' +
       '<div style="font-family:Rajdhani,sans-serif;font-size:16px;font-weight:700;color:#fff;margin-bottom:14px;">О турнире</div>' +
@@ -723,36 +721,87 @@ async function loadBracket() {
   } catch(e) { console.error(e); }
 }
 
+function grpRounds(arr){var r={};arr.forEach(function(m){if(!r[m.round])r[m.round]=[];r[m.round].push(m);});return r;}
+
+function getRL(r,maxR){var d=maxR-r;if(d===0)return'Финал';if(d===1)return'1/2 финала';if(d===2)return'1/4 финала';return'Раунд '+r;}
+
+function pubMatchCard(m,extra){
+  var cls='bm'+(m.status==='done'?' done':'')+(extra?' '+extra:'');
+  var t1w=m.status==='done'&&m.winner_team_id===m.team1_id;
+  var t2w=m.status==='done'&&m.winner_team_id===m.team2_id;
+  return '<div class="'+cls+'">'+
+    '<div class="bm-num">Матч #'+m.match_number+'</div>'+
+    '<div class="bm-slot">'+
+      '<span class="bm-seed">'+(m.team1_seed||'?')+'</span>'+
+      '<span class="bm-name '+(t1w?'win':'')+(m.team1_name?'':'tbd')+'">'+(m.team1_name||'TBD')+'</span>'+
+      (m.status==='done'?'<span class="bm-score '+(t1w?'win':'')+'">'+m.score1+'</span>':'')+
+    '</div>'+
+    '<div class="bm-slot">'+
+      '<span class="bm-seed">'+(m.team2_seed||'?')+'</span>'+
+      '<span class="bm-name '+(t2w?'win':'')+(m.team2_name?'':'tbd')+'">'+(m.team2_name||'TBD')+'</span>'+
+      (m.status==='done'?'<span class="bm-score '+(t2w?'win':'')+'">'+m.score2+'</span>':'')+
+    '</div>'+
+  '</div>';
+}
+
+function pubSection(matches){
+  var rounds=grpRounds(matches);
+  var rNums=Object.keys(rounds).map(Number).sort(function(a,b){return a-b;});
+  var maxR=Math.max.apply(null,rNums);
+  var html='<div style="display:flex;align-items:flex-start;overflow-x:auto;gap:0;padding-bottom:8px">';
+  rNums.forEach(function(r,ri){
+    var ms=rounds[r];
+    var topPad=ri===0?0:(Math.pow(2,ri)-1)*(58+8)/2;
+    var matchGap=Math.pow(2,ri)*(58+8)-58;
+    html+='<div style="flex-shrink:0;margin-right:'+(ri<rNums.length-1?'60px':'0')+'">';
+    html+='<div class="b-round-label">'+getRL(r,maxR)+'</div>';
+    html+='<div style="position:relative">';
+    ms.forEach(function(m,mi){
+      html+='<div style="margin-bottom:8px;margin-top:'+(mi===0?topPad:matchGap)+'px;position:relative">';
+      html+=pubMatchCard(m,'');
+      if(ri<rNums.length-1){
+        var isTop=mi%2===0;
+        var vLen=Math.pow(2,ri)*(58+8)/2;
+        var svgH=vLen+2;
+        html+='<svg style="position:absolute;top:28px;right:-61px;width:61px;height:'+svgH+'px;overflow:visible" viewBox="0 0 61 '+svgH+'">'+
+          '<path d="M0 1 L30 1 L30 '+(isTop?svgH:1)+' L61 '+(isTop?svgH:1)+'" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="0.5"/>'+
+        '</svg>';
+      }
+      html+='</div>';
+    });
+    html+='</div></div>';
+  });
+  return html+'</div>';
+}
+
 function renderBracket(data) {
   var wrap = document.getElementById('bracket-wrap');
   var matches = data.matches||[];
-  function grp(arr){ var r={}; arr.forEach(function(m){ if(!r[m.round])r[m.round]=[]; r[m.round].push(m); }); return r; }
-  function mCard(m){
-    var t1=m.team1_name||'TBD', t2=m.team2_name||'TBD';
-    var w1=m.winner_team_id&&m.winner_team_id===m.team1_id, w2=m.winner_team_id&&m.winner_team_id===m.team2_id;
-    return '<div style="background:var(--bg-card2);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin:8px 0;">'+
-      '<div style="padding:4px 10px;font-size:10px;color:var(--text-muted);background:rgba(0,0,0,.2);display:flex;justify-content:space-between;">Матч #'+m.match_number+'<span>'+(m.status==='done'?'✓':'Ожидает')+'</span></div>'+
-      '<div style="display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--border);'+(w1?'background:rgba(240,192,64,.05);':'')+'">'+
-        '<span style="font-size:9px;color:var(--text-dim);min-width:16px;">'+(m.team1_seed||'?')+'</span>'+
-        '<span style="flex:1;font-size:13px;font-weight:500;">'+t1+'</span>'+
-        '<span style="font-family:Rajdhani,sans-serif;font-size:16px;font-weight:700;color:'+(w1?'var(--gold)':'var(--text-dim)')+';">'+(m.status==='done'?m.score1:'—')+'</span>'+
-      '</div>'+
-      '<div style="display:flex;align-items:center;gap:8px;padding:9px 12px;'+(w2?'background:rgba(240,192,64,.05);':'')+'">'+
-        '<span style="font-size:9px;color:var(--text-dim);min-width:16px;">'+(m.team2_seed||'?')+'</span>'+
-        '<span style="flex:1;font-size:13px;font-weight:500;">'+t2+'</span>'+
-        '<span style="font-family:Rajdhani,sans-serif;font-size:16px;font-weight:700;color:'+(w2?'var(--gold)':'var(--text-dim)')+';">'+(m.status==='done'?m.score2:'—')+'</span>'+
-      '</div>'+
-    '</div>';
+  var upper=matches.filter(function(m){return m.bracket_type==='upper';});
+  var lower=matches.filter(function(m){return m.bracket_type==='lower';});
+  var grand=matches.filter(function(m){return m.bracket_type==='grand_final';});
+  var tp=matches.filter(function(m){return m.bracket_type==='third_place';});
+  var robin=matches.filter(function(m){return m.bracket_type==='robin';});
+
+  var html='<div class="bracket-wrap">';
+
+  if(robin.length){
+    html+='<div class="b-section"><div class="b-section-title">🔄 Круговой этап</div>'+pubSection(robin)+'</div>';
+  } else {
+    if(upper.length) html+='<div class="b-section"><div class="b-section-title upper">⬆ Верхняя сетка</div>'+pubSection(upper)+'</div>';
+    if(lower.length) html+='<div class="b-section"><div class="b-section-title lower">⬇ Нижняя сетка</div>'+pubSection(lower)+'</div>';
+    if(tp.length){
+      html+='<div class="b-section"><div class="b-section-title" style="color:var(--gold)">🥉 Матч за 3-е место</div><div style="display:flex;gap:16px;flex-wrap:wrap">';
+      tp.forEach(function(m){html+=pubMatchCard(m,'third');});
+      html+='</div></div>';
+    }
+    if(grand.length){
+      html+='<div class="b-section"><div class="b-section-title" style="color:#fff">🏆 Гранд-Финал</div><div style="display:flex;gap:16px;flex-wrap:wrap">';
+      grand.forEach(function(m){html+=pubMatchCard(m,'grand');});
+      html+='</div></div>';
+    }
   }
-  var upper=matches.filter(function(m){return m.bracket_type==='upper';}),
-      lower=matches.filter(function(m){return m.bracket_type==='lower';}),
-      grand=matches.filter(function(m){return m.bracket_type==='grand_final';});
-  var html='<div style="overflow-x:auto;padding:20px;">';
-  var rl=['Раунд 1','1/4 Финала','1/2 Финала','Финал'];
-  if(upper.length){var ur=grp(upper);html+='<div style="margin-bottom:24px;"><div style="font-family:Rajdhani,sans-serif;font-size:13px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1.5px;padding:10px 0;border-bottom:1px solid var(--border);margin-bottom:14px;">⬆️ Верхняя сетка</div><div style="display:flex;gap:0;">';Object.keys(ur).sort().forEach(function(r){html+='<div style="flex:1;padding:0 10px;"><div style="font-family:Rajdhani,sans-serif;font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;text-align:center;padding-bottom:10px;border-bottom:1px solid var(--border);margin-bottom:12px;">'+(rl[parseInt(r)-1]||'Раунд '+r)+'</div>';ur[r].forEach(function(m){html+=mCard(m);});html+='</div>';});html+='</div></div>';}
-  if(lower.length){var lr=grp(lower);html+='<div style="margin-bottom:24px;"><div style="font-family:Rajdhani,sans-serif;font-size:13px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:1.5px;padding:10px 0;border-bottom:1px solid var(--border);margin-bottom:14px;">⬇️ Нижняя сетка</div><div style="display:flex;gap:0;">';Object.keys(lr).sort().forEach(function(r){html+='<div style="flex:1;padding:0 10px;"><div style="font-family:Rajdhani,sans-serif;font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;text-align:center;padding-bottom:10px;border-bottom:1px solid var(--border);margin-bottom:12px;">Раунд L'+r+'</div>';lr[r].forEach(function(m){html+=mCard(m);});html+='</div>';});html+='</div></div>';}
-  if(grand.length){html+='<div><div style="font-family:Rajdhani,sans-serif;font-size:13px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:1.5px;padding:10px 0;border-bottom:1px solid var(--border);margin-bottom:14px;">🏆 Гранд-Финал</div><div style="display:flex;justify-content:center;"><div style="max-width:280px;width:100%;">';grand.forEach(function(m){html+=mCard(m);});html+='</div></div></div>';}
-  wrap.innerHTML = html+'</div>';
+  wrap.innerHTML=html+'</div>';
 }
 
 loadTournament();
