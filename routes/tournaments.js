@@ -296,11 +296,16 @@ router.post('/:id/teams', auth, async (req, res) => {
     var agentStudentData = {};
     if (mergedIds.length > 0) {
       const agentTeams = await db.query(
-        `SELECT t.id, t.student_data, t.student_photo, 
-                json_agg(json_build_object('nickname', p.nickname, 'student_data', p.student_data, 'student_photo', p.student_photo)) as player_data
-         FROM teams t
-         LEFT JOIN team_players p ON p.team_id = t.id
-         WHERE t.id = ANY($1::int[]) AND t.tournament_id = $2`,
+        `SELECT tm.id, tm.student_data, tm.student_photo,
+                json_agg(json_build_object(
+                  'nickname', p.nickname,
+                  'student_data', p.student_data,
+                  'student_photo', p.student_photo
+                )) as player_data
+         FROM teams tm
+         LEFT JOIN team_players p ON p.team_id = tm.id
+         WHERE tm.id = ANY($1::int[]) AND tm.tournament_id = $2
+         GROUP BY tm.id`,
         [mergedIds, req.params.id]
       )
       // Строим словарь: nickname -> {student_data, student_photo}
