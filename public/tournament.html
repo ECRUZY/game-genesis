@@ -625,12 +625,18 @@ async function loadTournament() {
     var data = await res.json();
     var t = data.tournament;
     var participants = data.participants || [];
+    // Считаем реальных игроков из принятых команд
+    var acceptedTeams = participants.filter(function(p){ return p.status === 'accepted'; });
+    var totalPlayers = acceptedTeams.reduce(function(sum, team){
+      var pl = (team.players||[]).filter(function(p){ return p && p.nickname; });
+      return sum + pl.length;
+    }, 0);
 
     document.title = t.name + ' — Game Genesis';
     document.getElementById('t-name').textContent = t.name;
 
     function set(id, val) { var el=document.getElementById(id); if(el) el.textContent=val; }
-    set('hp-participants', participants.length + ' / ' + (t.max_slots||16));
+    set('hp-participants', totalPlayers + ' / ' + (t.max_slots||16));
     set('hp-prize', t.prize_pool>0 ? t.prize_pool.toLocaleString('ru-RU')+' ₽' : 'Без призов');
     set('hp-date', fmtDate(t.start_date));
     set('hp-status', {live:'Live',open:'Открыта',soon:'Скоро',done:'Завершён'}[t.status]||t.status);
@@ -660,20 +666,33 @@ async function loadTournament() {
 function renderParticipants(list) {
   var wrap = document.getElementById('participants-wrap');
   if (!wrap) return;
-  if (!list.length) { wrap.innerHTML='<div style="text-align:center;padding:40px;color:var(--text-muted);">Участников пока нет</div>'; return; }
-  var html = '<table style="width:100%;border-collapse:collapse;"><thead><tr>' +
-    '<th style="padding:10px 16px;text-align:left;font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--text-dim);border-bottom:1px solid var(--border);">#</th>' +
-    '<th style="padding:10px 16px;text-align:left;font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--text-dim);border-bottom:1px solid var(--border);">Игрок</th>' +
-    '<th style="padding:10px 16px;text-align:left;font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--text-dim);border-bottom:1px solid var(--border);">Никнейм</th>' +
-    '</tr></thead><tbody>';
-  list.forEach(function(p,i){
-    html += '<tr style="border-bottom:1px solid rgba(26,36,54,.4);">' +
-      '<td style="padding:10px 16px;color:var(--text-muted);font-family:Rajdhani,sans-serif;font-size:15px;font-weight:700;">'+(i+1)+'</td>' +
-      '<td style="padding:10px 16px;font-size:13px;color:var(--text);">'+(p.full_name||p.username||'—')+'</td>' +
-      '<td style="padding:10px 16px;font-size:13px;color:var(--text-dim);">'+(p.nickname||p.nick||'—')+'</td>' +
-      '</tr>';
+  // Только принятые команды
+  var teams = list.filter(function(t){ return t.status === 'accepted'; });
+  if (!teams.length) {
+    wrap.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);">Принятых участников пока нет</div>';
+    return;
+  }
+  var html = '';
+  teams.forEach(function(team, i) {
+    var players = (team.players||[]).filter(function(p){ return p && p.nickname; });
+    html += '<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:10px;">' +
+      '<div style="font-family:Rajdhani,sans-serif;font-size:15px;font-weight:700;color:#fff;margin-bottom:'+(players.length?'10px':'0')+';">' +
+        '<span style="color:var(--text-dim);margin-right:8px;font-size:13px;">#'+(i+1)+'</span>' +
+        (team.team_name||'Команда') +
+      '</div>';
+    if (players.length) {
+      html += '<div style="display:flex;flex-wrap:wrap;gap:6px;">';
+      players.forEach(function(p) {
+        html += '<div style="display:flex;align-items:center;gap:5px;background:var(--bg-card2);border-radius:7px;padding:5px 10px;">' +
+          (p.is_captain ? '<span style="font-size:10px;color:var(--gold);">★</span>' : '') +
+          '<span style="font-size:12px;color:var(--text);">' + p.nickname + '</span>' +
+        '</div>';
+      });
+      html += '</div>';
+    }
+    html += '</div>';
   });
-  wrap.innerHTML = html + '</tbody></table>';
+  wrap.innerHTML = html;
 }
 
 function renderInfo(t, participants) {
@@ -693,7 +712,11 @@ function renderInfo(t, participants) {
       row('Дата начала', fmtDate(t.start_date)) +
       row('Взнос', t.entry_fee>0?t.entry_fee.toLocaleString('ru-RU')+' ₽':'Бесплатно', t.entry_fee>0?'':'var(--success)') +
       row('Статус', statusMap[t.status]||t.status, t.status==='live'?'var(--red)':t.status==='open'?'var(--success)':'') +
-      row('Участников', participants.length+' / '+(t.max_slots||16)) +
+      row('Участников', (function(){
+        var ac = participants.filter(function(p){return p.status==='accepted';});
+        var n = ac.reduce(function(s,t){return s+((t.players||[]).filter(function(p){return p&&p.nickname;}).length);},0);
+        return n+' / '+(t.max_slots||16);
+      })()) +
     '</div>' +
     '<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;">' +
       '<div style="font-family:Rajdhani,sans-serif;font-size:16px;font-weight:700;color:#fff;margin-bottom:14px;">О турнире</div>' +
