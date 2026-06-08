@@ -3,229 +3,293 @@ const router = express.Router()
 const db = require('../db')
 const auth = require('../middleware/auth')
 
-// ── ЗАРЕГИСТРИРОВАТЬ КОМАНДУ НА ТУРНИР ──
-router.post('/:tid/teams', async (req, res) => {
-  const { tid } = req.params
-  const { team_name, players } = req.body  // players: [{full_name, nickname, steam_url, is_captain}]
+// ─────────────────────────────────────────────
+// УТИЛИТЫ
+// ─────────────────────────────────────────────
 
-  if (!team_name || !players || !players.length) {
-    return res.status(400).json({ error: 'Укажите название команды и игроков' })
-  }
+// Следующая степень двойки >= n
+function nextPow2(n) {
+  let p = 1
+  while (p < n) p <<= 1
+  return p
+}
 
-  try {
-    // Проверяем турнир
-    const t = await db.query('SELECT * FROM tournaments WHERE id=$1', [tid])
-    if (!t.rows[0]) return res.status(404).json({ error: 'Турнир не найден' })
-    if (t.rows[0].status !== 'open') return res.status(400).json({ error: 'Регистрация закрыта' })
+// Перемешать массив
+function shuffle(arr) {
+  return [...arr].sort(() => Math.random() - 0.5)
+}
 
-    // Считаем уже зарегистрированные команды
-    const cnt = await db.query('SELECT COUNT(*) FROM teams WHERE tournament_id=$1', [tid])
-    const max_teams = Math.floor(t.rows[0].max_slots / 5)
-    if (parseInt(cnt.rows[0].count) >= max_teams) {
-      return res.status(400).json({ error: `Все ${max_teams} мест заняты` })
-    }
+// Вставить матч
+async function insertMatch(tid, round, bracketType, matchNum, t1 = null, t2 = null) {
+  const r = await db.query(
+    `INSERT INTO matches (tournament_id, round, bracket_type, match_number, team1_id, team2_id, status)
+     VALUES ($1, $2, $3, $4, $5, $6, 'pending') RETURNING id`,
+    [tid, round, bracketType, matchNum, t1, t2]
+  )
+  return r.rows[0].id
+}
 
-    // Проверяем дубли по названию
-    const dup = await db.query('SELECT id FROM teams WHERE tournament_id=$1 AND LOWER(name)=LOWER($2)', [tid, team_name])
-    if (dup.rows[0]) return res.status(400).json({ error: 'Команда с таким названием уже зарегистрирована' })
+// Заполнить слот следующего матча победителем/проигравшим
+async function fillSlot(matchId, teamId) {
+  await db.query(
+    `UPDATE matches SET
+      team1_id = CASE WHEN team1_id IS NULL THEN $1 ELSE team1_id END,
+      team2_id = CASE WHEN team1_id IS NOT NULL AND team2_id IS NULL THEN $1 ELSE team2_id END
+     WHERE id = $2`,
+    [teamId, matchId]
+  )
+}
 
-    // Создаём команду
-    const captain_id = req.user ? req.user.id : null
-    const team = await db.query(
-      'INSERT INTO teams (tournament_id, name, captain_id, status) VALUES ($1,$2,$3,$4) RETURNING *',
-      [tid, team_name, captain_id, 'pending']
-    )
-    const team_id = team.rows[0].id
-
-    // Добавляем игроков
-    for (const p of players) {
-      await db.query(
-        'INSERT INTO team_players (team_id, full_name, nickname, steam_url, is_captain) VALUES ($1,$2,$3,$4,$5)',
-        [team_id, p.full_name || '', p.nickname || '', p.steam_url || '', p.is_captain || false]
-      )
-    }
-
-    console.log(`✅ Команда "${team_name}" зарегистрирована на турнир #${tid}`)
-    res.status(201).json({ success: true, team: team.rows[0] })
-  } catch (e) {
-    console.error(e)
-    res.status(500).json({ error: 'Ошибка регистрации команды' })
-  }
-})
-
-// ── СПИСОК КОМАНД ТУРНИРА ──
-router.get('/:tid/teams', async (req, res) => {
-  try {
-    const teams = await db.query(
-      `SELECT t.*, 
-        json_agg(json_build_object(
-          'id', tp.id, 'full_name', tp.full_name,
-          'nickname', tp.nickname, 'steam_url', tp.steam_url,
-          'is_captain', tp.is_captain
-        ) ORDER BY tp.is_captain DESC, tp.id) as players
-       FROM teams t
-       LEFT JOIN team_players tp ON tp.team_id = t.id
-       WHERE t.tournament_id = $1
-       GROUP BY t.id
-       ORDER BY t.created_at`,
-      [req.params.tid]
-    )
-    res.json(teams.rows)
-  } catch (e) {
-    console.error(e)
-    res.status(500).json({ error: 'Ошибка загрузки команд' })
-  }
-})
-
-// ── ПРИНЯТЬ / ОТКЛОНИТЬ КОМАНДУ (только admin) ──
-router.put('/:tid/teams/:team_id', auth, async (req, res) => {
-  try {
-    const user = await db.query('SELECT role FROM users WHERE id=$1', [req.user.id])
-    if (user.rows[0]?.role !== 'admin') return res.status(403).json({ error: 'Только для администратора' })
-
-    const { status } = req.body // 'accepted' | 'rejected'
-    const result = await db.query(
-      'UPDATE teams SET status=$1 WHERE id=$2 AND tournament_id=$3 RETURNING *',
-      [status, req.params.team_id, req.params.tid]
-    )
-    if (!result.rows[0]) return res.status(404).json({ error: 'Команда не найдена' })
-    res.json(result.rows[0])
-  } catch (e) {
-    res.status(500).json({ error: 'Ошибка обновления' })
-  }
-})
-
-// ── УДАЛИТЬ КОМАНДУ (только admin) ──
-router.delete('/:tid/teams/:team_id', auth, async (req, res) => {
-  try {
-    const user = await db.query('SELECT role FROM users WHERE id=$1', [req.user.id])
-    if (user.rows[0]?.role !== 'admin') return res.status(403).json({ error: 'Только для администратора' })
-    await db.query('DELETE FROM teams WHERE id=$1 AND tournament_id=$2', [req.params.team_id, req.params.tid])
-    res.json({ success: true })
-  } catch (e) {
-    res.status(500).json({ error: 'Ошибка удаления' })
-  }
-})
-
-// ── СГЕНЕРИРОВАТЬ СЕТКУ Double Elimination (только admin) ──
+// ─────────────────────────────────────────────
+// ГЕНЕРАЦИЯ СЕТКИ
+// ─────────────────────────────────────────────
 router.post('/:tid/generate-bracket', auth, async (req, res) => {
   try {
-    const user = await db.query('SELECT role FROM users WHERE id=$1', [req.user.id])
-    if (user.rows[0]?.role !== 'admin') return res.status(403).json({ error: 'Только для администратора' })
+    const userRes = await db.query('SELECT role FROM users WHERE id=$1', [req.user.id])
+    const role = userRes.rows[0]?.role
+    if (role !== 'admin' && role !== 'organizer') {
+      return res.status(403).json({ error: 'Нет прав' })
+    }
 
     const tid = req.params.tid
+    const tRes = await db.query('SELECT * FROM tournaments WHERE id=$1', [tid])
+    const t = tRes.rows[0]
+    if (!t) return res.status(404).json({ error: 'Турнир не найден' })
 
-    // Берём только принятые команды
-    const teams = await db.query(
+    const format = (t.format || 'single_elimination').toLowerCase()
+
+    const teamsRes = await db.query(
       "SELECT id, name FROM teams WHERE tournament_id=$1 AND status='accepted' ORDER BY id",
       [tid]
     )
+    const teams = teamsRes.rows
+    if (teams.length < 2) return res.status(400).json({ error: 'Нужно минимум 2 принятые команды' })
 
-    if (teams.rows.length < 2) {
-      return res.status(400).json({ error: 'Нужно минимум 2 принятые команды' })
+    const seeded = shuffle(teams)
+    for (let i = 0; i < seeded.length; i++) {
+      await db.query('UPDATE teams SET seed=$1 WHERE id=$2', [i + 1, seeded[i].id])
     }
 
-    // Рандомная жеребьёвка — перемешиваем команды
-    const shuffled = [...teams.rows].sort(() => Math.random() - 0.5)
-    const n = shuffled.length // 8 команд
-
-    // Назначаем seed (номер посева)
-    for (let i = 0; i < shuffled.length; i++) {
-      await db.query('UPDATE teams SET seed=$1 WHERE id=$2', [i + 1, shuffled[i].id])
-    }
-
-    // Удаляем старые матчи этого турнира
     await db.query('DELETE FROM matches WHERE tournament_id=$1', [tid])
 
-    // Генерируем ВЕРХНЮЮ сетку (Upper Bracket)
-    // Для 8 команд: Round 1 = 4 матча, QF = 2 матча, SF = 1 матч, Final = 1 матч
-    const matches = []
+    let message = ''
 
-    // Upper Round 1: пары 1-8, 2-7, 3-6, 4-5
-    const r1pairs = []
-    for (let i = 0; i < n / 2; i++) {
-      r1pairs.push({ t1: shuffled[i], t2: shuffled[n - 1 - i] })
+    if (format === 'single_elimination' || format === 'se') {
+      message = await generateSingleElimination(tid, seeded)
+    } else if (format === 'double_elimination' || format === 'de') {
+      message = await generateDoubleElimination(tid, seeded)
+    } else if (format === 'round_robin' || format === 'rr') {
+      message = await generateRoundRobin(tid, seeded)
+    } else {
+      // По умолчанию — SE
+      message = await generateSingleElimination(tid, seeded)
     }
 
-    let matchNum = 1
-    for (const pair of r1pairs) {
-      const m = await db.query(
-        `INSERT INTO matches (tournament_id, round, team1_id, team2_id, bracket_type, match_number, status)
-         VALUES ($1, 1, $2, $3, 'upper', $4, 'pending') RETURNING id`,
-        [tid, pair.t1.id, pair.t2.id, matchNum++]
-      )
-      matches.push(m.rows[0].id)
-    }
-
-    // Upper Round 2 (пустые — заполнятся после R1)
-    for (let i = 0; i < n / 4; i++) {
-      await db.query(
-        `INSERT INTO matches (tournament_id, round, bracket_type, match_number, status)
-         VALUES ($1, 2, 'upper', $2, 'pending')`,
-        [tid, matchNum++]
-      )
-    }
-
-    // Upper Final (Semi, Final)
     await db.query(
-      `INSERT INTO matches (tournament_id, round, bracket_type, match_number, status)
-       VALUES ($1, 3, 'upper', $2, 'pending')`,
-      [tid, matchNum++]
+      "UPDATE tournaments SET bracket_generated=true, status='live' WHERE id=$1",
+      [tid]
     )
 
-    // Lower Bracket: Round 1 (4 проигравших из Upper R1)
-    for (let i = 0; i < n / 4; i++) {
-      await db.query(
-        `INSERT INTO matches (tournament_id, round, bracket_type, match_number, status)
-         VALUES ($1, 1, 'lower', $2, 'pending')`,
-        [tid, matchNum++]
-      )
-    }
-
-    // Lower Round 2
-    for (let i = 0; i < n / 8; i++) {
-      await db.query(
-        `INSERT INTO matches (tournament_id, round, bracket_type, match_number, status)
-         VALUES ($1, 2, 'lower', $2, 'pending')`,
-        [tid, matchNum++]
-      )
-    }
-
-    // Lower Final
-    await db.query(
-      `INSERT INTO matches (tournament_id, round, bracket_type, match_number, status)
-       VALUES ($1, 3, 'lower', $2, 'pending')`,
-      [tid, matchNum++]
-    )
-
-    // Grand Final
-    await db.query(
-      `INSERT INTO matches (tournament_id, round, bracket_type, match_number, status)
-       VALUES ($1, 4, 'grand_final', $2, 'pending')`,
-      [tid, matchNum++]
-    )
-
-    // Обновляем статус турнира
-    await db.query(
-      'UPDATE tournaments SET bracket_generated=true, status=$1 WHERE id=$2',
-      ['live', tid]
-    )
-
-    console.log(`✅ Сетка сгенерирована для турнира #${tid} (${shuffled.length} команд)`)
-    res.json({ success: true, teams: shuffled.length, message: 'Сетка сгенерирована и турнир запущен' })
-
+    res.json({ success: true, teams: seeded.length, format, message })
   } catch (e) {
-    console.error(e)
+    console.error('❌ bracket generate:', e)
     res.status(500).json({ error: 'Ошибка генерации сетки: ' + e.message })
   }
 })
 
-// ── ОПУБЛИКОВАТЬ СЕТКУ (сделать видимой участникам) ──
+// ─────────────────────────────────────────────
+// SINGLE ELIMINATION
+// Проигравшие в полуфинале играют за 3-е место
+// ─────────────────────────────────────────────
+async function generateSingleElimination(tid, teams) {
+  const n = teams.length
+  const size = nextPow2(n) // размер сетки (ближайшая степень 2)
+  let mn = 1
+
+  // Заполняем сетку — bye если команд меньше чем size
+  // Раунд 1: size/2 матчей
+  const round1Ids = []
+  const byes = [] // команды получившие bye (проходят автоматически)
+
+  for (let i = 0; i < size / 2; i++) {
+    const t1 = teams[i] || null
+    const t2 = teams[size - 1 - i] || null
+
+    if (t1 && !t2) {
+      // Bye — команда проходит автоматически
+      byes.push(t1.id)
+      const id = await insertMatch(tid, 1, 'upper', mn++, t1.id, null)
+      round1Ids.push({ id, bye: true, winner: t1.id })
+    } else {
+      const id = await insertMatch(tid, 1, 'upper', mn++, t1 ? t1.id : null, t2 ? t2.id : null)
+      round1Ids.push({ id, bye: false, winner: null })
+    }
+  }
+
+  // Генерируем оставшиеся раунды до финала
+  let currentRound = round1Ids
+  let roundNum = 2
+  const allRounds = [round1Ids]
+
+  while (currentRound.length > 1) {
+    const nextRound = []
+    for (let i = 0; i < currentRound.length; i += 2) {
+      const id = await insertMatch(tid, roundNum, 'upper', mn++)
+      nextRound.push({ id, bye: false, winner: null })
+    }
+    allRounds.push(nextRound)
+    currentRound = nextRound
+    roundNum++
+  }
+
+  // Полуфинал — предпоследний раунд (если >=4 команд)
+  // Матч за 3-е место между проигравшими в полуфинале
+  if (size >= 4) {
+    const semifinalRound = allRounds[allRounds.length - 2]
+    if (semifinalRound && semifinalRound.length === 2) {
+      // Матч за 3-е место
+      await db.query(
+        `INSERT INTO matches (tournament_id, round, bracket_type, match_number, status)
+         VALUES ($1, $2, 'third_place', $3, 'pending')`,
+        [tid, roundNum - 1, mn++]
+      )
+    }
+  }
+
+  return `Single Elimination: ${n} команд, ${size} слотов`
+}
+
+// ─────────────────────────────────────────────
+// DOUBLE ELIMINATION
+// Верхняя и нижняя сетка + Grand Final
+// Проигравшие в UB SF → матч за 3-е место (нижняя сетка)
+// ─────────────────────────────────────────────
+async function generateDoubleElimination(tid, teams) {
+  const n = teams.length
+  const size = nextPow2(n)
+  let mn = 1
+
+  // ── UPPER BRACKET ──
+  // Round 1
+  const ubR1 = []
+  for (let i = 0; i < size / 2; i++) {
+    const t1 = teams[i] || null
+    const t2 = teams[size - 1 - i] || null
+    const id = await insertMatch(tid, 1, 'upper', mn++, t1?.id || null, t2?.id || null)
+    ubR1.push(id)
+  }
+
+  // Остальные раунды UB вплоть до финала UB
+  let ubCurrent = ubR1
+  let ubRound = 2
+  const ubRounds = [ubR1]
+  while (ubCurrent.length > 1) {
+    const next = []
+    for (let i = 0; i < ubCurrent.length; i += 2) {
+      const id = await insertMatch(tid, ubRound, 'upper', mn++)
+      next.push(id)
+    }
+    ubRounds.push(next)
+    ubCurrent = next
+    ubRound++
+  }
+  // ubRounds последний элемент = финал UB (1 матч)
+
+  // ── LOWER BRACKET ──
+  // LB Round 1: проигравшие из UB Round 1 (size/2 команд → size/4 матчей)
+  let lbRound = 1
+  const lbR1 = []
+  for (let i = 0; i < size / 4; i++) {
+    const id = await insertMatch(tid, lbRound, 'lower', mn++)
+    lbR1.push(id)
+  }
+
+  let lbCurrent = lbR1
+  lbRound++
+
+  // LB продолжается пока не останется 1 матч
+  // После каждого UB раунда (начиная со 2) — проигравшие падают в LB
+  // LB раунды чередуются: elimination round (с падением из UB) и consolidation round
+  let ubDropRound = 2
+  while (lbCurrent.length > 1) {
+    // Elimination round (с упавшими из UB)
+    const elimRound = []
+    for (let i = 0; i < lbCurrent.length; i++) {
+      const id = await insertMatch(tid, lbRound, 'lower', mn++)
+      elimRound.push(id)
+    }
+    lbRound++
+    ubDropRound++
+
+    // Consolidation round
+    if (elimRound.length > 1) {
+      const consolRound = []
+      for (let i = 0; i < elimRound.length; i += 2) {
+        const id = await insertMatch(tid, lbRound, 'lower', mn++)
+        consolRound.push(id)
+      }
+      lbRound++
+      lbCurrent = consolRound
+    } else {
+      lbCurrent = elimRound
+    }
+  }
+  // lbCurrent[0] = финал LB
+
+  // ── GRAND FINAL ──
+  await insertMatch(tid, 1, 'grand_final', mn++)
+
+  // ── МАТЧ ЗА 3-Е МЕСТО ──
+  // Проигравшие в полуфиналах UB
+  // UB SF = предпоследний раунд UB (если rounds >= 2)
+  if (ubRounds.length >= 2) {
+    await db.query(
+      `INSERT INTO matches (tournament_id, round, bracket_type, match_number, status)
+       VALUES ($1, 1, 'third_place', $2, 'pending')`,
+      [tid, mn++]
+    )
+  }
+
+  return `Double Elimination: ${n} команд, ${size} слотов`
+}
+
+// ─────────────────────────────────────────────
+// ROUND ROBIN
+// Каждый против каждого
+// ─────────────────────────────────────────────
+async function generateRoundRobin(tid, teams) {
+  const n = teams.length
+  let mn = 1
+
+  // Алгоритм круговой сетки (round-robin scheduling)
+  // Если нечётное число — добавляем "bye"
+  const list = n % 2 === 0 ? [...teams] : [...teams, null]
+  const total = list.length
+
+  for (let round = 0; round < total - 1; round++) {
+    for (let i = 0; i < total / 2; i++) {
+      const t1 = list[i]
+      const t2 = list[total - 1 - i]
+      if (t1 && t2) {
+        await insertMatch(tid, round + 1, 'robin', mn++, t1.id, t2.id)
+      }
+    }
+    // Rotate: фиксируем первый элемент, остальные двигаем по кругу
+    const last = list.splice(total - 1, 1)[0]
+    list.splice(1, 0, last)
+  }
+
+  return `Round Robin: ${n} команд, ${(n * (n - 1)) / 2} матчей`
+}
+
+// ─────────────────────────────────────────────
+// ОПУБЛИКОВАТЬ СЕТКУ
+// ─────────────────────────────────────────────
 router.post('/:tid/publish-bracket', auth, async (req, res) => {
   try {
-    const user = await db.query('SELECT role FROM users WHERE id=$1', [req.user.id])
-    if (user.rows[0]?.role !== 'admin') return res.status(403).json({ error: 'Только для администратора' })
-
+    const userRes = await db.query('SELECT role FROM users WHERE id=$1', [req.user.id])
+    const role = userRes.rows[0]?.role
+    if (role !== 'admin' && role !== 'organizer') return res.status(403).json({ error: 'Нет прав' })
     await db.query('UPDATE tournaments SET bracket_published=true WHERE id=$1', [req.params.tid])
     res.json({ success: true })
   } catch (e) {
@@ -233,35 +297,29 @@ router.post('/:tid/publish-bracket', auth, async (req, res) => {
   }
 })
 
-// ── ПОЛУЧИТЬ СЕТКУ ──
+// ─────────────────────────────────────────────
+// ПОЛУЧИТЬ СЕТКУ
+// ─────────────────────────────────────────────
 router.get('/:tid/bracket', async (req, res) => {
   try {
-    const t = await db.query('SELECT bracket_generated, bracket_published FROM tournaments WHERE id=$1', [req.params.tid])
-    if (!t.rows[0]) return res.status(404).json({ error: 'Турнир не найден' })
+    const tRes = await db.query('SELECT bracket_generated, bracket_published, format FROM tournaments WHERE id=$1', [req.params.tid])
+    if (!tRes.rows[0]) return res.status(404).json({ error: 'Турнир не найден' })
+    const { bracket_generated, bracket_published, format } = tRes.rows[0]
 
-    const { bracket_generated, bracket_published } = t.rows[0]
-
-    // Проверяем роль — admin видит сетку всегда, остальные только после публикации
     let isAdmin = false
     const authHeader = req.headers.authorization
-    if (authHeader && authHeader.startsWith('Bearer ')) {
+    if (authHeader?.startsWith('Bearer ')) {
       try {
         const jwt = require('jsonwebtoken')
         const decoded = jwt.verify(authHeader.split(' ')[1], process.env.JWT_SECRET)
         const u = await db.query('SELECT role FROM users WHERE id=$1', [decoded.id])
-        isAdmin = u.rows[0]?.role === 'admin'
+        isAdmin = ['admin', 'organizer'].includes(u.rows[0]?.role)
       } catch(e) {}
     }
 
-    if (!bracket_generated) {
-      return res.json({ generated: false, published: false, matches: [], teams: [] })
-    }
+    if (!bracket_generated) return res.json({ generated: false, published: false, matches: [], teams: [] })
+    if (!bracket_published && !isAdmin) return res.json({ generated: true, published: false, matches: [], teams: [] })
 
-    if (!bracket_published && !isAdmin) {
-      return res.json({ generated: true, published: false, matches: [], teams: [] })
-    }
-
-    // Загружаем матчи с командами
     const matches = await db.query(
       `SELECT m.*,
         t1.name as team1_name, t1.seed as team1_seed,
@@ -272,14 +330,22 @@ router.get('/:tid/bracket', async (req, res) => {
        LEFT JOIN teams t2 ON m.team2_id = t2.id
        LEFT JOIN teams tw ON m.winner_team_id = tw.id
        WHERE m.tournament_id = $1
-       ORDER BY m.bracket_type, m.round, m.match_number`,
+       ORDER BY
+         CASE m.bracket_type
+           WHEN 'upper'       THEN 1
+           WHEN 'lower'       THEN 2
+           WHEN 'robin'       THEN 3
+           WHEN 'third_place' THEN 4
+           WHEN 'grand_final' THEN 5
+           ELSE 6 END,
+         m.round, m.match_number`,
       [req.params.tid]
     )
 
     const teams = await db.query(
       `SELECT t.*, json_agg(json_build_object(
         'nickname', tp.nickname, 'full_name', tp.full_name, 'is_captain', tp.is_captain
-      ) ORDER BY tp.is_captain DESC) as players
+       ) ORDER BY tp.is_captain DESC) as players
        FROM teams t
        LEFT JOIN team_players tp ON tp.team_id = t.id
        WHERE t.tournament_id = $1
@@ -287,23 +353,21 @@ router.get('/:tid/bracket', async (req, res) => {
       [req.params.tid]
     )
 
-    res.json({
-      generated: bracket_generated,
-      published: bracket_published,
-      matches: matches.rows,
-      teams: teams.rows
-    })
+    res.json({ generated: true, published: bracket_published, format, matches: matches.rows, teams: teams.rows })
   } catch (e) {
     console.error(e)
     res.status(500).json({ error: 'Ошибка загрузки сетки' })
   }
 })
 
-// ── ЗАПИСАТЬ РЕЗУЛЬТАТ МАТЧА (только admin) ──
+// ─────────────────────────────────────────────
+// РЕЗУЛЬТАТ МАТЧА
+// ─────────────────────────────────────────────
 router.put('/:tid/matches/:mid', auth, async (req, res) => {
   try {
-    const user = await db.query('SELECT role FROM users WHERE id=$1', [req.user.id])
-    if (user.rows[0]?.role !== 'admin') return res.status(403).json({ error: 'Только для администратора' })
+    const userRes = await db.query('SELECT role FROM users WHERE id=$1', [req.user.id])
+    const role = userRes.rows[0]?.role
+    if (role !== 'admin' && role !== 'organizer') return res.status(403).json({ error: 'Нет прав' })
 
     const { score1, score2, winner_team_id } = req.body
     if (!winner_team_id) return res.status(400).json({ error: 'Укажите победителя' })
@@ -313,85 +377,135 @@ router.put('/:tid/matches/:mid', auth, async (req, res) => {
        WHERE id=$4 AND tournament_id=$5 RETURNING *`,
       [score1 || 0, score2 || 0, winner_team_id, req.params.mid, req.params.tid]
     )
-
     if (!result.rows[0]) return res.status(404).json({ error: 'Матч не найден' })
 
-    // Определяем проигравшую команду
     const match = result.rows[0]
-    const loser_id = match.winner_team_id === match.team1_id ? match.team2_id : match.team1_id
+    const loser_id = winner_team_id == match.team1_id ? match.team2_id : match.team1_id
 
-    // Обновляем рейтинг игроков команды-победителя (+25) и проигравшей (-25, мин. 0)
+    // ── РЕЙТИНГ ──
     try {
-      // Игроки победившей команды
-      const winPlayers = await db.query(
-        'SELECT tp.* FROM team_players tp WHERE tp.team_id=$1',
-        [winner_team_id]
-      )
+      const winPlayers = await db.query('SELECT nickname FROM team_players WHERE team_id=$1', [winner_team_id])
       for (const p of winPlayers.rows) {
-        // Ищем пользователя по никнейму
         await db.query(
-          'UPDATE users SET rating=rating+25, wins=wins+1 WHERE LOWER(username)=LOWER($1) OR LOWER(faceit_nick)=LOWER($1)',
+          `INSERT INTO player_ratings (user_id, game, rating, wins, losses)
+           SELECT u.id, t.game, 1025, 1, 0 FROM users u, tournaments t
+           WHERE (LOWER(u.username)=LOWER($1) OR LOWER(u.faceit_nick)=LOWER($1)) AND t.id=$2
+           ON CONFLICT (user_id, game) DO UPDATE SET
+             rating = player_ratings.rating + 25,
+             wins   = player_ratings.wins + 1`,
+          [p.nickname, req.params.tid]
+        )
+        await db.query(
+          `UPDATE users SET rating=rating+25, wins=wins+1
+           WHERE LOWER(username)=LOWER($1) OR LOWER(faceit_nick)=LOWER($1)`,
           [p.nickname]
         )
       }
-      // Игроки проигравшей команды
       if (loser_id) {
-        const losePlayers = await db.query(
-          'SELECT tp.* FROM team_players tp WHERE tp.team_id=$1',
-          [loser_id]
-        )
+        const losePlayers = await db.query('SELECT nickname FROM team_players WHERE team_id=$1', [loser_id])
         for (const p of losePlayers.rows) {
           await db.query(
-            'UPDATE users SET rating=GREATEST(0, rating-25), losses=losses+1 WHERE LOWER(username)=LOWER($1) OR LOWER(faceit_nick)=LOWER($1)',
+            `INSERT INTO player_ratings (user_id, game, rating, wins, losses)
+             SELECT u.id, t.game, 975, 0, 1 FROM users u, tournaments t
+             WHERE (LOWER(u.username)=LOWER($1) OR LOWER(u.faceit_nick)=LOWER($1)) AND t.id=$2
+             ON CONFLICT (user_id, game) DO UPDATE SET
+               rating = GREATEST(0, player_ratings.rating - 25),
+               losses = player_ratings.losses + 1`,
+            [p.nickname, req.params.tid]
+          )
+          await db.query(
+            `UPDATE users SET rating=GREATEST(0,rating-25), losses=losses+1
+             WHERE LOWER(username)=LOWER($1) OR LOWER(faceit_nick)=LOWER($1)`,
             [p.nickname]
           )
         }
       }
-    } catch(ratingErr) {
-      console.log('Rating update skipped:', ratingErr.message)
-    }
+    } catch(ratingErr) { console.log('Rating skip:', ratingErr.message) }
 
-    // Если это Upper bracket — проигравший идёт в Lower
-    if (match.bracket_type === 'upper') {
-      // Найдём ближайший пустой матч в Lower bracket того же раунда
-      const lowerMatch = await db.query(
-        `SELECT id FROM matches WHERE tournament_id=$1 AND bracket_type='lower'
-         AND round=$2 AND team1_id IS NULL
+    // ── ПЕРЕХОД В СЛЕДУЮЩИЙ МАТЧ ──
+    const bt = match.bracket_type
+
+    if (bt === 'upper') {
+      // Победитель → следующий раунд Upper
+      const nextUpper = await db.query(
+        `SELECT id FROM matches WHERE tournament_id=$1 AND bracket_type='upper'
+         AND round=$2 AND (team1_id IS NULL OR team2_id IS NULL)
          ORDER BY match_number LIMIT 1`,
-        [req.params.tid, match.round]
+        [req.params.tid, match.round + 1]
       )
-      if (lowerMatch.rows[0]) {
-        await db.query(
-          `UPDATE matches SET team1_id = CASE WHEN team1_id IS NULL THEN $1 ELSE team1_id END,
-                             team2_id = CASE WHEN team1_id IS NOT NULL AND team2_id IS NULL THEN $1 ELSE team2_id END
-           WHERE id=$2`,
-          [loser_id, lowerMatch.rows[0].id]
-        )
-      }
-    }
+      if (nextUpper.rows[0]) await fillSlot(nextUpper.rows[0].id, winner_team_id)
 
-    // Победитель идёт в следующий матч Upper/Lower
-    const nextMatch = await db.query(
-      `SELECT id FROM matches WHERE tournament_id=$1 AND bracket_type=$2
-       AND round=$3 AND team1_id IS NULL
-       ORDER BY match_number LIMIT 1`,
-      [req.params.tid, match.bracket_type === 'grand_final' ? 'grand_final' : match.bracket_type,
-       match.bracket_type === 'grand_final' ? match.round : match.round + 1]
-    )
-    if (nextMatch.rows[0]) {
-      await db.query(
-        `UPDATE matches SET
-          team1_id = CASE WHEN team1_id IS NULL THEN $1 ELSE team1_id END,
-          team2_id = CASE WHEN team1_id IS NOT NULL AND team2_id IS NULL THEN $1 ELSE team2_id END
-         WHERE id=$2`,
-        [winner_team_id, nextMatch.rows[0].id]
+      // Проигравший → Lower bracket того же раунда
+      if (loser_id) {
+        const nextLower = await db.query(
+          `SELECT id FROM matches WHERE tournament_id=$1 AND bracket_type='lower'
+           AND round=$2 AND (team1_id IS NULL OR team2_id IS NULL)
+           ORDER BY match_number LIMIT 1`,
+          [req.params.tid, match.round]
+        )
+        if (nextLower.rows[0]) await fillSlot(nextLower.rows[0].id, loser_id)
+      }
+
+      // Проигравший в полуфинале UB → матч за 3-е место
+      // Проверяем: это предпоследний раунд UB?
+      const maxUBRound = await db.query(
+        `SELECT MAX(round) as mr FROM matches WHERE tournament_id=$1 AND bracket_type='upper'`,
+        [req.params.tid]
       )
+      const isUBSemifinal = match.round === (maxUBRound.rows[0].mr - 1)
+      if (isUBSemifinal && loser_id) {
+        const thirdPlace = await db.query(
+          `SELECT id FROM matches WHERE tournament_id=$1 AND bracket_type='third_place'
+           AND (team1_id IS NULL OR team2_id IS NULL) ORDER BY id LIMIT 1`,
+          [req.params.tid]
+        )
+        if (thirdPlace.rows[0]) await fillSlot(thirdPlace.rows[0].id, loser_id)
+      }
+
+    } else if (bt === 'lower') {
+      // Победитель → следующий раунд Lower или Grand Final
+      const nextLower = await db.query(
+        `SELECT id FROM matches WHERE tournament_id=$1 AND bracket_type='lower'
+         AND round=$2 AND (team1_id IS NULL OR team2_id IS NULL)
+         ORDER BY match_number LIMIT 1`,
+        [req.params.tid, match.round + 1]
+      )
+      if (nextLower.rows[0]) {
+        await fillSlot(nextLower.rows[0].id, winner_team_id)
+      } else {
+        // Нет следующего Lower раунда → идёт в Grand Final
+        const gf = await db.query(
+          `SELECT id FROM matches WHERE tournament_id=$1 AND bracket_type='grand_final'
+           AND (team1_id IS NULL OR team2_id IS NULL) ORDER BY id LIMIT 1`,
+          [req.params.tid]
+        )
+        if (gf.rows[0]) await fillSlot(gf.rows[0].id, winner_team_id)
+      }
+      // Проигравший выбывает
+
+    } else if (bt === 'grand_final') {
+      // Финал — обновляем статус турнира
+      await db.query("UPDATE tournaments SET status='done' WHERE id=$1", [req.params.tid])
+
+    } else if (bt === 'third_place') {
+      // Матч за 3-е место — ничего дополнительного
+
+    } else if (bt === 'robin') {
+      // Round Robin — ничего, победитель определяется по очкам в конце
+      // Проверяем закончились ли все матчи
+      const pending = await db.query(
+        `SELECT COUNT(*) FROM matches WHERE tournament_id=$1 AND bracket_type='robin' AND status!='done'`,
+        [req.params.tid]
+      )
+      if (parseInt(pending.rows[0].count) === 0) {
+        await db.query("UPDATE tournaments SET status='done' WHERE id=$1", [req.params.tid])
+      }
     }
 
     res.json({ success: true, match: result.rows[0] })
   } catch (e) {
-    console.error(e)
-    res.status(500).json({ error: 'Ошибка сохранения результата' })
+    console.error('❌ match result:', e)
+    res.status(500).json({ error: 'Ошибка сохранения результата: ' + e.message })
   }
 })
 
