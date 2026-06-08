@@ -18,7 +18,12 @@ const API = {
 
     const res = await fetch('/api' + path, opts)
     const data = await res.json()
-    if (!res.ok) throw new Error(data.error || 'Ошибка сервера')
+    if (!res.ok) {
+      const err = new Error(data.error || 'Ошибка сервера')
+      err.detail = data.detail || null
+      err.status = res.status
+      throw err
+    }
     return data
   },
 

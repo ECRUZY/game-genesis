@@ -967,7 +967,8 @@ async function doSend(data) {
     showSuccess(data);
   } catch(e) {
     if (btn) { btn.disabled = false; btn.textContent = 'Отправить заявку'; }
-    alert('Ошибка: ' + e.message);
+    alert('Ошибка: ' + e.message + (e.detail ? '\n\nДетали: ' + e.detail : ''));
+    console.error('doSend error:', e);
   }
 }
 
