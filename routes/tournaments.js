@@ -269,7 +269,8 @@ router.post('/:id/teams', auth, async (req, res) => {
     if (t.rows[0].status !== 'open') return res.status(400).json({ error: 'Регистрация закрыта' })
 
     // Студенческий турнир — требуем данные
-    if (t.rows[0].is_student) {
+    const isStudent = t.rows[0].is_student === true || t.rows[0].is_student === 't' || t.rows[0].is_student === 'true'
+    if (isStudent) {
       if (!student_data || !student_data.university || !student_data.faculty || !student_data.group) {
         return res.status(400).json({ error: 'Для студенческого турнира заполните данные студенческого билета' })
       }
@@ -343,24 +344,33 @@ router.post('/:id/teams', auth, async (req, res) => {
     )
 
     // Добавляем игроков в team_players
-    // Для агентов подставляем их сохранённые студ. данные из solo-команды
     for (const p of players) {
-      const nick = (p.nickname || '').toLowerCase();
-      const agentSd = agentStudentData && agentStudentData[nick];
-      const finalStudentData = p.student_data || (agentSd ? agentSd.student_data : null);
-      const finalStudentPhoto = p.student_photo || (agentSd ? agentSd.student_photo : null);
-      await db.query(
-        'INSERT INTO team_players (team_id, full_name, nickname, steam_url, is_captain, student_data, student_photo) VALUES ($1,$2,$3,$4,$5,$6,$7) ON CONFLICT DO NOTHING',
-        [team.rows[0].id, p.full_name || '', p.nickname || '', p.steam_url || '', p.is_captain || false,
-         finalStudentData ? JSON.stringify(finalStudentData) : null,
-         finalStudentPhoto || null]
-      )
+      const nick = (p.nickname || '').toLowerCase()
+      const agentSd = agentStudentData && agentStudentData[nick]
+      const finalStudentData = p.student_data || (agentSd ? agentSd.student_data : null)
+      const finalStudentPhoto = p.student_photo || (agentSd ? agentSd.student_photo : null)
+      try {
+        // Пробуем с student_data/student_photo колонками
+        await db.query(
+          'INSERT INTO team_players (team_id, full_name, nickname, steam_url, is_captain, student_data, student_photo) VALUES ($1,$2,$3,$4,$5,$6,$7)',
+          [team.rows[0].id, p.full_name || '', p.nickname || '', p.steam_url || '', p.is_captain || false,
+           finalStudentData ? JSON.stringify(finalStudentData) : null,
+           finalStudentPhoto || null]
+        )
+      } catch(colErr) {
+        // Если колонок нет — вставляем без них
+        await db.query(
+          'INSERT INTO team_players (team_id, full_name, nickname, steam_url, is_captain) VALUES ($1,$2,$3,$4,$5)',
+          [team.rows[0].id, p.full_name || '', p.nickname || '', p.steam_url || '', p.is_captain || false]
+        )
+      }
     }
 
     res.status(201).json({ success: true, team: team.rows[0] })
   } catch (e) {
-    console.error(e)
-    res.status(500).json({ error: 'Ошибка регистрации команды' })
+    console.error('❌ POST teams error:', e.message)
+    console.error('Stack:', e.stack)
+    res.status(500).json({ error: 'Ошибка регистрации команды', detail: e.message })
   }
 })
 
