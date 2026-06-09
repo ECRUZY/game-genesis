@@ -394,7 +394,6 @@ if (!TOKEN) {
 } else if (!USER || (USER.role !== 'admin' && USER.role !== 'organizer')) {
   document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center;padding:40px;font-family:\'Exo 2\',sans-serif;color:#5c7090;"><div><div style="font-size:48px;margin-bottom:16px;">🔒</div><div style="font-family:Rajdhani,sans-serif;font-size:26px;font-weight:700;color:#fff;margin-bottom:8px;">Только для организаторов</div><p style="margin-bottom:20px;">Эта страница доступна организаторам и администраторам.</p><a href="/auth.html" style="display:inline-flex;padding:11px 24px;background:#f0c040;color:#080c12;border-radius:8px;font-family:Rajdhani,sans-serif;font-weight:700;text-decoration:none;">Войти</a></div></div>';
 }
-}
 
 var currentTid = null;
 var currentTeams = [];
