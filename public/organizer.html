@@ -389,8 +389,11 @@ var TOKEN = localStorage.getItem('gg_token');
 var USER = null;
 try { USER = JSON.parse(localStorage.getItem('gg_user')); } catch(e) {}
 
-if (!USER || USER.role !== 'admin') {
-  document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center;padding:40px;font-family:Exo 2,sans-serif;color:#5c7090;"><div><div style="font-size:48px;margin-bottom:16px;">🔒</div><div style="font-family:Rajdhani,sans-serif;font-size:26px;font-weight:700;color:#fff;margin-bottom:8px;">Только для администратора</div><p style="margin-bottom:20px;">Эта страница доступна только организаторам.</p><a href="/auth.html" style="display:inline-flex;padding:11px 24px;background:#f0c040;color:#080c12;border-radius:8px;font-family:Rajdhani,sans-serif;font-weight:700;text-decoration:none;">Войти</a></div></div>';
+if (!TOKEN) {
+  window.location.href = '/auth.html?redirect=/organizer.html';
+} else if (!USER || (USER.role !== 'admin' && USER.role !== 'organizer')) {
+  document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center;padding:40px;font-family:\'Exo 2\',sans-serif;color:#5c7090;"><div><div style="font-size:48px;margin-bottom:16px;">🔒</div><div style="font-family:Rajdhani,sans-serif;font-size:26px;font-weight:700;color:#fff;margin-bottom:8px;">Только для организаторов</div><p style="margin-bottom:20px;">Эта страница доступна организаторам и администраторам.</p><a href="/auth.html" style="display:inline-flex;padding:11px 24px;background:#f0c040;color:#080c12;border-radius:8px;font-family:Rajdhani,sans-serif;font-weight:700;text-decoration:none;">Войти</a></div></div>';
+}
 }
 
 var currentTid = null;
@@ -690,164 +693,78 @@ function bMatchCard(m, extra){
   '</div>';
 }
 
+function closeRoster(){
+  var els = document.querySelectorAll('#roster-popup,#roster-overlay');
+  els.forEach(function(e){e.remove();});
+}
+
 function showRoster(teamId) {
-  document.querySelectorAll('#roster-popup,#roster-overlay').forEach(function(e){e.remove();});
+  closeRoster();
   var team = currentTeams.find(function(t){ return t.id === teamId; });
   if (!team) return;
   var players = (team.players||[]).filter(function(p){ return p && p.nickname; });
-  document.body.insertAdjacentHTML('beforeend',
-    '<div id="roster-overlay" onclick="document.querySelectorAll('#roster-popup,#roster-overlay').forEach(function(e){e.remove();})" style="position:fixed;inset:0;z-index:699;background:rgba(0,0,0,.4);"></div>' +
-    '<div id="roster-popup" style="background:var(--bg-card);border:1px solid var(--border-hi);border-radius:12px;padding:16px;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:700;min-width:220px;max-width:300px;box-shadow:0 20px 60px rgba(0,0,0,.6);">' +
-      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">' +
-        '<div style="font-family:Rajdhani,sans-serif;font-size:16px;font-weight:700;color:#fff;">'+team.name+'</div>' +
-        '<button onclick="document.querySelectorAll('#roster-popup,#roster-overlay').forEach(function(e){e.remove();})" style="background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:18px;line-height:1;">✕</button>' +
-      '</div>' +
-      (players.length ? players.map(function(p){
-        return '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid rgba(26,36,54,.4);">' +
-          (p.is_captain?'<span style="color:var(--gold);font-size:11px;">★</span>':'<span style="color:var(--text-muted);font-size:11px;">·</span>') +
-          '<span style="font-size:13px;font-weight:'+(p.is_captain?'600':'400')+';color:'+(p.is_captain?'#fff':'var(--text)')+'">'+p.nickname+'</span>' +
-        '</div>';
-      }).join('') : '<div style="color:var(--text-muted);font-size:12px;">Нет данных</div>') +
-    '</div>'
-  );
+
+  var overlay = document.createElement('div');
+  overlay.id = 'roster-overlay';
+  overlay.onclick = closeRoster;
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:699;background:rgba(0,0,0,.5);';
+  document.body.appendChild(overlay);
+
+  var popup = document.createElement('div');
+  popup.id = 'roster-popup';
+  popup.style.cssText = 'background:var(--bg-card);border:1px solid var(--border-hi);border-radius:12px;padding:16px;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:700;min-width:220px;max-width:300px;box-shadow:0 20px 60px rgba(0,0,0,.6);';
+
+  var header = document.createElement('div');
+  header.style.cssText = 'display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;';
+
+  var title = document.createElement('div');
+  title.style.cssText = "font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;color:#fff;";
+  title.textContent = team.name;
+
+  var closeBtn = document.createElement('button');
+  closeBtn.style.cssText = 'background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:18px;line-height:1;';
+  closeBtn.textContent = '✕';
+  closeBtn.onclick = closeRoster;
+
+  header.appendChild(title);
+  header.appendChild(closeBtn);
+  popup.appendChild(header);
+
+  if (players.length) {
+    players.forEach(function(p) {
+      var row = document.createElement('div');
+      row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid rgba(26,36,54,.4);';
+
+      var star = document.createElement('span');
+      star.style.cssText = 'font-size:11px;color:' + (p.is_captain ? 'var(--gold)' : 'var(--text-muted)') + ';';
+      star.textContent = p.is_captain ? '★' : '·';
+
+      var name = document.createElement('span');
+      name.style.cssText = 'font-size:13px;font-weight:' + (p.is_captain?'600':'400') + ';color:' + (p.is_captain?'#fff':'var(--text)') + ';';
+      name.textContent = p.nickname;
+
+      row.appendChild(star);
+      row.appendChild(name);
+      popup.appendChild(row);
+    });
+  } else {
+    var empty = document.createElement('div');
+    empty.style.cssText = 'color:var(--text-muted);font-size:12px;';
+    empty.textContent = 'Нет данных';
+    popup.appendChild(empty);
+  }
+
+  document.body.appendChild(popup);
 }
 
 function encodeMatch(m) {
-  return "JSON.parse(decodeURIComponent('"+encodeURIComponent(JSON.stringify(m))+"'))";
+  // Store match in global and use index
+  if (!window._matchCache) window._matchCache = [];
+  var idx = window._matchCache.length;
+  window._matchCache.push(m);
+  return 'window._matchCache[' + idx + ']';
 }
 
-function renderBracketSection(matches, isLower) {
-  var rounds = groupByRound(matches);
-  var rNums = Object.keys(rounds).map(Number).sort(function(a,b){return a-b;});
-  var maxR = Math.max.apply(null,rNums);
-  var maxMatches = Math.max.apply(null, rNums.map(function(r){ return rounds[r].length; }));
-  var html = '<div class="b-round-wrap">';
-
-  rNums.forEach(function(r, ri) {
-    var ms = rounds[r];
-    var n = ms.length;
-    var ratio = maxMatches / n;
-    var matchGap = ratio * (58+8) - 58;
-    var topPad = (ratio-1) * (58+8) / 2;
-
-    html += '<div class="b-round-col" style="margin-right:'+(ri<rNums.length-1?'60px':'0')+'">';
-    html += '<div class="b-round-label">'+(isLower?'L':'')+getRoundLabel(r,maxR)+'</div>';
-    html += '<div style="position:relative">';
-
-    ms.forEach(function(m, mi) {
-      html += '<div style="margin-bottom:8px;margin-top:'+(mi===0?topPad:matchGap)+'px;position:relative">';
-      html += bMatchCard(m,'');
-      if (ri < rNums.length-1) {
-        var nextN = rounds[rNums[ri+1]].length;
-        var isTop = mi%2===0;
-        var vLen = (n > nextN) ? ratio*(58+8)/2 : 0;
-        if (vLen > 4) {
-          html += '<svg style="position:absolute;top:28px;right:-61px;width:61px;height:'+(vLen+2)+'px;overflow:visible" viewBox="0 0 61 '+(vLen+2)+'">'+
-            '<path d="M0 1 L30 1 L30 '+(isTop?vLen+1:1)+' L61 '+(isTop?vLen+1:1)+'" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="0.5"/></svg>';
-        } else {
-          html += '<svg style="position:absolute;top:28px;right:-61px;width:61px;height:2px;overflow:visible" viewBox="0 0 61 2"><line x1="0" y1="1" x2="61" y2="1" stroke="rgba(255,255,255,.1)" stroke-width="0.5"/></svg>';
-        }
-      }
-      html += '</div>';
-    });
-    html += '</div></div>';
-  });
-  html += '</div>';
-  return html;
-}
-
-function renderBracket(data) {
-  var content = document.getElementById('bracket-content');
-  var banner = document.getElementById('bracket-banner');
-  var actions = document.getElementById('bracket-actions');
-
-  if (!data.generated) {
-    banner.style.display = 'none';
-    content.innerHTML = '<div class="empty"><div class="empty-icon">⚙️</div><h3>Сетка не сгенерирована</h3><p>Примите заявки и нажмите «Сгенерировать сетку»</p></div>';
-    actions.innerHTML = ''; return;
-  }
-
-  document.getElementById('bracket-teams-count').textContent = (data.teams||[]).length;
-  document.getElementById('st-matches').textContent = (data.matches||[]).filter(function(m){return m.status==='done';}).length;
-
-  if (!data.published) {
-    banner.style.display='block'; banner.className='bracket-banner waiting';
-    banner.innerHTML='⚡ <b>Сетка сгенерирована</b> — участники её не видят. Нажмите «Опубликовать».';
-    actions.innerHTML='<button class="btn-gold" onclick="publishBracket()">Опубликовать сетку</button>';
-  } else {
-    banner.style.display='block'; banner.className='bracket-banner ready';
-    banner.innerHTML='✅ <b>Сетка опубликована</b>';
-    actions.innerHTML='';
-  }
-
-  if (!data.matches||!data.matches.length) {
-    content.innerHTML='<div class="empty"><div class="empty-icon">📊</div><h3>Матчи будут здесь</h3></div>'; return;
-  }
-
-  var upper = data.matches.filter(function(m){return m.bracket_type==='upper';});
-  var lower = data.matches.filter(function(m){return m.bracket_type==='lower';});
-  var grand = data.matches.filter(function(m){return m.bracket_type==='grand_final';});
-  var tp    = data.matches.filter(function(m){return m.bracket_type==='third_place';});
-  var robin = data.matches.filter(function(m){return m.bracket_type==='robin';});
-
-  var html = '<div class="bracket-wrap">';
-
-  if (robin.length) {
-    html += '<div class="b-section"><div class="b-section-title">🔄 Круговой этап</div>';
-    html += renderBracketSection(robin, false) + '</div>';
-  } else {
-    if (upper.length) {
-      html += '<div class="b-section"><div class="b-section-title upper">⬆ Верхняя сетка</div>';
-      html += renderBracketSection(upper, false) + '</div>';
-    }
-    if (lower.length) {
-      html += '<div class="b-section"><div class="b-section-title lower">⬇ Нижняя сетка</div>';
-      html += renderBracketSection(lower, true) + '</div>';
-    }
-    if (tp.length) {
-      html += '<div class="b-section"><div class="b-section-title" style="color:var(--gold)">🥉 Матч за 3-е место</div><div style="display:flex;gap:16px;">';
-      tp.forEach(function(m){ html += bMatchCard(m,'third'); }); html += '</div></div>';
-    }
-    if (grand.length) {
-      html += '<div class="b-section"><div class="b-section-title" style="color:#fff">🏆 Гранд-Финал</div><div style="display:flex;gap:16px;">';
-      grand.forEach(function(m){ html += bMatchCard(m,'grand'); }); html += '</div></div>';
-    }
-  }
-
-  html += '</div>';
-  content.innerHTML = html;
-}
-
-
-// ── МАТЧ МОДАЛ ──
-function openMatch(m) {
-  currentMatchId = m.id;
-  currentMatchData = m;
-  currentWinner = m.status === 'done' ? (m.winner_team_id === m.team1_id ? 1 : 2) : null;
-
-  document.getElementById('modal-title').textContent = 'Матч #' + m.match_number +
-    (m.bracket_type === 'third_place' ? ' — За 3-е место' :
-     m.bracket_type === 'grand_final' ? ' — Гранд-Финал' : '');
-
-  // Команда 1 с составом
-  var t1players = getTeamPlayers(m.team1_id);
-  var t2players = getTeamPlayers(m.team2_id);
-
-  document.getElementById('mt1').innerHTML = m.team1_name +
-    (t1players ? '<div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:4px;">' +
-      t1players.map(function(p){ return '<span style="font-size:10px;background:var(--bg-card2);border-radius:4px;padding:2px 6px;color:var(--text-dim);">'+(p.is_captain?'★ ':'')+p.nickname+'</span>'; }).join('') +
-    '</div>' : '');
-  document.getElementById('mt2').innerHTML = m.team2_name +
-    (t2players ? '<div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:4px;">' +
-      t2players.map(function(p){ return '<span style="font-size:10px;background:var(--bg-card2);border-radius:4px;padding:2px 6px;color:var(--text-dim);">'+(p.is_captain?'★ ':'')+p.nickname+'</span>'; }).join('') +
-    '</div>' : '');
-
-  document.getElementById('ms1').value = m.score1 || 0;
-  document.getElementById('ms2').value = m.score2 || 0;
-  document.getElementById('wb1').classList.toggle('sel', currentWinner===1);
-  document.getElementById('wb2').classList.toggle('sel', currentWinner===2);
-  document.getElementById('match-modal').classList.add('open');
-}
 
 function getTeamPlayers(teamId) {
   if (!teamId || !currentTeams) return null;
