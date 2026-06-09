@@ -658,25 +658,58 @@ function getRoundLabel(r, maxR) {
   return 'Раунд '+r;
 }
 
-function bMatchCard(m, extraClass) {
-  var cls = 'bm'+(m.status==='done'?' done':'')+(extraClass?' '+extraClass:'');
+function bMatchCard(m, extra){
+  var cls = 'bm'+(m.status==='done'?' done':'')+(extra?' '+extra:'');
   var t1w = m.status==='done'&&m.winner_team_id===m.team1_id;
   var t2w = m.status==='done'&&m.winner_team_id===m.team2_id;
   var t1n = m.team1_name||null; var t2n = m.team2_name||null;
-  var onclick = (m.status!=='done'&&t1n&&t2n) ? 'onclick="openMatch('+encodeMatch(m)+')"' : '';
-  return '<div class="'+cls+'" '+onclick+'>' +
+  var canClick = t1n && t2n;
+  var matchOnclick = canClick ? 'onclick="openMatch('+encodeMatch(m)+')" style="cursor:pointer"' : '';
+
+  function slotHtml(name, teamId, isWin) {
+    if (!name) return '<span class="bm-name tbd">TBD</span>';
+    var pl = getTeamPlayers(teamId);
+    var tip = pl ? pl.map(function(p){return (p.is_captain?'★ ':'')+p.nickname;}).join(', ') : '';
+    return '<span class="bm-name '+(isWin?'win':'')+'" title="'+tip+'" '+
+      (teamId ? 'onclick="event.stopPropagation();showRoster('+teamId+')" style="cursor:pointer;text-decoration:underline dotted;text-underline-offset:2px"' : '')+
+      '>'+name+'</span>';
+  }
+
+  return '<div class="'+cls+'" '+matchOnclick+'>' +
     '<div class="bm-num">Матч #'+m.match_number+'</div>' +
     '<div class="bm-slot">' +
       '<span class="bm-seed">'+(m.team1_seed||'?')+'</span>' +
-      '<span class="bm-name '+(t1w?'win':'')+(t1n?'':'tbd')+'">'+(t1n||'TBD')+'</span>' +
+      slotHtml(t1n, m.team1_id, t1w) +
       (m.status==='done'?'<span class="bm-score '+(t1w?'win':'')+'">'+m.score1+'</span>':'') +
     '</div>' +
     '<div class="bm-slot">' +
       '<span class="bm-seed">'+(m.team2_seed||'?')+'</span>' +
-      '<span class="bm-name '+(t2w?'win':'')+(t2n?'':'tbd')+'">'+(t2n||'TBD')+'</span>' +
+      slotHtml(t2n, m.team2_id, t2w) +
       (m.status==='done'?'<span class="bm-score '+(t2w?'win':'')+'">'+m.score2+'</span>':'') +
     '</div>' +
   '</div>';
+}
+
+function showRoster(teamId) {
+  document.querySelectorAll('#roster-popup,#roster-overlay').forEach(function(e){e.remove();});
+  var team = currentTeams.find(function(t){ return t.id === teamId; });
+  if (!team) return;
+  var players = (team.players||[]).filter(function(p){ return p && p.nickname; });
+  document.body.insertAdjacentHTML('beforeend',
+    '<div id="roster-overlay" onclick="document.querySelectorAll('#roster-popup,#roster-overlay').forEach(function(e){e.remove();})" style="position:fixed;inset:0;z-index:699;background:rgba(0,0,0,.4);"></div>' +
+    '<div id="roster-popup" style="background:var(--bg-card);border:1px solid var(--border-hi);border-radius:12px;padding:16px;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:700;min-width:220px;max-width:300px;box-shadow:0 20px 60px rgba(0,0,0,.6);">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">' +
+        '<div style="font-family:Rajdhani,sans-serif;font-size:16px;font-weight:700;color:#fff;">'+team.name+'</div>' +
+        '<button onclick="document.querySelectorAll('#roster-popup,#roster-overlay').forEach(function(e){e.remove();})" style="background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:18px;line-height:1;">✕</button>' +
+      '</div>' +
+      (players.length ? players.map(function(p){
+        return '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid rgba(26,36,54,.4);">' +
+          (p.is_captain?'<span style="color:var(--gold);font-size:11px;">★</span>':'<span style="color:var(--text-muted);font-size:11px;">·</span>') +
+          '<span style="font-size:13px;font-weight:'+(p.is_captain?'600':'400')+';color:'+(p.is_captain?'#fff':'var(--text)')+'">'+p.nickname+'</span>' +
+        '</div>';
+      }).join('') : '<div style="color:var(--text-muted);font-size:12px;">Нет данных</div>') +
+    '</div>'
+  );
 }
 
 function encodeMatch(m) {
@@ -687,35 +720,33 @@ function renderBracketSection(matches, isLower) {
   var rounds = groupByRound(matches);
   var rNums = Object.keys(rounds).map(Number).sort(function(a,b){return a-b;});
   var maxR = Math.max.apply(null,rNums);
+  var maxMatches = Math.max.apply(null, rNums.map(function(r){ return rounds[r].length; }));
   var html = '<div class="b-round-wrap">';
 
   rNums.forEach(function(r, ri) {
     var ms = rounds[r];
-    // Vertical spacing: doubles each round
-    var matchGap = Math.pow(2,ri)*(58+8)-58; // total space between match centers
-    var topPad = ri===0 ? 0 : (Math.pow(2,ri)-1)*(58+8)/2;
+    var n = ms.length;
+    var ratio = maxMatches / n;
+    var matchGap = ratio * (58+8) - 58;
+    var topPad = (ratio-1) * (58+8) / 2;
 
     html += '<div class="b-round-col" style="margin-right:'+(ri<rNums.length-1?'60px':'0')+'">';
     html += '<div class="b-round-label">'+(isLower?'L':'')+getRoundLabel(r,maxR)+'</div>';
     html += '<div style="position:relative">';
 
-    ms.forEach(function(m,mi) {
-      var mt = mi===0 ? topPad : matchGap;
+    ms.forEach(function(m, mi) {
       html += '<div style="margin-bottom:8px;margin-top:'+(mi===0?topPad:matchGap)+'px;position:relative">';
       html += bMatchCard(m,'');
-
-      // Connector to next round (right side)
       if (ri < rNums.length-1) {
+        var nextN = rounds[rNums[ri+1]].length;
         var isTop = mi%2===0;
-        var vLen = Math.pow(2,ri)*(58+8)/2;
-        var dir = isTop ? 1 : -1;
-        var svgH = vLen+2;
-        var y0 = 29; // middle of card
-        var y1 = isTop ? (y0+vLen) : (y0-vLen);
-        var yMid = (y0+y1)/2;
-        html += '<svg class="connector-svg" style="position:absolute;top:'+(y0-1)+'px;right:-61px;width:61px;height:'+(Math.abs(y1-y0)+2)+'px;overflow:visible" viewBox="0 0 61 '+(Math.abs(y1-y0)+2)+'">' +
-          '<path d="M0 1 L30 1 L30 '+(Math.abs(y1-y0)+1)+' L61 '+(Math.abs(y1-y0)+1)+'" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="0.5"'+(isTop?'':' transform="scale(1,-1) translate(0,-'+(Math.abs(y1-y0)+2)+')"')+'/>' +
-          '</svg>';
+        var vLen = (n > nextN) ? ratio*(58+8)/2 : 0;
+        if (vLen > 4) {
+          html += '<svg style="position:absolute;top:28px;right:-61px;width:61px;height:'+(vLen+2)+'px;overflow:visible" viewBox="0 0 61 '+(vLen+2)+'">'+
+            '<path d="M0 1 L30 1 L30 '+(isTop?vLen+1:1)+' L61 '+(isTop?vLen+1:1)+'" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="0.5"/></svg>';
+        } else {
+          html += '<svg style="position:absolute;top:28px;right:-61px;width:61px;height:2px;overflow:visible" viewBox="0 0 61 2"><line x1="0" y1="1" x2="61" y2="1" stroke="rgba(255,255,255,.1)" stroke-width="0.5"/></svg>';
+        }
       }
       html += '</div>';
     });
@@ -792,15 +823,37 @@ function renderBracket(data) {
 function openMatch(m) {
   currentMatchId = m.id;
   currentMatchData = m;
-  currentWinner = null;
-  document.getElementById('modal-title').textContent = 'Матч #' + m.match_number;
-  document.getElementById('mt1').textContent = m.team1_name;
-  document.getElementById('mt2').textContent = m.team2_name;
+  currentWinner = m.status === 'done' ? (m.winner_team_id === m.team1_id ? 1 : 2) : null;
+
+  document.getElementById('modal-title').textContent = 'Матч #' + m.match_number +
+    (m.bracket_type === 'third_place' ? ' — За 3-е место' :
+     m.bracket_type === 'grand_final' ? ' — Гранд-Финал' : '');
+
+  // Команда 1 с составом
+  var t1players = getTeamPlayers(m.team1_id);
+  var t2players = getTeamPlayers(m.team2_id);
+
+  document.getElementById('mt1').innerHTML = m.team1_name +
+    (t1players ? '<div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:4px;">' +
+      t1players.map(function(p){ return '<span style="font-size:10px;background:var(--bg-card2);border-radius:4px;padding:2px 6px;color:var(--text-dim);">'+(p.is_captain?'★ ':'')+p.nickname+'</span>'; }).join('') +
+    '</div>' : '');
+  document.getElementById('mt2').innerHTML = m.team2_name +
+    (t2players ? '<div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:4px;">' +
+      t2players.map(function(p){ return '<span style="font-size:10px;background:var(--bg-card2);border-radius:4px;padding:2px 6px;color:var(--text-dim);">'+(p.is_captain?'★ ':'')+p.nickname+'</span>'; }).join('') +
+    '</div>' : '');
+
   document.getElementById('ms1').value = m.score1 || 0;
   document.getElementById('ms2').value = m.score2 || 0;
-  document.getElementById('wb1').classList.remove('sel');
-  document.getElementById('wb2').classList.remove('sel');
+  document.getElementById('wb1').classList.toggle('sel', currentWinner===1);
+  document.getElementById('wb2').classList.toggle('sel', currentWinner===2);
   document.getElementById('match-modal').classList.add('open');
+}
+
+function getTeamPlayers(teamId) {
+  if (!teamId || !currentTeams) return null;
+  var team = currentTeams.find(function(t){ return t.id === teamId; });
+  if (!team) return null;
+  return (team.players||[]).filter(function(p){ return p && p.nickname; });
 }
 
 function closeModal() { document.getElementById('match-modal').classList.remove('open'); }
@@ -1017,4 +1070,5 @@ async function mergeSelectedAgents() {
 loadMyTournaments();
 </script>
 </body>
+
 </html>
