@@ -31,13 +31,17 @@ async function insertMatch(tid, round, bracketType, matchNum, t1 = null, t2 = nu
 
 // Заполнить слот следующего матча победителем/проигравшим
 async function fillSlot(matchId, teamId) {
-  await db.query(
-    `UPDATE matches SET
-      team1_id = CASE WHEN team1_id IS NULL THEN $1 ELSE team1_id END,
-      team2_id = CASE WHEN team1_id IS NOT NULL AND team2_id IS NULL THEN $1 ELSE team2_id END
-     WHERE id = $2`,
-    [teamId, matchId]
-  )
+  // Читаем текущее состояние матча
+  const cur = await db.query('SELECT team1_id, team2_id FROM matches WHERE id=$1', [matchId])
+  if (!cur.rows[0]) return
+  const { team1_id, team2_id } = cur.rows[0]
+  
+  if (!team1_id) {
+    await db.query('UPDATE matches SET team1_id=$1 WHERE id=$2', [teamId, matchId])
+  } else if (!team2_id) {
+    await db.query('UPDATE matches SET team2_id=$1 WHERE id=$2', [teamId, matchId])
+  }
+  // Оба слота заняты — ничего не делаем (не перезаписываем)
 }
 
 // ─────────────────────────────────────────────
