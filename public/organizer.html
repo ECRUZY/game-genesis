@@ -772,6 +772,98 @@ function getTeamPlayers(teamId) {
   return (team.players||[]).filter(function(p){ return p && p.nickname; });
 }
 
+function renderBracketSection(matches, isLower) {
+  var rounds = groupByRound(matches);
+  var rNums = Object.keys(rounds).map(Number).sort(function(a,b){return a-b;});
+  var maxR = Math.max.apply(null, rNums);
+  var maxMatches = Math.max.apply(null, rNums.map(function(r){ return rounds[r].length; }));
+  var html = '<div style="display:flex;align-items:flex-start;overflow-x:auto;gap:0;padding-bottom:8px;">';
+
+  rNums.forEach(function(r, ri) {
+    var ms = rounds[r];
+    var n = ms.length;
+    var ratio = maxMatches / n;
+    var matchGap = ratio * (58+8) - 58;
+    var topPad = (ratio-1) * (58+8) / 2;
+
+    html += '<div class="b-round-col" style="flex-shrink:0;margin-right:'+(ri<rNums.length-1?'60px':'0')+'">';
+    html += '<div class="b-round-label">'+(isLower?'L':'')+getRoundLabel(r,maxR)+'</div>';
+    html += '<div style="position:relative;">';
+
+    ms.forEach(function(m, mi) {
+      html += '<div style="margin-bottom:8px;margin-top:'+(mi===0?topPad:matchGap)+'px;position:relative;">';
+      html += bMatchCard(m, '');
+      if (ri < rNums.length-1) {
+        var nextN = rounds[rNums[ri+1]].length;
+        var isTop = mi%2===0;
+        var vLen = (n > nextN) ? ratio*(58+8)/2 : 0;
+        if (vLen > 4) {
+          html += '<svg style="position:absolute;top:28px;right:-61px;width:61px;height:'+(vLen+2)+'px;overflow:visible;" viewBox="0 0 61 '+(vLen+2)+'">' +
+            '<path d="M0 1 L30 1 L30 '+(isTop?vLen+1:1)+' L61 '+(isTop?vLen+1:1)+'" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="0.5"/>' +
+            '</svg>';
+        } else {
+          html += '<svg style="position:absolute;top:28px;right:-61px;width:61px;height:2px;overflow:visible;" viewBox="0 0 61 2"><line x1="0" y1="1" x2="61" y2="1" stroke="rgba(255,255,255,.1)" stroke-width="0.5"/></svg>';
+        }
+      }
+      html += '</div>';
+    });
+    html += '</div></div>';
+  });
+  html += '</div>';
+  return html;
+}
+
+function renderBracket(data) {
+  var content = document.getElementById('bracket-content');
+  var banner  = document.getElementById('bracket-banner');
+  var actions = document.getElementById('bracket-actions');
+
+  if (!data.generated) {
+    if (banner) banner.style.display = 'none';
+    content.innerHTML = '<div class="empty"><div class="empty-icon">⚙️</div><h3>Сетка не сгенерирована</h3><p>Примите заявки и нажмите «Сгенерировать сетку»</p></div>';
+    if (actions) actions.innerHTML = ''; return;
+  }
+
+  var teams = data.teams || [];
+  document.getElementById('bracket-teams-count').textContent = teams.length;
+  document.getElementById('st-matches').textContent = (data.matches||[]).filter(function(m){return m.status==='done';}).length;
+
+  if (!data.published) {
+    if (banner) { banner.style.display='block'; banner.innerHTML='⚡ <b>Сетка сгенерирована</b> — участники её не видят. Нажмите «Опубликовать».'; }
+    if (actions) actions.innerHTML='<button class="btn-gold" onclick="publishBracket()">Опубликовать сетку</button>';
+  } else {
+    if (banner) { banner.style.display='block'; banner.innerHTML='✅ <b>Сетка опубликована</b>'; }
+    if (actions) actions.innerHTML='';
+  }
+
+  if (!data.matches||!data.matches.length) {
+    content.innerHTML='<div class="empty"><div class="empty-icon">📊</div><h3>Нет матчей</h3></div>'; return;
+  }
+
+  var upper = data.matches.filter(function(m){return m.bracket_type==='upper';});
+  var lower = data.matches.filter(function(m){return m.bracket_type==='lower';});
+  var grand = data.matches.filter(function(m){return m.bracket_type==='grand_final';});
+  var tp    = data.matches.filter(function(m){return m.bracket_type==='third_place';});
+  var robin = data.matches.filter(function(m){return m.bracket_type==='robin';});
+
+  var html = '<div class="bracket-wrap">';
+  if (robin.length) {
+    html += '<div class="b-section"><div class="b-section-title">🔄 Круговой этап</div>'+renderBracketSection(robin,false)+'</div>';
+  } else {
+    if (upper.length) html += '<div class="b-section"><div class="b-section-title upper">⬆ Верхняя сетка</div>'+renderBracketSection(upper,false)+'</div>';
+    if (lower.length) html += '<div class="b-section"><div class="b-section-title lower">⬇ Нижняя сетка</div>'+renderBracketSection(lower,true)+'</div>';
+    if (tp.length) {
+      html += '<div class="b-section"><div class="b-section-title" style="color:var(--gold)">🥉 Матч за 3-е место</div><div style="display:flex;gap:16px;flex-wrap:wrap;">';
+      tp.forEach(function(m){ html += bMatchCard(m,'third'); }); html += '</div></div>';
+    }
+    if (grand.length) {
+      html += '<div class="b-section"><div class="b-section-title" style="color:#fff">🏆 Гранд-Финал</div><div style="display:flex;gap:16px;flex-wrap:wrap;">';
+      grand.forEach(function(m){ html += bMatchCard(m,'grand'); }); html += '</div></div>';
+    }
+  }
+  content.innerHTML = html + '</div>';
+}
+
 function closeModal() { document.getElementById('match-modal').classList.remove('open'); }
 
 function selWinner(n) {
