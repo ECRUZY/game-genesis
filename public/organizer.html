@@ -358,12 +358,15 @@
           <div class="winner-btns"><button class="wb" id="wb2" onclick="selWinner(2)">Победитель</button></div>
         </div>
       </div>
-      <div style="display:flex;gap:10px;">
+      <div style="display:flex;gap:10px;align-items:center;">
         <button class="btn-outline" style="flex:1;" onclick="closeModal()">Отмена</button>
         <button class="btn-gold" style="flex:2;" onclick="saveMatch()">
           <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-          Сохранить результат
+          <span id="save-btn-text">Сохранить результат</span>
         </button>
+      </div>
+      <div id="match-done-hint" style="display:none;margin-top:10px;text-align:center;font-size:12px;color:var(--text-muted);">
+        Матч завершён — вы редактируете результат. Переходы в следующий раунд не изменятся автоматически.
       </div>
     </div>
   </div>
@@ -862,6 +865,46 @@ function renderBracket(data) {
     }
   }
   content.innerHTML = html + '</div>';
+}
+
+function openMatch(m) {
+  currentMatchId = m.id;
+  currentMatchData = m;
+  currentWinner = m.status === 'done' ? (m.winner_team_id === m.team1_id ? 1 : 2) : null;
+
+  document.getElementById('modal-title').textContent = 'Матч #' + m.match_number +
+    (m.bracket_type === 'third_place' ? ' — За 3-е место' :
+     m.bracket_type === 'grand_final' ? ' — Гранд-Финал' : '');
+
+  var t1p = getTeamPlayers(m.team1_id);
+  var t2p = getTeamPlayers(m.team2_id);
+
+  function makePlayersHtml(players) {
+    if (!players || !players.length) return '';
+    return '<div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:4px;">' +
+      players.map(function(p){
+        return '<span style="font-size:10px;background:var(--bg-card2);border-radius:4px;padding:2px 6px;color:var(--text-dim);">' +
+          (p.is_captain ? '★ ' : '') + p.nickname + '</span>';
+      }).join('') + '</div>';
+  }
+
+  var mt1 = document.getElementById('mt1');
+  var mt2 = document.getElementById('mt2');
+  mt1.innerHTML = (m.team1_name || 'TBD') + makePlayersHtml(t1p);
+  mt2.innerHTML = (m.team2_name || 'TBD') + makePlayersHtml(t2p);
+
+  document.getElementById('ms1').value = m.score1 || 0;
+  document.getElementById('ms2').value = m.score2 || 0;
+  document.getElementById('wb1').classList.toggle('sel', currentWinner === 1);
+  document.getElementById('wb2').classList.toggle('sel', currentWinner === 2);
+
+  var isDone = m.status === 'done';
+  var saveBtn = document.getElementById('save-btn-text');
+  if (saveBtn) saveBtn.textContent = isDone ? 'Обновить результат' : 'Сохранить результат';
+  var hint = document.getElementById('match-done-hint');
+  if (hint) hint.style.display = isDone ? 'block' : 'none';
+
+  document.getElementById('match-modal').classList.add('open');
 }
 
 function closeModal() { document.getElementById('match-modal').classList.remove('open'); }
