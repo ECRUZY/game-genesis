@@ -514,3 +514,109 @@ router.put('/:tid/matches/:mid', auth, async (req, res) => {
 })
 
 module.exports = router
+
+// ─────────────────────────────────────────────
+// ПЕРЕСЧИТАТЬ ПЕРЕХОДЫ (для уже сыгранных матчей)
+// ─────────────────────────────────────────────
+router.post('/:tid/recalculate', auth, async (req, res) => {
+  try {
+    const userRes = await db.query('SELECT role FROM users WHERE id=$1', [req.user.id])
+    const role = userRes.rows[0]?.role
+    if (role !== 'admin' && role !== 'organizer') return res.status(403).json({ error: 'Нет прав' })
+
+    const tid = req.params.tid
+
+    // Сначала сбрасываем все незавершённые матчи (кроме R1)
+    await db.query(
+      `UPDATE matches SET team1_id=NULL, team2_id=NULL
+       WHERE tournament_id=$1 AND status='pending' AND round > 1`,
+      [tid]
+    )
+    // Также сбрасываем матчи за 3-е место и гранд-финал
+    await db.query(
+      `UPDATE matches SET team1_id=NULL, team2_id=NULL
+       WHERE tournament_id=$1 AND status='pending' AND bracket_type IN ('grand_final','third_place','lower')`,
+      [tid]
+    )
+
+    // Берём все завершённые матчи в правильном порядке
+    const done = await db.query(
+      `SELECT * FROM matches WHERE tournament_id=$1 AND status='done'
+       ORDER BY
+         CASE bracket_type WHEN 'upper' THEN 1 WHEN 'lower' THEN 2 ELSE 3 END,
+         round, match_number`,
+      [tid]
+    )
+
+    for (const match of done.rows) {
+      const winner_team_id = match.winner_team_id
+      const loser_id = winner_team_id === match.team1_id ? match.team2_id : match.team1_id
+      const bt = match.bracket_type
+
+      if (bt === 'upper') {
+        // Победитель → следующий upper раунд
+        const nextUpper = await db.query(
+          `SELECT id FROM matches WHERE tournament_id=$1 AND bracket_type='upper'
+           AND round=$2 AND (team1_id IS NULL OR team2_id IS NULL)
+           ORDER BY match_number LIMIT 1`,
+          [tid, match.round + 1]
+        )
+        if (nextUpper.rows[0]) await fillSlot(nextUpper.rows[0].id, winner_team_id)
+
+        // Проигравший → lower того же раунда
+        if (loser_id) {
+          const nextLower = await db.query(
+            `SELECT id FROM matches WHERE tournament_id=$1 AND bracket_type='lower'
+             AND round=$2 AND (team1_id IS NULL OR team2_id IS NULL)
+             ORDER BY match_number LIMIT 1`,
+            [tid, match.round]
+          )
+          if (nextLower.rows[0]) await fillSlot(nextLower.rows[0].id, loser_id)
+        }
+
+        // Проигравший в полуфинале → матч за 3-е место
+        const maxUBRound = await db.query(
+          `SELECT MAX(round) as mr FROM matches WHERE tournament_id=$1 AND bracket_type='upper'`, [tid]
+        )
+        if (loser_id && match.round === maxUBRound.rows[0].mr - 1) {
+          const tp = await db.query(
+            `SELECT id FROM matches WHERE tournament_id=$1 AND bracket_type='third_place'
+             AND (team1_id IS NULL OR team2_id IS NULL) ORDER BY id LIMIT 1`, [tid]
+          )
+          if (tp.rows[0]) await fillSlot(tp.rows[0].id, loser_id)
+        }
+
+        // Победитель финала upper → grand_final
+        if (match.round === maxUBRound.rows[0].mr) {
+          const gf = await db.query(
+            `SELECT id FROM matches WHERE tournament_id=$1 AND bracket_type='grand_final'
+             AND (team1_id IS NULL OR team2_id IS NULL) ORDER BY id LIMIT 1`, [tid]
+          )
+          if (gf.rows[0]) await fillSlot(gf.rows[0].id, winner_team_id)
+        }
+
+      } else if (bt === 'lower') {
+        const nextLower = await db.query(
+          `SELECT id FROM matches WHERE tournament_id=$1 AND bracket_type='lower'
+           AND round=$2 AND (team1_id IS NULL OR team2_id IS NULL)
+           ORDER BY match_number LIMIT 1`,
+          [tid, match.round + 1]
+        )
+        if (nextLower.rows[0]) {
+          await fillSlot(nextLower.rows[0].id, winner_team_id)
+        } else {
+          const gf = await db.query(
+            `SELECT id FROM matches WHERE tournament_id=$1 AND bracket_type='grand_final'
+             AND (team1_id IS NULL OR team2_id IS NULL) ORDER BY id LIMIT 1`, [tid]
+          )
+          if (gf.rows[0]) await fillSlot(gf.rows[0].id, winner_team_id)
+        }
+      }
+    }
+
+    res.json({ success: true, processed: done.rows.length })
+  } catch(e) {
+    console.error('recalculate:', e)
+    res.status(500).json({ error: e.message })
+  }
+})
