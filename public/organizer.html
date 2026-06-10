@@ -245,6 +245,10 @@
             <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
             Принять все
           </button>
+          <button class="btn-outline" onclick="recalculateBracket()" title="Заполнить следующие раунды по уже сыгранным матчам" style="display:flex;align-items:center;gap:6px;font-size:13px;">
+            <svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;flex-shrink:0;"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.58"/></svg>
+            Пересчитать
+          </button>
           <button class="btn-gold" id="gen-btn" onclick="confirmGenerate()" disabled>
             <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
             Сгенерировать сетку
@@ -932,6 +936,20 @@ async function saveMatch() {
     toast('✓ Результат сохранён');
     await loadBracket();
     await loadTeams();
+  } catch(e) { toast('Ошибка: ' + e.message, 'err'); }
+}
+
+async function recalculateBracket() {
+  if (!currentTid) { toast('Выберите турнир', 'err'); return; }
+  try {
+    var res = await fetch('/api/tournaments/' + currentTid + '/recalculate', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + TOKEN }
+    });
+    var data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    toast('✓ Переходы пересчитаны (' + data.processed + ' матчей)');
+    await loadBracket();
   } catch(e) { toast('Ошибка: ' + e.message, 'err'); }
 }
 
