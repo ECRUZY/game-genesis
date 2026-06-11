@@ -123,17 +123,18 @@
         <p id="my-rank-sub">— победы · — поражения</p>
       </div>
     </div>
+    <div id="my-rank-level" style="display:flex;align-items:center;gap:8px;min-width:200px;"></div>
     <div style="text-align:right;margin-left:auto;">
       <div class="rank-pts" id="my-rank-pts">1 000</div>
-      <div class="rank-pts-label">очков рейтинга</div>
+      <div class="rank-pts-label">ELO рейтинг</div>
     </div>
   </div>
 
   <!-- ТАБЫ И ФИЛЬТРЫ -->
   <div class="tabs-row">
     <div class="type-tabs">
-      <button class="type-tab active" onclick="setType('individual',this)">Индивидуальный</button>
-      <button class="type-tab soon" title="Скоро" onclick="return false">Командный <span style="font-size:10px;opacity:.6;">— скоро</span></button>
+      <button class="type-tab active" onclick="setType('individual',this)">Игроки</button>
+      <button class="type-tab" onclick="setType('teams',this)">Команды</button>
     </div>
     <div class="game-filters">
       <button class="gf active" data-game="all" onclick="setGame(this)"><span class="gf-icon">🎮</span>Все игры</button>
@@ -145,18 +146,32 @@
   </div>
 
   <!-- ТАБЛИЦА -->
-  <div class="table-wrap">
+  <div class="table-wrap" id="individual-wrap">
     <div class="table-head">
       <div class="th">Ранг</div>
       <div class="th">Игрок</div>
       <div class="th">Игра</div>
+      <div class="th">Уровень</div>
       <div class="th right">В/П</div>
-      <div class="th right">Очки</div>
+      <div class="th right">ELO</div>
     </div>
     <div id="ratings-body">
-      <!-- Скелетон -->
       <div class="skel"><div class="skel-inner"></div></div>
       <div class="skel"><div class="skel-inner"></div></div>
+      <div class="skel"><div class="skel-inner"></div></div>
+    </div>
+  </div>
+
+  <div class="table-wrap" id="teams-wrap" style="display:none;">
+    <div class="table-head" style="grid-template-columns:50px 1fr 90px 160px 80px 80px;">
+      <div class="th">Ранг</div>
+      <div class="th">Команда</div>
+      <div class="th">Игра</div>
+      <div class="th">Уровень</div>
+      <div class="th right">В/П</div>
+      <div class="th right">ELO</div>
+    </div>
+    <div id="teams-body">
       <div class="skel"><div class="skel-inner"></div></div>
       <div class="skel"><div class="skel-inner"></div></div>
       <div class="skel"><div class="skel-inner"></div></div>
@@ -172,6 +187,124 @@ try { ME = JSON.parse(localStorage.getItem('gg_user')); } catch(e) {}
 
 var ALL_PLAYERS = [];
 var currentGame = 'all';
+
+// ── FACEIT-ПОДОБНЫЕ УРОВНИ ──
+var ELO_LEVELS = [
+  { level:1,  min:0,    max:500,  color:'#8c8c8c', bg:'rgba(140,140,140,.12)' },
+  { level:2,  min:501,  max:750,  color:'#4db6ac', bg:'rgba(77,182,172,.12)'  },
+  { level:3,  min:751,  max:900,  color:'#4fc3f7', bg:'rgba(79,195,247,.12)'  },
+  { level:4,  min:901,  max:1050, color:'#81c784', bg:'rgba(129,199,132,.12)' },
+  { level:5,  min:1051, max:1200, color:'#aed581', bg:'rgba(174,213,129,.12)' },
+  { level:6,  min:1201, max:1350, color:'#fff176', bg:'rgba(255,241,118,.12)' },
+  { level:7,  min:1351, max:1530, color:'#ffb74d', bg:'rgba(255,183,77,.12)'  },
+  { level:8,  min:1531, max:1750, color:'#ff8a65', bg:'rgba(255,138,101,.12)' },
+  { level:9,  min:1751, max:2000, color:'#f06292', bg:'rgba(240,98,146,.12)'  },
+  { level:10, min:2001, max:9999, color:'#ce93d8', bg:'rgba(206,147,216,.15)' }
+];
+
+function getLevel(elo) {
+  var e = elo || 1000;
+  for (var i = ELO_LEVELS.length - 1; i >= 0; i--) {
+    if (e >= ELO_LEVELS[i].min) return ELO_LEVELS[i];
+  }
+  return ELO_LEVELS[0];
+}
+
+function levelBadge(elo) {
+  var lv = getLevel(elo);
+  return '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;' +
+    'min-width:42px;height:42px;background:'+lv.bg+';border:1px solid '+lv.color+'40;border-radius:8px;">' +
+    '<div style="font-family:Rajdhani,sans-serif;font-size:16px;font-weight:900;color:'+lv.color+';line-height:1;">'+lv.level+'</div>' +
+    '<div style="font-size:8px;color:'+lv.color+';opacity:.7;letter-spacing:.5px;">LVL</div>' +
+    '</div>';
+}
+
+function eloBar(elo) {
+  var lv = getLevel(elo);
+  var range = lv.max - lv.min;
+  var pct = lv.level === 10 ? 100 : Math.min(100, Math.round((elo - lv.min) / range * 100));
+  var next = lv.level < 10 ? ELO_LEVELS[lv.level].min : null;
+  return '<div style="margin-top:3px;">' +
+    '<div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text-muted);margin-bottom:2px;">' +
+      '<span style="color:'+lv.color+';font-weight:600;">Ур. '+lv.level+'</span>' +
+      (next ? '<span>'+next+' ELO → ур.'+(lv.level+1)+'</span>' : '<span style="color:'+lv.color+';">MAX</span>') +
+    '</div>' +
+    '<div style="height:3px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden;">' +
+      '<div style="height:100%;width:'+pct+'%;background:'+lv.color+';border-radius:2px;transition:width .4s;"></div>' +
+    '</div>' +
+  '</div>';
+}
+
+var ALL_TEAMS = [];
+var currentType = 'individual';
+
+function setType(type, btn) {
+  currentType = type;
+  document.querySelectorAll('.type-tab').forEach(function(b){ b.classList.remove('active'); });
+  if (btn) btn.classList.add('active');
+  document.getElementById('individual-wrap').style.display = type === 'individual' ? '' : 'none';
+  document.getElementById('teams-wrap').style.display = type === 'teams' ? '' : 'none';
+  document.getElementById('my-rank-banner').style.display = (type === 'individual' && ME) ? 'flex' : 'none';
+  if (type === 'teams' && !ALL_TEAMS.length) loadTeamRatings();
+}
+
+async function loadTeamRatings() {
+  try {
+    var res = await fetch('/api/users/team-ratings');
+    if (!res.ok) throw new Error('Ошибка');
+    ALL_TEAMS = await res.json();
+    renderTeams(ALL_TEAMS);
+  } catch(e) {
+    document.getElementById('teams-body').innerHTML =
+      '<div class="empty"><div class="empty-icon">⚠️</div><h3>Не удалось загрузить</h3></div>';
+  }
+}
+
+function renderTeams(list) {
+  var body = document.getElementById('teams-body');
+  // Фильтр по игре
+  var filtered = currentGame === 'all' ? list
+    : list.filter(function(t){ return t.game === currentGame; });
+  // Сортировка
+  filtered = filtered.slice().sort(function(a,b){ return (b.elo||1000)-(a.elo||1000); });
+
+  if (!filtered.length) {
+    body.innerHTML = '<div class="empty"><div class="empty-icon">🎮</div><h3>Нет команд</h3><p>Команды появятся после завершения матчей</p></div>';
+    return;
+  }
+
+  body.innerHTML = filtered.map(function(t, i) {
+    var rank = i + 1;
+    var rankClass = rank===1?'r1':rank===2?'r2':rank===3?'r3':'rn';
+    var elo = parseInt(t.elo) || 1000;
+    var wins = parseInt(t.wins) || 0;
+    var losses = parseInt(t.losses) || 0;
+    var total = wins + losses;
+    var wr = total > 0 ? Math.round(wins/total*100) : 0;
+    var wrClass = wr>=60?'high':wr>=40?'mid':'low';
+    var players = (t.players||[]).filter(function(p){return p&&p.nickname;});
+    var ini = (t.name||'?').slice(0,2).toUpperCase();
+
+    return '<div class="row" style="grid-template-columns:50px 1fr 90px 160px 80px 80px;">' +
+      '<div class="rank-cell"><div class="rank-badge '+rankClass+'">'+rank+'</div></div>' +
+      '<div class="player-cell">' +
+        '<div class="player-av" style="background:var(--bg-card2);border:1px solid var(--border);font-family:Rajdhani,sans-serif;font-weight:700;">'+ini+'</div>' +
+        '<div>' +
+          '<div class="player-name">'+t.name+'</div>' +
+          '<div class="player-sub" style="display:flex;gap:4px;flex-wrap:wrap;margin-top:3px;">' +
+            players.map(function(p){
+              return '<span style="font-size:10px;color:var(--text-dim);background:rgba(255,255,255,.05);border-radius:3px;padding:1px 5px;">'+(p.is_captain?'★ ':'')+p.nickname+'</span>';
+            }).join('') +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div><span class="game-tag">'+(t.game||'—')+'</span></div>' +
+      '<div style="display:flex;align-items:center;gap:8px;">'+levelBadge(elo)+'<div style="min-width:100px;">'+eloBar(elo)+'</div></div>' +
+      '<div class="wr-cell"><div class="wr-val '+wrClass+'">'+wr+'%</div><div class="wr-sub">'+wins+'W / '+losses+'L</div></div>' +
+      '<div class="pts-cell">'+elo.toLocaleString('ru-RU')+'</div>' +
+    '</div>';
+  }).join('');
+}
 
 // ── ЗАГРУЗКА РЕЙТИНГА ──
 async function loadRatings() {
@@ -202,6 +335,14 @@ function renderMyRank() {
   document.getElementById('my-rank-name').textContent = myData.is_private ? myData.username : (myData.full_name || myData.username);
   document.getElementById('my-rank-sub').textContent = (myData.wins||0) + ' победы · ' + (myData.losses||0) + ' поражения';
   document.getElementById('my-rank-pts').textContent = (myData.rating||1000).toLocaleString('ru-RU');
+
+  // Добавляем уровень в баннер
+  var lv = getLevel(myData.rating||1000);
+  var lvEl = document.getElementById('my-rank-level');
+  if (lvEl) {
+    lvEl.innerHTML = levelBadge(myData.rating||1000) +
+      '<div style="margin-left:8px;">' + eloBar(myData.rating||1000) + '</div>';
+  }
 }
 
 // ── РЕНДЕР ТАБЛИЦЫ ──
@@ -235,7 +376,8 @@ function renderTable(list) {
     var wr = total > 0 ? Math.round(wins / total * 100) : 0;
     var wrClass = wr >= 60 ? 'high' : wr >= 40 ? 'mid' : 'low';
     var rankClass = rank === 1 ? 'r1' : rank === 2 ? 'r2' : rank === 3 ? 'r3' : 'rn';
-    var pts = (p.rating||0).toLocaleString('ru-RU');
+    var pts = (p.rating||1000).toLocaleString('ru-RU');
+    var eloVal = p.rating || 1000;
 
     // Игры пользователя
     var games = p.game ? p.game.split(',').map(function(g){return g.trim();}) : ['—'];
@@ -254,6 +396,10 @@ function renderTable(list) {
         '</div>' +
       '</div>' +
       '<div>' + gameTag + '</div>' +
+      '<div style="display:flex;align-items:center;gap:8px;">' +
+        levelBadge(eloVal) +
+        '<div style="min-width:120px;">' + eloBar(eloVal) + '</div>' +
+      '</div>' +
       '<div class="wr-cell"><div class="wr-val ' + wrClass + '">' + wr + '%</div><div class="wr-sub">' + wins + 'W / ' + losses + 'L</div></div>' +
       '<div class="pts-cell">' + pts + '</div>' +
     '</a>';
@@ -263,15 +409,13 @@ function renderTable(list) {
 // ── ФИЛЬТРЫ ──
 function setGame(btn) {
   currentGame = btn.dataset.game;
-  document.querySelectorAll('.gf').forEach(function(b){
-    b.classList.remove('active');
-  });
+  document.querySelectorAll('.gf').forEach(function(b){ b.classList.remove('active'); });
   btn.classList.add('active');
-  renderTable(ALL_PLAYERS);
+  if (currentType === 'teams') renderTeams(ALL_TEAMS);
+  else renderTable(ALL_PLAYERS);
 }
 
-function setType(type, btn) {
-  if (type !== 'individual') return;
+// setType defined above
   document.querySelectorAll('.type-tab').forEach(function(b){ b.classList.remove('active'); });
   btn.classList.add('active');
 }
