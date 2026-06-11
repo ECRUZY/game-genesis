@@ -119,18 +119,9 @@ router.get('/team-ratings', async (req, res) => {
         t.name,
         t.tournament_id,
         tr.game,
-        COUNT(CASE WHEN m.winner_team_id = t.id THEN 1 END) as wins,
-        COUNT(CASE WHEN m.winner_team_id != t.id
-          AND (m.team1_id = t.id OR m.team2_id = t.id)
-          AND m.status = 'done' THEN 1 END) as losses,
-        COALESCE(
-          1000
-          + 25 * COUNT(CASE WHEN m.winner_team_id = t.id THEN 1 END)
-          - 25 * COUNT(CASE WHEN m.winner_team_id != t.id
-              AND (m.team1_id = t.id OR m.team2_id = t.id)
-              AND m.status = 'done' THEN 1 END),
-          1000
-        ) as elo,
+        COALESCE(stats.wins, 0) as wins,
+        COALESCE(stats.losses, 0) as losses,
+        1000 + 25 * COALESCE(stats.wins, 0) - 25 * COALESCE(stats.losses, 0) as elo,
         COALESCE(
           json_agg(
             json_build_object('nickname', tp.nickname, 'is_captain', tp.is_captain)
@@ -140,10 +131,18 @@ router.get('/team-ratings', async (req, res) => {
         ) as players
       FROM teams t
       JOIN tournaments tr ON tr.id = t.tournament_id
-      LEFT JOIN matches m ON (m.team1_id = t.id OR m.team2_id = t.id)
       LEFT JOIN team_players tp ON tp.team_id = t.id
+      LEFT JOIN LATERAL (
+        SELECT
+          COUNT(CASE WHEN m.winner_team_id = t.id THEN 1 END) as wins,
+          COUNT(CASE WHEN m.winner_team_id != t.id
+            AND (m.team1_id = t.id OR m.team2_id = t.id)
+            AND m.status = 'done' THEN 1 END) as losses
+        FROM matches m
+        WHERE m.team1_id = t.id OR m.team2_id = t.id
+      ) stats ON true
       WHERE t.status = 'accepted'
-      GROUP BY t.id, t.name, t.tournament_id, tr.game
+      GROUP BY t.id, t.name, t.tournament_id, tr.game, stats.wins, stats.losses
       ORDER BY elo DESC, wins DESC
       LIMIT 100
     `)
