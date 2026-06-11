@@ -694,3 +694,70 @@ router.post('/:id/cover', auth, async (req, res) => {
 })
 
 module.exports = router
+
+// ── ВВОД СТАТИСТИКИ МАТЧА ──
+router.post('/:tid/matches/:mid/stats', auth, async (req, res) => {
+  try {
+    const uRes = await db.query('SELECT role FROM users WHERE id=$1', [req.user.id])
+    if (!['admin','organizer'].includes(uRes.rows[0]?.role))
+      return res.status(403).json({ error: 'Нет прав' })
+
+    const { stats } = req.body
+    // stats = [{nickname, team_id, kills, deaths, assists, hs_pct, adr}, ...]
+    if (!stats || !stats.length) return res.status(400).json({ error: 'Нет данных' })
+
+    // Удаляем старые статы этого матча
+    await db.query('DELETE FROM match_player_stats WHERE match_id=$1', [req.params.mid])
+
+    // Вставляем новые
+    for (const s of stats) {
+      await db.query(
+        `INSERT INTO match_player_stats (match_id, tournament_id, team_id, nickname, kills, deaths, assists, hs_pct, adr)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+        [req.params.mid, req.params.tid, s.team_id||null, s.nickname,
+         s.kills||0, s.deaths||0, s.assists||0, s.hs_pct||0, s.adr||0]
+      )
+
+      // Обновляем рейтинг игрока с учётом статов
+      // K/D bonus: если K/D > 1.5 → +10, < 0.5 → -10
+      // HS% bonus: если HS% > 50 → +5
+      const kd = s.deaths > 0 ? s.kills / s.deaths : s.kills
+      let bonus = 0
+      if (kd > 1.5) bonus += 10
+      else if (kd < 0.5) bonus -= 10
+      if ((s.hs_pct||0) > 50) bonus += 5
+      if ((s.adr||0) > 80) bonus += 5
+
+      if (bonus !== 0) {
+        await db.query(
+          `UPDATE users SET rating = GREATEST(0, rating + $1)
+           WHERE LOWER(username) = LOWER($2) OR LOWER(faceit_nick) = LOWER($2)`,
+          [bonus, s.nickname]
+        )
+        await db.query(
+          `UPDATE player_ratings SET rating = GREATEST(0, rating + $1)
+           WHERE user_id = (SELECT id FROM users WHERE LOWER(username)=LOWER($2) OR LOWER(faceit_nick)=LOWER($2) LIMIT 1)`,
+          [bonus, s.nickname]
+        )
+      }
+    }
+
+    res.json({ success: true, count: stats.length })
+  } catch(e) {
+    console.error('❌ stats:', e)
+    res.status(500).json({ error: e.message })
+  }
+})
+
+// ── ПОЛУЧИТЬ СТАТИСТИКУ МАТЧА ──
+router.get('/:tid/matches/:mid/stats', auth, async (req, res) => {
+  try {
+    const r = await db.query(
+      'SELECT * FROM match_player_stats WHERE match_id=$1 ORDER BY kills DESC',
+      [req.params.mid]
+    )
+    res.json(r.rows)
+  } catch(e) {
+    res.status(500).json({ error: e.message })
+  }
+})
