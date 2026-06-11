@@ -684,6 +684,7 @@ function bMatchCard(m, extra){
       '>'+name+'</span>';
   }
 
+  var isDone = m.status === 'done';
   var statsBtn = isDone
     ? '<div onclick="event.stopPropagation();openStats('+encodeMatch(m)+')" title="Ввести статистику" '+
         'style="position:absolute;top:4px;right:4px;cursor:pointer;font-size:11px;color:var(--blue);'+
