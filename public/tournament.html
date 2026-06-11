@@ -1022,7 +1022,7 @@ function renderRatings(matches, teams, format) {
 
     html +=
       '<div style="background:'+bg+';border:1px solid '+border+';border-radius:12px;margin-bottom:10px;overflow:hidden;">' +
-        '<div style="display:flex;align-items:center;gap:14px;padding:14px 16px;cursor:pointer;" onclick="toggleTeamStats('ts-'+tid+'')">' +
+        '<div style="display:flex;align-items:center;gap:14px;padding:14px 16px;cursor:pointer;" onclick="toggleTeamStats(this)" data-tsid="ts-' + tid + '">' +
           '<div style="min-width:48px;text-align:center;">' +
             (icon?'<div style="font-size:'+(placeNum===1?'28px':'22px')+';line-height:1;">'+icon+'</div>':'<div style="font-family:Rajdhani,sans-serif;font-size:20px;font-weight:700;color:var(--text-dim);">'+place+'</div>') +
           '</div>' +
@@ -1045,8 +1045,10 @@ function renderRatings(matches, teams, format) {
   wrap.innerHTML = html;
 }
 
-function toggleTeamStats(elId) {
-  var el = document.getElementById(elId);
+function toggleTeamStats(btn) {
+  var tsId = btn.dataset ? btn.dataset.tsid : btn;
+  if (!tsId) return;
+  var el = document.getElementById(tsId);
   if (!el) return;
   if (el.style.display !== 'none') { el.style.display='none'; return; }
   el.style.display = 'block';
