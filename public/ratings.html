@@ -226,7 +226,11 @@ function renderMyRank() {
 function renderTable(list) {
   var body = document.getElementById('ratings-body');
 
-  var filtered = list.slice().sort(function(a,b){ return (b.elo||1000)-(a.elo||1000); });
+  var filtered = currentGame === 'all'
+    ? list
+    : list.filter(function(p){ return p.game === currentGame; });
+
+  filtered = filtered.slice().sort(function(a,b){ return (b.elo||1000)-(a.elo||1000); });
 
   if (!filtered.length) {
     body.innerHTML = '<div class="empty"><div class="empty-icon">🎮</div><h3>Нет данных</h3><p>Статистика появится после завершения матчей</p></div>';
