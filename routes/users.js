@@ -117,41 +117,36 @@ router.get('/player-stats', async (req, res) => {
     const stats = await db.query(`
       SELECT
         mps.nickname,
+        tr.game,
         SUM(mps.kills)   as total_kills,
         SUM(mps.deaths)  as total_deaths,
         SUM(mps.assists) as total_assists,
         ROUND(AVG(mps.hs_pct))  as avg_hs,
         ROUND(AVG(mps.adr))     as avg_adr,
         COUNT(*)                as matches_played,
-        -- Победы: матчи где команда игрока выиграла
         COUNT(CASE WHEN m.winner_team_id = mps.team_id THEN 1 END) as wins,
         COUNT(CASE WHEN m.winner_team_id != mps.team_id AND m.status='done' THEN 1 END) as losses,
-        -- ELO: базовый 1000 + бонусы
         1000
           + 25 * COUNT(CASE WHEN m.winner_team_id = mps.team_id THEN 1 END)
           - 25 * COUNT(CASE WHEN m.winner_team_id != mps.team_id AND m.status='done' THEN 1 END)
-          + SUM(
-              CASE
-                WHEN mps.deaths > 0 AND (mps.kills::float / mps.deaths) > 1.5 THEN 10
-                WHEN mps.deaths > 0 AND (mps.kills::float / mps.deaths) < 0.5 THEN -10
-                ELSE 0
-              END
-            )
+          + SUM(CASE WHEN mps.deaths > 0 AND (mps.kills::float/mps.deaths) > 1.5 THEN 10
+                     WHEN mps.deaths > 0 AND (mps.kills::float/mps.deaths) < 0.5 THEN -10
+                     ELSE 0 END)
           + SUM(CASE WHEN mps.hs_pct > 50 THEN 5 ELSE 0 END)
           + SUM(CASE WHEN mps.adr > 80 THEN 5 ELSE 0 END)
         as elo,
-        -- Привязка к аккаунту
         u.id         as user_id,
         u.username   as username,
         u.full_name  as full_name,
         u.avatar     as avatar,
-        u.game       as game,
         u.is_private as is_private
       FROM match_player_stats mps
       LEFT JOIN matches m ON m.id = mps.match_id
+      LEFT JOIN teams t ON t.id = mps.team_id
+      LEFT JOIN tournaments tr ON tr.id = t.tournament_id
       LEFT JOIN users u ON LOWER(u.username) = LOWER(mps.nickname)
                         OR LOWER(u.faceit_nick) = LOWER(mps.nickname)
-      GROUP BY mps.nickname, u.id, u.username, u.full_name, u.avatar, u.game, u.is_private
+      GROUP BY mps.nickname, tr.game, u.id, u.username, u.full_name, u.avatar, u.is_private
       ORDER BY elo DESC
       LIMIT 100
     `)
