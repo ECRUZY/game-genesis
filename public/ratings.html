@@ -146,12 +146,15 @@
 
   <!-- ТАБЛИЦА -->
   <div class="table-wrap" id="individual-wrap">
-    <div class="table-head">
+    <div class="table-head" style="grid-template-columns:50px 1fr 60px 60px 60px 60px 60px 70px;">
       <div class="th">Ранг</div>
       <div class="th">Игрок</div>
-      <div class="th">Игра</div>
+      <div class="th right">ELO</div>
+      <div class="th right">K/D</div>
+      <div class="th right">HS%</div>
+      <div class="th right">ADR</div>
       <div class="th right">В/П</div>
-      <div class="th right">Очки</div>
+      <div class="th right">Матчей</div>
     </div>
     <div id="ratings-body">
       <div class="skel"><div class="skel-inner"></div></div>
@@ -190,7 +193,7 @@ var currentGame = 'all';
 // ── ЗАГРУЗКА РЕЙТИНГА ──
 async function loadRatings() {
   try {
-    var res = await fetch('/api/users/ratings');
+    var res = await fetch('/api/users/player-stats');
     if (!res.ok) throw new Error('Ошибка загрузки');
     ALL_PLAYERS = await res.json();
     renderMyRank();
@@ -205,72 +208,68 @@ async function loadRatings() {
 function renderMyRank() {
   if (!ME) return;
   var banner = document.getElementById('my-rank-banner');
+  // Ищем себя по username или нику
+  var myIdx = ALL_PLAYERS.findIndex(function(p) {
+    return p.user_id === ME.id || p.username === ME.username ||
+           p.nickname === ME.username || p.nickname === ME.faceit_nick;
+  });
+  if (myIdx < 0) return;
   banner.style.display = 'flex';
-
-  // Находим себя в списке
-  var myIdx = ALL_PLAYERS.findIndex(function(p) { return p.id === ME.id || p.username === ME.username; });
-  var myData = myIdx >= 0 ? ALL_PLAYERS[myIdx] : ME;
-  var myRank = myIdx >= 0 ? myIdx + 1 : '—';
-
-  document.getElementById('my-rank-num').textContent = '#' + myRank;
-  document.getElementById('my-rank-name').textContent = myData.is_private ? myData.username : (myData.full_name || myData.username);
-  document.getElementById('my-rank-sub').textContent = (myData.wins||0) + ' победы · ' + (myData.losses||0) + ' поражения';
-  document.getElementById('my-rank-pts').textContent = (myData.rating||1000).toLocaleString('ru-RU');
+  var myData = ALL_PLAYERS[myIdx];
+  document.getElementById('my-rank-num').textContent = '#' + (myIdx + 1);
+  document.getElementById('my-rank-name').textContent = myData.full_name || myData.username || myData.nickname;
+  document.getElementById('my-rank-sub').textContent = (myData.wins||0) + ' побед · ' + (myData.losses||0) + ' поражений · ' + (myData.matches_played||0) + ' матчей';
+  document.getElementById('my-rank-pts').textContent = (myData.elo||1000).toLocaleString('ru-RU');
 }
 
 // ── РЕНДЕР ТАБЛИЦЫ ──
 function renderTable(list) {
   var body = document.getElementById('ratings-body');
 
-  // Фильтр по игре
-  var filtered = currentGame === 'all'
-    ? list
-    : list.filter(function(p) {
-        if (!p.game) return false;
-        return p.game.split(',').some(function(g) { return g.trim() === currentGame; });
-      });
+  var filtered = list.slice().sort(function(a,b){ return (b.elo||1000)-(a.elo||1000); });
 
   if (!filtered.length) {
-    body.innerHTML = '<div class="empty"><div class="empty-icon">🎮</div><h3>Нет игроков</h3><p>По выбранной игре пока нет участников</p></div>';
+    body.innerHTML = '<div class="empty"><div class="empty-icon">🎮</div><h3>Нет данных</h3><p>Статистика появится после завершения матчей</p></div>';
     return;
   }
 
-  // Сортировка по рейтингу
-  filtered = filtered.slice().sort(function(a,b) { return (b.rating||0)-(a.rating||0); });
-
   body.innerHTML = filtered.map(function(p, i) {
     var rank = i + 1;
-    var isMe = ME && (p.id === ME.id || p.username === ME.username);
-    var ini = (p.full_name || p.username || '?').split(' ').map(function(w){return w[0]||'';}).join('').toUpperCase().slice(0,2);
-    var displayName = p.is_private ? p.username : (p.full_name || p.username);
-    var wins = p.wins || 0;
-    var losses = p.losses || 0;
-    var total = wins + losses;
-    var wr = total > 0 ? Math.round(wins / total * 100) : 0;
-    var wrClass = wr >= 60 ? 'high' : wr >= 40 ? 'mid' : 'low';
-    var rankClass = rank === 1 ? 'r1' : rank === 2 ? 'r2' : rank === 3 ? 'r3' : 'rn';
-    var pts = (p.rating||0).toLocaleString('ru-RU');
+    var rankClass = rank===1?'r1':rank===2?'r2':rank===3?'r3':'rn';
+    var isMe = ME && (p.user_id===ME.id || p.username===ME.username || p.nickname===ME.username);
+    var hasProfile = !!p.username;
+    var displayName = p.is_private ? (p.username||p.nickname) : (p.full_name || p.username || p.nickname);
+    var ini = (displayName||'?').split(' ').map(function(w){return w[0]||'';}).join('').toUpperCase().slice(0,2) || (p.nickname||'?').slice(0,2).toUpperCase();
 
-    // Игры пользователя
-    var games = p.game ? p.game.split(',').map(function(g){return g.trim();}) : ['—'];
-    var gameTag = games[0] !== '—' ? '<span class="game-tag">' + games[0] + '</span>' : '<span style="color:var(--text-muted);font-size:12px;">—</span>';
+    var wins = parseInt(p.wins)||0;
+    var losses = parseInt(p.losses)||0;
+    var total = wins+losses;
+    var kd = p.total_deaths > 0 ? (p.total_kills / p.total_deaths).toFixed(2) : (p.total_kills||0).toFixed(2);
+    var kdColor = kd >= 1.5 ? 'var(--success)' : kd < 0.8 ? 'var(--red)' : 'var(--text)';
 
-    return '<a href="/profile.html?user=' + p.username + '" class="row' + (isMe ? ' me' : '') + '">' +
-      '<div class="rank-cell"><div class="rank-badge ' + rankClass + '">' + rank + '</div></div>' +
+    var tag = isMe ? ' <span style="font-size:10px;color:var(--gold);font-weight:700;background:var(--gold-dim);padding:1px 6px;border-radius:4px;border:1px solid rgba(240,192,64,.3);">ВЫ</span>' : '';
+
+    var wrap = hasProfile
+      ? '<a href="/profile.html?user='+p.username+'" class="row'+(isMe?' me':'')+'" style="grid-template-columns:50px 1fr 60px 60px 60px 60px 60px 70px;">'
+      : '<div class="row'+(isMe?' me':'')+'" style="grid-template-columns:50px 1fr 60px 60px 60px 60px 60px 70px;cursor:default;">';
+    var wrapClose = hasProfile ? '</a>' : '</div>';
+
+    return wrap +
+      '<div class="rank-cell"><div class="rank-badge '+rankClass+'">'+rank+'</div></div>' +
       '<div class="player-cell">' +
-        '<div class="player-av" style="overflow:hidden;">' + (p.avatar ? '<img src="' + p.avatar + '" style="width:100%;height:100%;object-fit:cover;">' : ini) + '</div>' +
+        '<div class="player-av" style="overflow:hidden;">'+(p.avatar?'<img src="'+p.avatar+'" style="width:100%;height:100%;object-fit:cover;">':ini)+'</div>' +
         '<div>' +
-          '<div class="player-name">' + displayName + (isMe ? ' <span style="font-size:10px;color:var(--gold);font-weight:700;background:var(--gold-dim);padding:1px 6px;border-radius:4px;border:1px solid rgba(240,192,64,.3);">ВЫ</span>' : '') + '</div>' +
-          '<div class="player-sub">' +
-            '@' + p.username +
-            (p.university ? '<span class="uni-tag">' + p.university + '</span>' : '') +
-          '</div>' +
+          '<div class="player-name">'+displayName+tag+'</div>' +
+          '<div class="player-sub">'+(hasProfile?'@'+p.username:p.nickname)+(hasProfile?'':' <span style="font-size:10px;opacity:.5;">(без профиля)</span>')+'</div>' +
         '</div>' +
       '</div>' +
-      '<div>' + gameTag + '</div>' +
-      '<div class="wr-cell"><div class="wr-val ' + wrClass + '">' + wr + '%</div><div class="wr-sub">' + wins + 'W / ' + losses + 'L</div></div>' +
-      '<div class="pts-cell">' + pts + '</div>' +
-    '</a>';
+      '<div class="pts-cell">'+(parseInt(p.elo)||1000).toLocaleString('ru-RU')+'</div>' +
+      '<div style="text-align:right;padding-right:8px;font-family:Rajdhani,sans-serif;font-size:14px;font-weight:700;color:'+kdColor+';">'+kd+'</div>' +
+      '<div style="text-align:right;padding-right:8px;font-size:13px;color:var(--text);">'+(p.avg_hs||0)+'%</div>' +
+      '<div style="text-align:right;padding-right:8px;font-size:13px;color:var(--text);">'+(p.avg_adr||0)+'</div>' +
+      '<div class="wr-cell"><div style="font-size:12px;font-weight:600;color:var(--text);">'+wins+'W</div><div class="wr-sub">'+losses+'L</div></div>' +
+      '<div style="text-align:right;padding-right:8px;font-size:13px;color:var(--text-dim);">'+(p.matches_played||0)+'</div>' +
+    wrapClose;
   }).join('');
 }
 
