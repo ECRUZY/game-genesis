@@ -983,6 +983,8 @@ function renderRatings(matches, teams, format) {
   html += '</div>';
   wrap.innerHTML = html;
 }
+
+function renderBracket(data) {
   var wrap = document.getElementById('bracket-wrap');
   var matches = data.matches||[];
   var upper=matches.filter(function(m){return m.bracket_type==='upper';});
