@@ -110,6 +110,50 @@ router.get('/ratings', async (req, res) => {
   res.json(result.rows)
 })
 
+// ── КОМАНДНЫЙ РЕЙТИНГ ──
+router.get('/team-ratings', async (req, res) => {
+  try {
+    const result = await db.query(`
+      SELECT
+        t.id,
+        t.name,
+        t.tournament_id,
+        tr.game,
+        COUNT(CASE WHEN m.winner_team_id = t.id THEN 1 END) as wins,
+        COUNT(CASE WHEN m.winner_team_id != t.id
+          AND (m.team1_id = t.id OR m.team2_id = t.id)
+          AND m.status = 'done' THEN 1 END) as losses,
+        COALESCE(
+          1000
+          + 25 * COUNT(CASE WHEN m.winner_team_id = t.id THEN 1 END)
+          - 25 * COUNT(CASE WHEN m.winner_team_id != t.id
+              AND (m.team1_id = t.id OR m.team2_id = t.id)
+              AND m.status = 'done' THEN 1 END),
+          1000
+        ) as elo,
+        COALESCE(
+          json_agg(
+            json_build_object('nickname', tp.nickname, 'is_captain', tp.is_captain)
+            ORDER BY tp.is_captain DESC
+          ) FILTER (WHERE tp.id IS NOT NULL),
+          '[]'
+        ) as players
+      FROM teams t
+      JOIN tournaments tr ON tr.id = t.tournament_id
+      LEFT JOIN matches m ON (m.team1_id = t.id OR m.team2_id = t.id)
+      LEFT JOIN team_players tp ON tp.team_id = t.id
+      WHERE t.status = 'accepted'
+      GROUP BY t.id, t.name, t.tournament_id, tr.game
+      ORDER BY elo DESC, wins DESC
+      LIMIT 100
+    `)
+    res.json(result.rows)
+  } catch(e) {
+    console.error(e)
+    res.status(500).json({ error: e.message })
+  }
+})
+
 
 // ── РЕЙТИНГ ИГРОКА ПО ИГРАМ ──
 router.get('/:username/ratings', async (req, res) => {
