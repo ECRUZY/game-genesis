@@ -239,25 +239,167 @@ router.delete('/:tid/finance/:id', auth, async (req, res) => {
 
 // ── ЗАПИСАТЬ РЕЗУЛЬТАТ МАТЧА ──
 router.put('/:tid/matches/:mid', auth, async (req, res) => {
-  const { score1, score2, winner_id } = req.body
-  const t = await db.query('SELECT organizer_id FROM tournaments WHERE id=$1', [req.params.tid])
-  if (!t.rows[0] || t.rows[0].organizer_id !== req.user.id) return res.status(403).json({ error: 'Нет прав' })
+  try {
+    const uRes = await db.query('SELECT role FROM users WHERE id=$1', [req.user.id])
+    if (!['admin','organizer'].includes(uRes.rows[0]?.role))
+      return res.status(403).json({ error: 'Нет прав' })
 
-  const result = await db.query(
-    `UPDATE matches SET score1=$1, score2=$2, winner_id=$3, status='done', played_at=NOW()
-     WHERE id=$4 AND tournament_id=$5 RETURNING *`,
-    [score1, score2, winner_id, req.params.mid, req.params.tid]
-  )
+    const { score1, score2, winner_team_id } = req.body
+    if (!winner_team_id) return res.status(400).json({ error: 'Укажите победителя' })
 
-  // Обновить статистику победителя
-  if (winner_id) {
-    const loserId = result.rows[0].player1_id === winner_id ? result.rows[0].player2_id : result.rows[0].player1_id
-    await db.query('UPDATE users SET wins=wins+1, rating=rating+100 WHERE id=$1', [winner_id])
-    if (loserId) await db.query('UPDATE users SET losses=losses+1 WHERE id=$1', [loserId])
+    const result = await db.query(
+      `UPDATE matches SET score1=$1,score2=$2,winner_team_id=$3,status='done',played_at=NOW()
+       WHERE id=$4 AND tournament_id=$5 RETURNING *`,
+      [score1||0, score2||0, winner_team_id, req.params.mid, req.params.tid]
+    )
+    if (!result.rows[0]) return res.status(404).json({ error: 'Матч не найден' })
+
+    const match = result.rows[0]
+    const w = Number(winner_team_id)
+    const l = (w === match.team1_id) ? match.team2_id : match.team1_id
+
+    // Рейтинг
+    try {
+      for (const [teamId, delta] of [[w,25],[l,-25]]) {
+        if (!teamId) continue
+        const pl = await db.query('SELECT nickname FROM team_players WHERE team_id=$1', [teamId])
+        for (const p of pl.rows) {
+          await db.query(
+            `UPDATE users SET rating=GREATEST(0,rating+$1),
+              wins=wins+${delta>0?1:0},losses=losses+${delta<0?1:0}
+             WHERE LOWER(username)=LOWER($2) OR LOWER(faceit_nick)=LOWER($2)`,
+            [delta, p.nickname]
+          )
+        }
+      }
+    } catch(e) { console.log('rating skip:', e.message) }
+
+    // Переходы в следующий раунд
+    await applyTransitions(req.params.tid, match, w, l)
+
+    res.json({ success: true, match: result.rows[0] })
+  } catch(e) {
+    console.error('❌ match result:', e)
+    res.status(500).json({ error: 'Ошибка: ' + e.message, detail: e.message })
   }
-
-  res.json(result.rows[0])
 })
+
+// Найти правильный следующий матч по позиции в раунде
+async function findNextMatch(tid, bracketType, curRound, curMatchNum, nextRound) {
+  const curStart = await db.query(
+    'SELECT MIN(match_number) as mn FROM matches WHERE tournament_id=$1 AND bracket_type=$2 AND round=$3',
+    [tid, bracketType, curRound]
+  )
+  const nextStart = await db.query(
+    'SELECT MIN(match_number) as mn FROM matches WHERE tournament_id=$1 AND bracket_type=$2 AND round=$3',
+    [tid, bracketType, nextRound]
+  )
+  if (!curStart.rows[0]?.mn || !nextStart.rows[0]?.mn) return null
+  const pos = curMatchNum - curStart.rows[0].mn
+  const nextNum = nextStart.rows[0].mn + Math.floor(pos / 2)
+  const r = await db.query(
+    'SELECT id FROM matches WHERE tournament_id=$1 AND bracket_type=$2 AND match_number=$3',
+    [tid, bracketType, nextNum]
+  )
+  return r.rows[0]?.id || null
+}
+
+async function fillSlotT(matchId, teamId) {
+  if (!matchId || !teamId) return
+  const cur = await db.query('SELECT team1_id,team2_id FROM matches WHERE id=$1', [matchId])
+  if (!cur.rows[0]) return
+  const { team1_id, team2_id } = cur.rows[0]
+  if (!team1_id) await db.query('UPDATE matches SET team1_id=$1 WHERE id=$2', [teamId, matchId])
+  else if (!team2_id) await db.query('UPDATE matches SET team2_id=$1 WHERE id=$2', [teamId, matchId])
+}
+
+async function applyTransitions(tid, match, w, l) {
+  const bt = match.bracket_type
+
+  if (bt === 'upper') {
+    const maxR = await db.query(
+      "SELECT MAX(round) as mr FROM matches WHERE tournament_id=$1 AND bracket_type='upper'", [tid]
+    )
+    const maxUBRound = maxR.rows[0].mr
+    const isFinal = match.round === maxUBRound
+    const isSF = match.round === maxUBRound - 1
+
+    if (isFinal) {
+      // Финал UB → победитель в Grand Final, проигравший в LB финал (для DE)
+      const gf = await db.query(
+        "SELECT id FROM matches WHERE tournament_id=$1 AND bracket_type='grand_final' AND (team1_id IS NULL OR team2_id IS NULL) LIMIT 1", [tid]
+      )
+      if (gf.rows[0]) await fillSlotT(gf.rows[0].id, w)
+      if (l) {
+        const lbF = await db.query(
+          "SELECT id FROM matches WHERE tournament_id=$1 AND bracket_type='lower' AND (team1_id IS NULL OR team2_id IS NULL) ORDER BY round DESC LIMIT 1", [tid]
+        )
+        if (lbF.rows[0]) await fillSlotT(lbF.rows[0].id, l)
+      }
+    } else {
+      // Обычный UB: победитель → правильный матч следующего раунда
+      const nextId = await findNextMatch(tid, 'upper', match.round, match.match_number, match.round + 1)
+      if (nextId) await fillSlotT(nextId, w)
+
+      if (l) {
+        // Проигравший в SF → матч за 3-е место
+        if (isSF) {
+          const tp = await db.query(
+            "SELECT id FROM matches WHERE tournament_id=$1 AND bracket_type='third_place' AND (team1_id IS NULL OR team2_id IS NULL) LIMIT 1", [tid]
+          )
+          if (tp.rows[0]) await fillSlotT(tp.rows[0].id, l)
+        }
+        // DE: проигравший → LB по позиции
+        const lbCount = await db.query(
+          "SELECT COUNT(*) FROM matches WHERE tournament_id=$1 AND bracket_type='lower'", [tid]
+        )
+        if (parseInt(lbCount.rows[0].count) > 0) {
+          const curStart = await db.query(
+            'SELECT MIN(match_number) as mn FROM matches WHERE tournament_id=$1 AND bracket_type=$2 AND round=$3',
+            [tid, 'upper', match.round]
+          )
+          const lbStart = await db.query(
+            'SELECT MIN(match_number) as mn FROM matches WHERE tournament_id=$1 AND bracket_type=\'lower\' AND round=$2',
+            [tid, match.round]
+          )
+          if (curStart.rows[0]?.mn && lbStart.rows[0]?.mn) {
+            const pos = match.match_number - curStart.rows[0].mn
+            const lbNum = lbStart.rows[0].mn + Math.floor(pos / 2)
+            const lbM = await db.query(
+              'SELECT id FROM matches WHERE tournament_id=$1 AND bracket_type=\'lower\' AND match_number=$2',
+              [tid, lbNum]
+            )
+            if (lbM.rows[0]) await fillSlotT(lbM.rows[0].id, l)
+          }
+        }
+      }
+    }
+
+  } else if (bt === 'lower') {
+    const maxLB = await db.query(
+      "SELECT MAX(round) as mr FROM matches WHERE tournament_id=$1 AND bracket_type='lower'", [tid]
+    )
+    if (match.round === maxLB.rows[0].mr) {
+      const gf = await db.query(
+        "SELECT id FROM matches WHERE tournament_id=$1 AND bracket_type='grand_final' AND (team1_id IS NULL OR team2_id IS NULL) LIMIT 1", [tid]
+      )
+      if (gf.rows[0]) await fillSlotT(gf.rows[0].id, w)
+    } else {
+      const nextId = await findNextMatch(tid, 'lower', match.round, match.match_number, match.round + 1)
+      if (nextId) await fillSlotT(nextId, w)
+    }
+
+  } else if (bt === 'grand_final') {
+    await db.query("UPDATE tournaments SET status='done' WHERE id=$1", [tid])
+
+  } else if (bt === 'robin') {
+    const p = await db.query(
+      "SELECT COUNT(*) FROM matches WHERE tournament_id=$1 AND bracket_type='robin' AND status!='done'", [tid]
+    )
+    if (parseInt(p.rows[0].count) === 0)
+      await db.query("UPDATE tournaments SET status='done' WHERE id=$1", [tid])
+  }
+}
 
 
 
