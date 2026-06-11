@@ -540,6 +540,32 @@ async function loadTournamentData() {
     // Название
     document.getElementById('t-name').textContent = t.name;
 
+    // ── ПРОВЕРКА: можно ли регистрироваться ──
+    var teamSize2 = parseInt((t.team_size||'1x1').split('x')[0]) || 1;
+    var maxTeams2 = Math.floor((t.max_slots||16) / teamSize2);
+    var accepted2 = (data.participants||[]).filter(function(p){ return p.status==='accepted'; }).length;
+    var isFull2 = accepted2 >= maxTeams2;
+    var closed = t.status !== 'open';
+
+    if (closed || isFull2) {
+      var msg = isFull2 ? 'Все места заняты' :
+                t.status === 'live' ? 'Турнир уже идёт' :
+                t.status === 'done' ? 'Турнир завершён' : 'Регистрация закрыта';
+      var sub = isFull2
+        ? 'Зарегистрировалось ' + accepted2 + ' из ' + maxTeams2 + ' команд'
+        : 'Следите за расписанием новых турниров';
+      document.getElementById('fw').innerHTML =
+        '<div style="text-align:center;padding:60px 20px;">' +
+          '<div style="font-size:48px;margin-bottom:16px;">' + (isFull2 ? '🔒' : t.status==='live' ? '⚡' : '🏁') + '</div>' +
+          '<div style="font-family:Rajdhani,sans-serif;font-size:24px;font-weight:700;color:#fff;margin-bottom:8px;">' + msg + '</div>' +
+          '<div style="font-size:14px;color:var(--text-muted);margin-bottom:24px;">' + sub + '</div>' +
+          '<a href="/tournaments.html" style="display:inline-flex;align-items:center;gap:8px;background:var(--gold);color:#080c12;font-family:Rajdhani,sans-serif;font-weight:700;font-size:15px;padding:12px 24px;border-radius:8px;text-decoration:none;">← Все турниры</a>' +
+        '</div>';
+      // Скрываем сайдбар регистрации
+      var sidebar = document.querySelector('.sidebar');
+      if (sidebar) sidebar.style.display = 'none';
+    }
+
     // Устанавливаем размер команды из турнира
     if (t.team_size) {
       var tsMatch = t.team_size.match(/(\d+)x/);

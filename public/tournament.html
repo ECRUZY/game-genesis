@@ -507,7 +507,7 @@
   </div>
 
     <div id="tab-ratings" class="tab-panel">
-    <div id="ratings-content" style="padding:20px;text-align:center;color:var(--text-muted);padding-top:40px;">Рейтинг формируется по результатам матчей</div>
+    <div id="ratings-content" style="padding:20px;"></div>
   </div>
 
     <div id="tab-participants" class="tab-panel">
@@ -650,13 +650,39 @@ async function loadTournament() {
       coverBtn.style.display = 'block';
     }
 
-    // Кнопки регистрации
-    document.querySelectorAll('[onclick*="tournament-register"]').forEach(function(btn){
-      btn.onclick = function(){ location.href='/tournament-register.html?id='+TID; };
+    // Кнопки регистрации — показываем только если статус 'open' и есть места
+    var teamSize = parseInt((t.team_size||'1x1').split('x')[0]) || 1;
+    var maxTeams = Math.floor((t.max_slots||16) / teamSize);
+    var acceptedCount = participants.filter(function(p){ return p.status === 'accepted'; }).length;
+    var isFull = acceptedCount >= maxTeams;
+    var isOpen = t.status === 'open';
+
+    document.querySelectorAll('[onclick*="tournament-register"], .btn-register').forEach(function(btn) {
+      if (!isOpen || isFull) {
+        btn.disabled = true;
+        btn.style.opacity = '0.5';
+        btn.style.cursor = 'not-allowed';
+        btn.title = isFull ? 'Все места заняты' : 'Регистрация закрыта';
+        btn.onclick = function(e){ e.preventDefault(); };
+        // Меняем текст
+        var txt = btn.querySelector('span') || btn;
+        if (isFull) txt.textContent = 'Мест нет';
+        else if (t.status === 'live') txt.textContent = 'Идёт турнир';
+        else if (t.status === 'done') txt.textContent = 'Завершён';
+        else txt.textContent = 'Закрыта';
+      } else {
+        btn.onclick = function(){ location.href='/tournament-register.html?id='+TID; };
+      }
     });
 
     renderParticipants(participants);
     renderInfo(t, participants);
+    // Рейтинг — подгружаем матчи для расчёта мест
+    fetch('/api/tournaments/' + TID + '/bracket', {
+      headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('gg_token')||'') }
+    }).then(function(r){return r.json();}).then(function(bd){
+      renderRatings(bd.matches||[], bd.teams||[], bd.format||'se');
+    }).catch(function(){ renderRatings([], [], 'se'); });
     await loadBracket();
   } catch(e) {
     document.getElementById('t-name').textContent = e.message;
@@ -797,7 +823,166 @@ function pubSection(matches){
   return html+'</div>';
 }
 
-function renderBracket(data) {
+function renderRatings(matches, teams, format) {
+  var wrap = document.getElementById('ratings-content');
+  if (!wrap) return;
+
+  if (!matches || !matches.length) {
+    wrap.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);">Рейтинг формируется по результатам матчей</div>';
+    return;
+  }
+
+  // Строим таблицу мест на основе матчей
+  // Формат: {teamId: {name, wins, losses, place, players}}
+  var teamMap = {};
+  teams.forEach(function(t) {
+    var players = (t.players||[]).filter(function(p){return p&&p.nickname;});
+    teamMap[t.id] = {
+      id: t.id,
+      name: t.name,
+      seed: t.seed,
+      players: players,
+      wins: 0,
+      losses: 0,
+      place: null
+    };
+  });
+
+  // Считаем победы/поражения
+  matches.forEach(function(m) {
+    if (m.status !== 'done' || !m.winner_team_id) return;
+    var w = m.winner_team_id;
+    var l = (w === m.team1_id) ? m.team2_id : m.team1_id;
+    if (teamMap[w]) teamMap[w].wins++;
+    if (l && teamMap[l]) teamMap[l].losses++;
+  });
+
+  // Определяем места по сетке
+  var standings = {};
+
+  // 1-е место: победитель Grand Final или финала UB
+  var gf = matches.find(function(m){return m.bracket_type==='grand_final'&&m.status==='done';});
+  var ufinal = matches.filter(function(m){return m.bracket_type==='upper'&&m.status==='done';})
+    .sort(function(a,b){return b.round-a.round;})[0];
+  var topFinal = gf || ufinal;
+  if (topFinal && topFinal.winner_team_id) {
+    var w1 = topFinal.winner_team_id;
+    var l1 = (w1===topFinal.team1_id) ? topFinal.team2_id : topFinal.team1_id;
+    standings[w1] = 1;
+    if (l1) standings[l1] = 2;
+  }
+
+  // 3-е место: победитель матча за 3-е место
+  var tp = matches.find(function(m){return m.bracket_type==='third_place'&&m.status==='done';});
+  if (tp && tp.winner_team_id) {
+    var w3 = tp.winner_team_id;
+    var l3 = (w3===tp.team1_id) ? tp.team2_id : tp.team1_id;
+    if (!standings[w3]) standings[w3] = 3;
+    if (l3 && !standings[l3]) standings[l3] = 4;
+  }
+
+  // 5-8: выбывшие в 1/4 финала (SE) или из LB (DE)
+  // Собираем команды которым не назначено место — по кол-ву побед
+  var unranked = Object.values(teamMap).filter(function(t){
+    return !standings[t.id] && (t.wins > 0 || t.losses > 0);
+  }).sort(function(a,b){ return b.wins - a.wins || a.losses - b.losses; });
+
+  var nextPlace = 5;
+  var i = 0;
+  while (i < unranked.length) {
+    var sameWins = unranked[i].wins;
+    var group = [];
+    var j = i;
+    while (j < unranked.length && unranked[j].wins === sameWins) {
+      group.push(unranked[j]);
+      j++;
+    }
+    if (group.length === 1) {
+      standings[group[0].id] = nextPlace++;
+    } else {
+      // Диапазон: "5-6"
+      var rangeEnd = nextPlace + group.length - 1;
+      group.forEach(function(t){ standings[t.id] = nextPlace + '-' + rangeEnd; });
+      nextPlace += group.length;
+    }
+    i = j;
+  }
+
+  // Назначаем места командам ещё не игравшим (зарегистрированы но нет матчей)
+  Object.values(teamMap).forEach(function(t) {
+    if (!standings[t.id]) standings[t.id] = '—';
+  });
+
+  // Сортируем для отображения
+  var sorted = Object.values(teamMap).filter(function(t){ return t.wins>0||t.losses>0; });
+  sorted.sort(function(a, b) {
+    var pa = standings[a.id], pb = standings[b.id];
+    if (pa === '—' && pb === '—') return 0;
+    if (pa === '—') return 1;
+    if (pb === '—') return -1;
+    var na = parseInt(String(pa)), nb = parseInt(String(pb));
+    return na - nb;
+  });
+
+  if (!sorted.length) {
+    wrap.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);">Рейтинг будет доступен после завершения матчей</div>';
+    return;
+  }
+
+  var placeIcons = {1:'🥇',2:'🥈',3:'🥉'};
+  var placeColors = {
+    1:'linear-gradient(135deg,rgba(240,192,64,.15),rgba(240,192,64,.05))',
+    2:'linear-gradient(135deg,rgba(180,180,190,.12),rgba(180,180,190,.04))',
+    3:'linear-gradient(135deg,rgba(180,120,60,.12),rgba(180,120,60,.04))'
+  };
+  var placeBorders = {1:'rgba(240,192,64,.4)',2:'rgba(200,200,210,.25)',3:'rgba(180,120,60,.3)'};
+
+  var html = '<div style="max-width:700px;margin:0 auto;">';
+
+  sorted.forEach(function(team) {
+    var place = standings[team.id];
+    var placeNum = parseInt(String(place));
+    var icon = placeIcons[placeNum] || '';
+    var bg = placeColors[placeNum] || 'transparent';
+    var border = placeBorders[placeNum] || 'var(--border)';
+    var isTop3 = placeNum <= 3;
+
+    html += '<div style="background:'+bg+';border:1px solid '+border+';border-radius:12px;padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;gap:14px;">';
+
+    // Место
+    html += '<div style="min-width:52px;text-align:center;">';
+    if (icon) {
+      html += '<div style="font-size:'+(placeNum===1?'28px':'24px')+';line-height:1;">'+icon+'</div>';
+    } else {
+      html += '<div style="font-family:Rajdhani,sans-serif;font-size:20px;font-weight:700;color:var(--text-dim);">'+place+'</div>';
+    }
+    html += '</div>';
+
+    // Команда
+    html += '<div style="flex:1;min-width:0;">';
+    html += '<div style="font-family:Rajdhani,sans-serif;font-size:'+(isTop3?'17px':'15px')+';font-weight:700;color:'+(isTop3?'#fff':'var(--text)')+';margin-bottom:4px;">'+team.name+'</div>';
+    if (team.players.length) {
+      html += '<div style="display:flex;flex-wrap:wrap;gap:4px;">';
+      team.players.forEach(function(p){
+        html += '<span style="font-size:11px;color:var(--text-dim);background:rgba(255,255,255,.05);border-radius:4px;padding:1px 7px;">'+
+          (p.is_captain?'★ ':'')+p.nickname+'</span>';
+      });
+      html += '</div>';
+    }
+    html += '</div>';
+
+    // Статистика
+    html += '<div style="text-align:right;flex-shrink:0;">';
+    html += '<div style="font-family:Rajdhani,sans-serif;font-size:14px;color:var(--success);">'+team.wins+' <span style="font-size:11px;color:var(--text-muted);">побед</span></div>';
+    html += '<div style="font-family:Rajdhani,sans-serif;font-size:14px;color:var(--red);">'+team.losses+' <span style="font-size:11px;color:var(--text-muted);">пораж.</span></div>';
+    html += '</div>';
+
+    html += '</div>';
+  });
+
+  html += '</div>';
+  wrap.innerHTML = html;
+}
   var wrap = document.getElementById('bracket-wrap');
   var matches = data.matches||[];
   var upper=matches.filter(function(m){return m.bracket_type==='upper';});
