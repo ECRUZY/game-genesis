@@ -695,6 +695,25 @@ router.post('/:id/cover', auth, async (req, res) => {
 
 module.exports = router
 
+// ── СТАТИСТИКА ВСЕГО ТУРНИРА (для рейтинга) ──
+router.get('/:tid/stats', async (req, res) => {
+  try {
+    const { team_id } = req.query
+    let q, params
+    if (team_id) {
+      q = 'SELECT * FROM match_player_stats WHERE tournament_id=$1 AND team_id=$2 ORDER BY kills DESC'
+      params = [req.params.tid, team_id]
+    } else {
+      q = 'SELECT * FROM match_player_stats WHERE tournament_id=$1 ORDER BY kills DESC'
+      params = [req.params.tid]
+    }
+    const r = await db.query(q, params)
+    res.json(r.rows)
+  } catch(e) {
+    res.status(500).json({ error: e.message })
+  }
+})
+
 // ── ВВОД СТАТИСТИКИ МАТЧА ──
 router.post('/:tid/matches/:mid/stats', auth, async (req, res) => {
   try {
