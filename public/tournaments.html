@@ -487,7 +487,7 @@ function updateCounters() {
   var total   = ALL_TOURNAMENTS.length;
   var open    = ALL_TOURNAMENTS.filter(function(t){return t.status==='open';}).length;
   var live    = ALL_TOURNAMENTS.filter(function(t){return t.status==='live';}).length;
-  var players = ALL_TOURNAMENTS.reduce(function(s,t){return s+(t.filled_count||0);}, 0);
+  var players = ALL_TOURNAMENTS.reduce(function(s,t){ var tsz=parseInt((t.team_size||'1x1').split('x')[0])||1; return s+((t.filled_count||0)*tsz); }, 0);
   var prize   = ALL_TOURNAMENTS.reduce(function(s,t){return s+(t.prize_pool||0);}, 0);
 
   function set(id, val) { var el = document.getElementById(id); if (el) el.textContent = val; }
@@ -501,7 +501,7 @@ function updateCounters() {
   // Tab счётчики
   var student = ALL_TOURNAMENTS.filter(function(t){ return t.is_student === true || t.is_student === 't'; }).length;
   var me2 = null;
-  try { var t2=localStorage.getItem('token'); if(t2){var p2=JSON.parse(atob(t2.split('.')[1]));me2=p2.id||p2.userId;} } catch(e){}
+  try { var t2=localStorage.getItem('gg_token'); if(t2){var p2=JSON.parse(atob(t2.split('.')[1]));me2=p2.id||p2.userId;} } catch(e){}
   var mine = me2 ? ALL_TOURNAMENTS.filter(function(t){ return String(t.organizer_id)===String(me2); }).length : 0;
   set('tab-all-cnt',     total);
   set('tab-live-cnt',    live);
@@ -534,7 +534,8 @@ function renderFeatured() {
   if (!featured) { sec.style.display = 'none'; return; }
 
   var bg = GAME_BG[featured.game] || GAME_BG['CS2'];
-  var filled = featured.filled_count || 0;
+  var featTeamSz = parseInt((featured.team_size||'1x1').split('x')[0]) || 1;
+  var filled = (featured.filled_count || 0) * featTeamSz;
   var statusLbl = STATUS_LABEL[featured.status] || featured.status;
   var statusCls = STATUS_CLS[featured.status] || 'fc-tag-open';
   var isLive = featured.status === 'live';
@@ -639,11 +640,22 @@ function toggleStatus(statusOrEl, btn) {
   var el = (statusOrEl && statusOrEl.dataset) ? statusOrEl : btn;
   var status = (statusOrEl && statusOrEl.dataset) ? statusOrEl.dataset.status : statusOrEl;
   if (filterStatus[status]) {
-    delete filterStatus[status];
-    if (el) { el.classList.remove('active'); el.style.opacity = '0.5'; }
+    filterStatus = {};
+    document.querySelectorAll('.status-btn').forEach(function(b){
+      b.style.opacity=''; b.style.background=''; b.style.color=''; b.style.borderColor='';
+    });
   } else {
+    filterStatus = {};
     filterStatus[status] = true;
-    if (el) { el.classList.add('active'); el.style.opacity = '1'; }
+    var colors = {open:['rgba(74,222,128,.15)','var(--success)'],live:['rgba(239,68,68,.15)','var(--red)'],soon:['rgba(96,165,250,.15)','var(--blue)'],done:['rgba(100,100,110,.15)','var(--text-dim)']};
+    var c = colors[status] || ['rgba(255,255,255,.1)','var(--text)'];
+    document.querySelectorAll('.status-btn').forEach(function(b){
+      var active = b.dataset.status === status;
+      b.style.opacity = active?'1':'0.4';
+      b.style.background = active?c[0]:'';
+      b.style.borderColor = active?c[1]:'';
+      b.style.color = active?c[1]:'';
+    });
   }
   filterCards();
 }
@@ -694,7 +706,8 @@ function renderCards(list) {
   var html = '';
   for (var i = 0; i < list.length; i++) {
     var t = list[i];
-    var filled = t.filled_count || 0;
+    var teamSz = parseInt((t.team_size||'1x1').split('x')[0]) || 1;
+    var filled = (t.filled_count || 0) * teamSz;
     var max = t.max_slots || 16;
     var pct = max > 0 ? Math.round(filled / max * 100) : 0;
     var bg = GAME_BG[t.game] || GAME_BG['CS2'];
@@ -798,7 +811,7 @@ function updateCounters() {
   var total   = ALL_TOURNAMENTS.length;
   var open    = ALL_TOURNAMENTS.filter(function(t){return t.status==='open';}).length;
   var live    = ALL_TOURNAMENTS.filter(function(t){return t.status==='live';}).length;
-  var players = ALL_TOURNAMENTS.reduce(function(s,t){return s+(t.filled_count||0);}, 0);
+  var players = ALL_TOURNAMENTS.reduce(function(s,t){ var tsz=parseInt((t.team_size||'1x1').split('x')[0])||1; return s+((t.filled_count||0)*tsz); }, 0);
   var prize   = ALL_TOURNAMENTS.reduce(function(s,t){return s+(t.prize_pool||0);}, 0);
 
   function set(id, val) { var el = document.getElementById(id); if (el) el.textContent = val; }
@@ -812,7 +825,7 @@ function updateCounters() {
   // Tab счётчики
   var student = ALL_TOURNAMENTS.filter(function(t){ return t.is_student === true || t.is_student === 't'; }).length;
   var me2 = null;
-  try { var t2=localStorage.getItem('token'); if(t2){var p2=JSON.parse(atob(t2.split('.')[1]));me2=p2.id||p2.userId;} } catch(e){}
+  try { var t2=localStorage.getItem('gg_token'); if(t2){var p2=JSON.parse(atob(t2.split('.')[1]));me2=p2.id||p2.userId;} } catch(e){}
   var mine = me2 ? ALL_TOURNAMENTS.filter(function(t){ return String(t.organizer_id)===String(me2); }).length : 0;
   set('tab-all-cnt',     total);
   set('tab-live-cnt',    live);
@@ -845,7 +858,8 @@ function renderFeatured() {
   if (!featured) { sec.style.display = 'none'; return; }
 
   var bg = GAME_BG[featured.game] || GAME_BG['CS2'];
-  var filled = featured.filled_count || 0;
+  var featTeamSz = parseInt((featured.team_size||'1x1').split('x')[0]) || 1;
+  var filled = (featured.filled_count || 0) * featTeamSz;
   var statusLbl = STATUS_LABEL[featured.status] || featured.status;
   var statusCls = STATUS_CLS[featured.status] || 'fc-tag-open';
   var isLive = featured.status === 'live';
@@ -950,11 +964,22 @@ function toggleStatus(statusOrEl, btn) {
   var el = (statusOrEl && statusOrEl.dataset) ? statusOrEl : btn;
   var status = (statusOrEl && statusOrEl.dataset) ? statusOrEl.dataset.status : statusOrEl;
   if (filterStatus[status]) {
-    delete filterStatus[status];
-    if (el) { el.classList.remove('active'); el.style.opacity = '0.5'; }
+    filterStatus = {};
+    document.querySelectorAll('.status-btn').forEach(function(b){
+      b.style.opacity=''; b.style.background=''; b.style.color=''; b.style.borderColor='';
+    });
   } else {
+    filterStatus = {};
     filterStatus[status] = true;
-    if (el) { el.classList.add('active'); el.style.opacity = '1'; }
+    var colors = {open:['rgba(74,222,128,.15)','var(--success)'],live:['rgba(239,68,68,.15)','var(--red)'],soon:['rgba(96,165,250,.15)','var(--blue)'],done:['rgba(100,100,110,.15)','var(--text-dim)']};
+    var c = colors[status] || ['rgba(255,255,255,.1)','var(--text)'];
+    document.querySelectorAll('.status-btn').forEach(function(b){
+      var active = b.dataset.status === status;
+      b.style.opacity = active?'1':'0.4';
+      b.style.background = active?c[0]:'';
+      b.style.borderColor = active?c[1]:'';
+      b.style.color = active?c[1]:'';
+    });
   }
   filterCards();
 }
