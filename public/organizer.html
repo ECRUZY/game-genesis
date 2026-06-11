@@ -335,6 +335,19 @@
         <div style="grid-column:1/-1;">
           <button onclick="saveTournamentSettings()" style="background:var(--gold);border:none;border-radius:8px;padding:12px 28px;font-family:Rajdhani,sans-serif;font-size:15px;font-weight:700;color:#080c12;cursor:pointer;">Сохранить изменения</button>
         </div>
+
+        <!-- Завершение турнира -->
+        <div style="grid-column:1/-1;border-top:1px solid var(--border);padding-top:20px;margin-top:4px;">
+          <div style="font-size:13px;color:var(--text-dim);margin-bottom:12px;">⚠️ Опасная зона — действие нельзя отменить</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button onclick="finishTournament()" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:10px 20px;font-family:Rajdhani,sans-serif;font-size:14px;font-weight:700;color:var(--red);cursor:pointer;">
+              🏁 Завершить турнир
+            </button>
+            <button onclick="reopenTournament()" style="background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.2);border-radius:8px;padding:10px 20px;font-family:Rajdhani,sans-serif;font-size:14px;font-weight:700;color:var(--success);cursor:pointer;">
+              🔄 Переоткрыть регистрацию
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -1058,6 +1071,41 @@ async function loadTournamentSettings(tid) {
     if (el('set-max-slots'))  el('set-max-slots').value  = t.max_slots || 16;
     if (el('set-team-size'))  el('set-team-size').value  = t.team_size || '5x5';
   } catch(e) { toast('Ошибка загрузки настроек', 'err'); }
+}
+
+async function finishTournament() {
+  if (!currentTid) return;
+  if (!confirm('Завершить турнир? Регистрация закроется, статус изменится на «Завершён».')) return;
+  try {
+    var res = await fetch('/api/tournaments/' + currentTid, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + TOKEN },
+      body: JSON.stringify({ status: 'done' })
+    });
+    if (!res.ok) throw new Error('Ошибка');
+    toast('🏁 Турнир завершён');
+    // Обновляем статус в шапке
+    document.getElementById('st-status').textContent = 'done';
+    document.getElementById('st-status').style.color = 'var(--text-dim)';
+    await loadTournamentSettings(currentTid);
+  } catch(e) { toast('Ошибка: ' + e.message, 'err'); }
+}
+
+async function reopenTournament() {
+  if (!currentTid) return;
+  if (!confirm('Переоткрыть регистрацию? Статус изменится на «Открыта».')) return;
+  try {
+    var res = await fetch('/api/tournaments/' + currentTid, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + TOKEN },
+      body: JSON.stringify({ status: 'open' })
+    });
+    if (!res.ok) throw new Error('Ошибка');
+    toast('✓ Регистрация открыта');
+    document.getElementById('st-status').textContent = 'open';
+    document.getElementById('st-status').style.color = 'var(--success)';
+    await loadTournamentSettings(currentTid);
+  } catch(e) { toast('Ошибка: ' + e.message, 'err'); }
 }
 
 async function saveTournamentSettings() {
