@@ -684,7 +684,12 @@ function bMatchCard(m, extra){
       '>'+name+'</span>';
   }
 
-  return '<div class="'+cls+'" '+matchOnclick+'>' +
+  var statsBtn = isDone
+    ? '<div onclick="event.stopPropagation();openStats('+encodeMatch(m)+')" title="Ввести статистику" '+
+        'style="position:absolute;top:4px;right:4px;cursor:pointer;font-size:11px;color:var(--blue);'+
+        'background:rgba(96,165,250,.1);border-radius:4px;padding:2px 6px;z-index:1;">📊</div>'
+    : '';
+  return '<div class="'+cls+'" style="position:relative;" '+matchOnclick+'>' + statsBtn +
     '<div class="bm-num">Матч #'+m.match_number+'</div>' +
     '<div class="bm-slot">' +
       '<span class="bm-seed">'+(m.team1_seed||'?')+'</span>' +
@@ -1135,9 +1140,137 @@ async function mergeSelectedAgents() {
   } catch(e) { toast('Ошибка: ' + e.message, 'err'); }
 }
 
+// ── СТАТИСТИКА МАТЧА ──
+var currentStatsMatch = null;
+
+function openStats(m) {
+  currentStatsMatch = m;
+  document.getElementById('stats-modal-title').textContent = '📊 Статистика — Матч #' + m.match_number;
+
+  var teams = [
+    { id: m.team1_id, name: m.team1_name, players: getTeamPlayers(m.team1_id)||[] },
+    { id: m.team2_id, name: m.team2_name, players: getTeamPlayers(m.team2_id)||[] }
+  ];
+
+  var inp = function(id, type, val, ph) {
+    return '<input id="'+id+'" type="'+type+'" value="'+(val||0)+'" placeholder="'+ph+'" '+
+      'style="width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:6px;'+
+      'padding:5px 8px;font-size:12px;color:var(--text);text-align:center;outline:none;" min="0" max="'+(type==='number'&&ph.includes('%')?'100':'999')+'">';
+  };
+
+  var html = '';
+  teams.forEach(function(team) {
+    if (!team.id) return;
+    html += '<div style="margin-bottom:16px;">';
+    html += '<div style="font-family:Rajdhani,sans-serif;font-size:14px;font-weight:700;color:'+(team.id===m.winner_team_id?'var(--success)':'var(--text)')+';margin-bottom:8px;">'+
+      (team.id===m.winner_team_id?'🏆 ':'')+team.name+'</div>';
+
+    // Заголовок колонок
+    html += '<div style="display:grid;grid-template-columns:140px 60px 60px 60px 60px 60px;gap:6px;margin-bottom:6px;">'+
+      ['Игрок','K','D','A','HS%','ADR'].map(function(h){
+        return '<div style="font-size:10px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.6px;text-align:center;">'+h+'</div>';
+      }).join('')+'</div>';
+
+    // Строки игроков
+    if (!team.players.length) {
+      html += '<div style="color:var(--text-muted);font-size:12px;padding:6px;">Нет игроков</div>';
+    } else {
+      team.players.forEach(function(p) {
+        var prefix = 's_'+m.id+'_'+team.id+'_'+p.nickname.replace(/[^a-zA-Z0-9]/g,'_');
+        html += '<div style="display:grid;grid-template-columns:140px 60px 60px 60px 60px 60px;gap:6px;margin-bottom:6px;align-items:center;">';
+        html += '<div style="font-size:12px;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+(p.is_captain?'★ ':'')+p.nickname+'</div>';
+        html += inp(prefix+'_k','number',0,'0');
+        html += inp(prefix+'_d','number',0,'0');
+        html += inp(prefix+'_a','number',0,'0');
+        html += inp(prefix+'_hs','number',0,'0-100');
+        html += inp(prefix+'_adr','number',0,'0');
+        html += '</div>';
+      });
+    }
+    html += '</div>';
+  });
+
+  document.getElementById('stats-table-wrap').innerHTML = html;
+
+  // Загружаем существующие статы
+  fetch('/api/tournaments/'+currentTid+'/matches/'+m.id+'/stats', {
+    headers: { 'Authorization': 'Bearer '+TOKEN }
+  }).then(function(r){return r.json();}).then(function(existing){
+    existing.forEach(function(s) {
+      var prefix = 's_'+m.id+'_'+s.team_id+'_'+s.nickname.replace(/[^a-zA-Z0-9]/g,'_');
+      var set = function(sfx, val){ var el=document.getElementById(prefix+sfx); if(el) el.value=val; };
+      set('_k', s.kills); set('_d', s.deaths); set('_a', s.assists);
+      set('_hs', s.hs_pct); set('_adr', s.adr);
+    });
+  }).catch(function(){});
+
+  document.getElementById('stats-modal').classList.add('open');
+}
+
+function closeStatsModal() {
+  document.getElementById('stats-modal').classList.remove('open');
+  currentStatsMatch = null;
+}
+
+async function saveStats() {
+  if (!currentStatsMatch || !currentTid) return;
+  var m = currentStatsMatch;
+  var teams = [
+    { id: m.team1_id, players: getTeamPlayers(m.team1_id)||[] },
+    { id: m.team2_id, players: getTeamPlayers(m.team2_id)||[] }
+  ];
+
+  var stats = [];
+  teams.forEach(function(team) {
+    if (!team.id) return;
+    team.players.forEach(function(p) {
+      var prefix = 's_'+m.id+'_'+team.id+'_'+p.nickname.replace(/[^a-zA-Z0-9]/g,'_');
+      var gv = function(sfx){ var el=document.getElementById(prefix+sfx); return el?parseInt(el.value)||0:0; };
+      stats.push({
+        nickname: p.nickname,
+        team_id: team.id,
+        kills: gv('_k'), deaths: gv('_d'), assists: gv('_a'),
+        hs_pct: gv('_hs'), adr: gv('_adr')
+      });
+    });
+  });
+
+  try {
+    var res = await fetch('/api/tournaments/'+currentTid+'/matches/'+m.id+'/stats', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+TOKEN },
+      body: JSON.stringify({ stats })
+    });
+    if (!res.ok) throw new Error((await res.json()).error);
+    toast('✓ Статистика сохранена');
+    closeStatsModal();
+  } catch(e) { toast('Ошибка: '+e.message, 'err'); }
+}
+
 // Загрузка
 loadMyTournaments();
 </script>
+<!-- STATS MODAL -->
+<div class="modal-bg" id="stats-modal">
+  <div class="modal" style="max-width:700px;width:95%;">
+    <div class="modal-head">
+      <div id="stats-modal-title" style="font-family:Rajdhani,sans-serif;font-size:18px;font-weight:700;">📊 Статистика матча</div>
+      <button class="modal-close" onclick="closeStatsModal()">✕</button>
+    </div>
+    <div style="padding:16px;overflow-y:auto;max-height:65vh;">
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px;">Введите статистику игроков. Влияет на рейтинг: K/D &gt; 1.5 → +10, HS% &gt; 50 → +5, ADR &gt; 80 → +5</div>
+      <div id="stats-table-wrap"></div>
+    </div>
+    <div style="padding:14px 16px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn-outline" onclick="closeStatsModal()">Отмена</button>
+      <button class="btn-gold" onclick="saveStats()">
+        <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.5;"><polyline points="20 6 9 17 4 12"/></svg>
+        Сохранить статы
+      </button>
+    </div>
+  </div>
+</div>
+
 </body>
 
 </html>
