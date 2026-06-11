@@ -134,6 +134,21 @@ async function initDB() {
         BEGIN ALTER TABLE users ADD COLUMN avatar TEXT; EXCEPTION WHEN duplicate_column THEN NULL; END;
         BEGIN ALTER TABLE team_players ADD COLUMN student_data JSONB; EXCEPTION WHEN duplicate_column THEN NULL; END;
         BEGIN ALTER TABLE team_players ADD COLUMN student_photo TEXT; EXCEPTION WHEN duplicate_column THEN NULL; END;
+
+        -- Статистика игроков по матчам
+        CREATE TABLE IF NOT EXISTS match_player_stats (
+          id SERIAL PRIMARY KEY,
+          match_id INT REFERENCES matches(id) ON DELETE CASCADE,
+          tournament_id INT REFERENCES tournaments(id) ON DELETE CASCADE,
+          team_id INT REFERENCES teams(id) ON DELETE CASCADE,
+          nickname TEXT NOT NULL,
+          kills INT DEFAULT 0,
+          deaths INT DEFAULT 0,
+          assists INT DEFAULT 0,
+          hs_pct INT DEFAULT 0,
+          adr INT DEFAULT 0,
+          created_at TIMESTAMPTZ DEFAULT NOW()
+        );
       END $$;
 
     CREATE TABLE IF NOT EXISTS matches (
