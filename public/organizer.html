@@ -602,14 +602,18 @@ function updateStats() {
 // ── ДЕЙСТВИЯ С КОМАНДАМИ ──
 async function setTeamStatus(teamId, status) {
   try {
-    await fetch('/api/tournaments/' + currentTid + '/teams/' + teamId, {
-      method: 'PUT',
+    var res = await fetch('/api/tournaments/' + currentTid + '/teams/' + teamId, {
+      method: 'PATCH',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + TOKEN },
       body: JSON.stringify({ status })
     });
+    if (!res.ok) {
+      var err = await res.json();
+      toast('Ошибка: ' + (err.error||res.status), 'err'); return;
+    }
     await loadTeams();
-    toast(status === 'accepted' ? '✓ Команда принята' : 'Команда отклонена');
-  } catch(e) { toast('Ошибка', 'err'); }
+    toast(status === 'accepted' ? '✓ Команда принята' : status === 'rejected' ? 'Команда отклонена' : 'Статус обновлён');
+  } catch(e) { toast('Ошибка: ' + e.message, 'err'); }
 }
 
 async function acceptAll() {
