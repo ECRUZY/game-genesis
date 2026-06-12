@@ -558,7 +558,8 @@ router.patch('/:tid/teams/:id', auth, async (req, res) => {
   const t = await db.query('SELECT organizer_id FROM tournaments WHERE id=$1', [req.params.tid])
   if (!t.rows[0]) return res.status(404).json({ error: 'Не найден' })
   const userRes = await db.query('SELECT role FROM users WHERE id=$1', [req.user.id])
-  const isAdmin = userRes.rows[0]?.role === 'admin' || t.rows[0].organizer_id === req.user.id
+  const role = userRes.rows[0]?.role
+  const isAdmin = role === 'admin' || role === 'organizer' || t.rows[0].organizer_id === req.user.id
   if (!isAdmin) return res.status(403).json({ error: 'Нет прав' })
 
   const { status } = req.body
