@@ -91,7 +91,34 @@ router.get('/teams/:id/student-photo', adminAuth, async (req, res) => {
   }
 })
 
-// ── СТУД. ВЕРИФИКАЦИИ ──
+// ── СТУД. ВЕРИФИКАЦИИ — СПИСОК ──
+router.get('/student-verifications', adminAuth, async (req, res) => {
+  try {
+    const result = await db.query(`
+      SELECT
+        tp.id,
+        tp.nickname as username,
+        tp.student_data->>'university' as university,
+        tp.student_data->>'faculty' as faculty,
+        tp.student_data->>'group' as group_name,
+        tp.student_photo as student_id_photo,
+        te.status,
+        te.created_at
+      FROM team_players tp
+      JOIN teams te ON te.id = tp.team_id
+      JOIN tournaments t2 ON t2.id = te.tournament_id
+      WHERE t2.is_student = true
+        AND tp.student_data IS NOT NULL
+      ORDER BY te.created_at DESC
+    `)
+    res.json(result.rows)
+  } catch(e) {
+    console.error('student-verifications:', e)
+    res.status(500).json({ error: e.message })
+  }
+})
+
+// ── СТУД. ВЕРИФИКАЦИИ — ОБНОВИТЬ ──
 router.put('/student-verification/:id', adminAuth, async (req, res) => {
   const { status } = req.body
   if (!['approved','rejected','pending'].includes(status)) return res.status(400).json({ error: 'Неверный статус' })
