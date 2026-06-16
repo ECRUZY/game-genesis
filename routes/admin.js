@@ -136,7 +136,7 @@ router.get('/stats', adminAuth, async (req, res) => {
 module.exports = router
 
 // ── УПРАВЛЕНИЕ ПОДПИСКАМИ ──
-router.post('/subscription', auth, async (req, res) => {
+router.post('/subscription', adminAuth, async (req, res) => {
   try {
     const adminRes = await db.query('SELECT role FROM users WHERE id=$1', [req.user.id])
     if (adminRes.rows[0]?.role !== 'admin') return res.status(403).json({ error: 'Нет прав' })
@@ -167,7 +167,7 @@ router.post('/subscription', auth, async (req, res) => {
 })
 
 // ── СПИСОК ПОЛЬЗОВАТЕЛЕЙ С ПОДПИСКАМИ ──
-router.get('/subscriptions', auth, async (req, res) => {
+router.get('/subscriptions', adminAuth, async (req, res) => {
   try {
     const adminRes = await db.query('SELECT role FROM users WHERE id=$1', [req.user.id])
     if (adminRes.rows[0]?.role !== 'admin') return res.status(403).json({ error: 'Нет прав' })
