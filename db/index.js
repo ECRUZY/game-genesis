@@ -132,6 +132,9 @@ async function initDB() {
         BEGIN ALTER TABLE teams ADD COLUMN student_data JSONB; EXCEPTION WHEN duplicate_column THEN NULL; END;
         BEGIN ALTER TABLE teams ADD COLUMN student_photo TEXT; EXCEPTION WHEN duplicate_column THEN NULL; END;
         BEGIN ALTER TABLE users ADD COLUMN avatar TEXT; EXCEPTION WHEN duplicate_column THEN NULL; END;
+        BEGIN ALTER TABLE users ADD COLUMN subscription_type VARCHAR(20) DEFAULT NULL; EXCEPTION WHEN duplicate_column THEN NULL; END;
+        BEGIN ALTER TABLE users ADD COLUMN subscription_expires TIMESTAMPTZ DEFAULT NULL; EXCEPTION WHEN duplicate_column THEN NULL; END;
+        BEGIN ALTER TABLE tournaments ADD COLUMN organizer_paid BOOLEAN DEFAULT false; EXCEPTION WHEN duplicate_column THEN NULL; END;
         BEGIN ALTER TABLE team_players ADD COLUMN student_data JSONB; EXCEPTION WHEN duplicate_column THEN NULL; END;
         BEGIN ALTER TABLE team_players ADD COLUMN student_photo TEXT; EXCEPTION WHEN duplicate_column THEN NULL; END;
 
