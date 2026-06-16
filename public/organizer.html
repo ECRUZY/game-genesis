@@ -412,7 +412,39 @@ try { USER = JSON.parse(localStorage.getItem('gg_user')); } catch(e) {}
 if (!TOKEN) {
   window.location.href = '/auth.html?redirect=/organizer.html';
 } else if (!USER || (USER.role !== 'admin' && USER.role !== 'organizer')) {
-  document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center;padding:40px;font-family:\'Exo 2\',sans-serif;color:#5c7090;"><div><div style="font-size:48px;margin-bottom:16px;">🔒</div><div style="font-family:Rajdhani,sans-serif;font-size:26px;font-weight:700;color:#fff;margin-bottom:8px;">Только для организаторов</div><p style="margin-bottom:20px;">Эта страница доступна организаторам и администраторам.</p><a href="/auth.html" style="display:inline-flex;padding:11px 24px;background:#f0c040;color:#080c12;border-radius:8px;font-family:Rajdhani,sans-serif;font-weight:700;text-decoration:none;">Войти</a></div></div>';
+  document.body.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center;padding:40px;font-family:'Exo 2',sans-serif;color:#5c7090;background:#080c12;">
+      <div style="max-width:520px;">
+        <div style="font-size:56px;margin-bottom:20px;">🏆</div>
+        <div style="font-family:Rajdhani,sans-serif;font-size:28px;font-weight:700;color:#fff;margin-bottom:10px;">Хотите организовывать турниры?</div>
+        <div style="font-size:15px;color:#5c7090;line-height:1.7;margin-bottom:32px;">
+          Панель организатора доступна пользователям со статусом <b style="color:#f0c040;">Организатор</b>.<br>
+          Для получения статуса необходима подписка или разовый взнос.
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:28px;text-align:left;">
+          <div style="background:#0f1e35;border:1px solid #1e3a5f;border-radius:12px;padding:20px;">
+            <div style="font-size:12px;color:#4a6a8a;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Разовый турнир</div>
+            <div style="font-family:Rajdhani,sans-serif;font-size:30px;font-weight:900;color:#fff;">3 000 ₽</div>
+            <div style="font-size:12px;color:#4a6a8a;margin-bottom:12px;">за один турнир</div>
+            <div style="font-size:13px;color:#5c7090;line-height:1.8;">✓ 1 турнир любого формата<br>✓ До 128 участников<br>✓ Статистика и рейтинг</div>
+          </div>
+          <div style="background:linear-gradient(135deg,rgba(240,192,64,.1),rgba(240,192,64,.03));border:1px solid rgba(240,192,64,.3);border-radius:12px;padding:20px;position:relative;">
+            <div style="position:absolute;top:-10px;right:12px;background:#f0c040;color:#080c12;font-family:Rajdhani,sans-serif;font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;">ВЫГОДНЕЕ</div>
+            <div style="font-size:12px;color:#f0c040;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Подписка</div>
+            <div style="font-family:Rajdhani,sans-serif;font-size:30px;font-weight:900;color:#fff;">15 000 ₽</div>
+            <div style="font-size:12px;color:#4a6a8a;margin-bottom:12px;">в месяц</div>
+            <div style="font-size:13px;color:#5c7090;line-height:1.8;">✓ Безлимитные турниры<br>✓ Приоритетная поддержка<br>✓ Для вузов — спец. условия</div>
+          </div>
+        </div>
+        <div style="background:rgba(96,165,250,.08);border:1px solid rgba(96,165,250,.2);border-radius:10px;padding:14px;margin-bottom:24px;font-size:13px;color:#60a5fa;">
+          ⚡ Платёжная система в разработке. Для получения статуса — свяжитесь с администрацией.
+        </div>
+        <div style="display:flex;gap:12px;justify-content:center;">
+          <a href="/tournaments.html" style="display:inline-flex;align-items:center;padding:12px 22px;background:#0f1e35;border:1px solid #1e3a5f;border-radius:8px;color:#fff;text-decoration:none;font-size:14px;">← Турниры</a>
+          <a href="mailto:smagomadov494@gmail.com?subject=Статус организатора Game Genesis&body=Здравствуйте! Хочу получить статус организатора." style="display:inline-flex;align-items:center;padding:12px 22px;background:#f0c040;border-radius:8px;color:#080c12;text-decoration:none;font-family:Rajdhani,sans-serif;font-weight:700;font-size:14px;">📧 Связаться</a>
+        </div>
+      </div>
+    </div>`;
 }
 
 var currentTid = null;
