@@ -971,7 +971,7 @@ function renderTournaments(list) {
           '<div class="t-meta-item">' + f + ' / ' + (t.max_slots||16) + '</div>' +
           '<div class="t-meta-item" style="color:' + (t.entry_fee>0?'var(--gold)':'var(--success)') + ';">' + (t.entry_fee>0?t.entry_fee+'₽':'Бесплатно') + '</div>' +
         '</div>' +
-        '<div class="t-bar-wrap"><div class="t-bar-top"><span>Регистрация</span><span>' + pct + '%</span></div>' +
+        '<div class="t-bar-wrap"><div class="t-bar-label"><span>Регистрация</span><span>' + pct + '%</span></div>' +
         '<div class="t-bar"><div class="t-bar-fill open" style="width:' + pct + '%;"></div></div></div>' +
         '<div class="t-footer">' +
           '<div><div class="t-prize">' + (t.prize_pool>0?t.prize_pool.toLocaleString('ru-RU')+' ₽':'—') + '</div><div class="t-prize-label">Призовой фонд</div></div>' +
