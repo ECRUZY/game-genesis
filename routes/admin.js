@@ -134,3 +134,51 @@ router.get('/stats', adminAuth, async (req, res) => {
 })
 
 module.exports = router
+
+// ── УПРАВЛЕНИЕ ПОДПИСКАМИ ──
+router.post('/subscription', auth, async (req, res) => {
+  try {
+    const adminRes = await db.query('SELECT role FROM users WHERE id=$1', [req.user.id])
+    if (adminRes.rows[0]?.role !== 'admin') return res.status(403).json({ error: 'Нет прав' })
+
+    const { user_id, subscription_type, months } = req.body
+    // subscription_type: 'organizer' | 'university' | null (отменить)
+
+    if (!subscription_type) {
+      // Отменить подписку
+      await db.query(
+        'UPDATE users SET subscription_type=NULL, subscription_expires=NULL WHERE id=$1',
+        [user_id]
+      )
+      return res.json({ success: true, message: 'Подписка отменена' })
+    }
+
+    const expires = new Date()
+    expires.setMonth(expires.getMonth() + (months || 1))
+
+    await db.query(
+      'UPDATE users SET subscription_type=$1, subscription_expires=$2 WHERE id=$3',
+      [subscription_type, expires, user_id]
+    )
+    res.json({ success: true, message: `Подписка ${subscription_type} выдана до ${expires.toLocaleDateString('ru-RU')}` })
+  } catch(e) {
+    res.status(500).json({ error: e.message })
+  }
+})
+
+// ── СПИСОК ПОЛЬЗОВАТЕЛЕЙ С ПОДПИСКАМИ ──
+router.get('/subscriptions', auth, async (req, res) => {
+  try {
+    const adminRes = await db.query('SELECT role FROM users WHERE id=$1', [req.user.id])
+    if (adminRes.rows[0]?.role !== 'admin') return res.status(403).json({ error: 'Нет прав' })
+
+    const result = await db.query(
+      `SELECT id, username, full_name, email, role, subscription_type, subscription_expires
+       FROM users WHERE subscription_type IS NOT NULL OR role IN ('admin','organizer')
+       ORDER BY subscription_type NULLS LAST, username`
+    )
+    res.json(result.rows)
+  } catch(e) {
+    res.status(500).json({ error: e.message })
+  }
+})

@@ -90,19 +90,47 @@ router.post('/', auth, async (req, res) => {
   const { name, description, game, format, team_size, max_slots, entry_fee, prize_pct, region, start_date, reg_start, reg_end, start_time, is_student } = req.body
   if (!name || !game) return res.status(400).json({ error: 'Укажите название и игру' })
 
-  // Проверяем роль — admin публикует бесплатно, остальные в будущем платят
-  const userRes = await db.query('SELECT role FROM users WHERE id=$1', [req.user.id])
-  const role = userRes.rows[0]?.role || 'player'
+  const userRes = await db.query(
+    'SELECT role, subscription_type, subscription_expires FROM users WHERE id=$1',
+    [req.user.id]
+  )
+  const user = userRes.rows[0]
+  const role = user?.role || 'player'
+  const isAdmin = role === 'admin'
+
+  // Проверяем подписку
+  const hasSubscription = user?.subscription_type &&
+    (!user.subscription_expires || new Date(user.subscription_expires) > new Date())
+
+  // Блокируем если не admin и нет подписки
+  if (!isAdmin && !hasSubscription) {
+    return res.status(403).json({
+      error: 'Требуется подписка',
+      detail: 'Для публикации турниров необходима подписка организатора (15 000 ₽/мес) или разовый взнос (3 000 ₽). Платёжная система скоро будет подключена.',
+      code: 'NO_SUBSCRIPTION'
+    })
+  }
+
+  // Платные турниры — только для admin пока нет шлюза для сбора с участников
+  if ((entry_fee || 0) > 0 && !isAdmin) {
+    return res.status(403).json({
+      error: 'Платные турниры временно недоступны',
+      detail: 'Сбор взносов с участников будет доступен после подключения платёжного шлюза.',
+      code: 'NO_PAYMENT_GATEWAY'
+    })
+  }
 
   try {
     const result = await db.query(
-      `INSERT INTO tournaments (organizer_id, name, description, game, format, team_size, max_slots, entry_fee, prize_pct, region, start_date, reg_start, reg_end, start_time, is_student)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) RETURNING *`,
+      `INSERT INTO tournaments (organizer_id, name, description, game, format, team_size, max_slots, entry_fee, prize_pct, region, start_date, reg_start, reg_end, start_time, is_student, organizer_paid)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) RETURNING *`,
       [req.user.id, name, description || '', game, format || 'single_elimination', team_size || '1x1',
        max_slots || 16, entry_fee || 0, prize_pct || 50, region || 'Чеченская Республика',
-       start_date, reg_start, reg_end, start_time || '18:00', is_student === true || is_student === 'true']
+       start_date, reg_start, reg_end, start_time || '18:00',
+       is_student === true || is_student === 'true',
+       isAdmin || hasSubscription]
     )
-    console.log(`✅ Турнир создан: "${name}" (${game}) от ${req.user.username} [${role}], студенческий: ${is_student}`)
+    console.log(`✅ Турнир создан: "${name}" (${game}) от ${req.user.username} [${role}]`)
     res.status(201).json(result.rows[0])
   } catch (e) {
     console.error(e)
