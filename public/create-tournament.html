@@ -67,7 +67,7 @@
     .sb-sep { width: 28px; height: 1px; background: var(--border); margin: 6px 0; }
 
     /* PAGE */
-    .page { margin-left: 60px; padding-top: 64px; min-height: 100vh; position: relative; z-index: 1; }
+    .page { margin-left: 220px; padding-top: 64px; min-height: 100vh; position: relative; z-index: 1; }
 
     /* WIZARD LAYOUT */
     .wizard-wrap {
@@ -285,35 +285,9 @@
 <body>
 <div class="grid-bg"></div>
 
-<!-- HEADER -->
-<header>
-  <a href="index.html" class="logo">
-    <div class="logo-hex"><svg viewBox="0 0 18 18" fill="none"><polygon points="9,1 16,4.5 16,13.5 9,17 2,13.5 2,4.5" stroke="#080c12" stroke-width="1.5"/><circle cx="9" cy="9" r="2.5" fill="#080c12"/></svg></div>
-    <span class="logo-name">GAME GENESIS</span>
-  </a>
-  <nav>
-    <a href="index.html" class="nav-a">Главная</a>
-    <a href="tournament.html" class="nav-a">Турниры</a>
-    <a href="#" class="nav-a active">Создать турнир</a>
-    <a href="#" class="nav-a">Рейтинг</a>
-  </nav>
-  <div style="display:flex;align-items:center;gap:8px;margin-left:auto;margin-right:12px;">
-    <button onclick="location.href='auth.html'" style="font-family:'Exo 2',sans-serif;font-size:13px;font-weight:500;padding:7px 18px;border-radius:7px;border:1px solid #253550;background:transparent;color:#5c7090;cursor:pointer;" onmouseover="this.style.borderColor='#f0c040';this.style.color='#f0c040'" onmouseout="this.style.borderColor='#253550';this.style.color='#5c7090'">Войти</button>
-  </div>
-  <button class="btn-back" onclick="location.href='index.html'">
-    <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
-    Назад
-  </button>
-</header>
-
-<!-- SIDEBAR -->
-<aside class="sidebar">
-  <div class="sb-item" onclick="location.href='index.html'"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span class="tip">Главная</span></div>
-  <div class="sb-item"><svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/></svg><span class="tip">Турниры</span></div>
-  <div class="sb-item active"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg><span class="tip">Создать</span></div>
-  <div class="sb-sep"></div>
-  <div class="sb-item"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span class="tip">Профиль</span></div>
-</aside>
+<!-- NAVIGATION -->
+<script src="nav.js"></script>
+<div id="nav-root"></div>
 
 <div class="page">
   <div class="wizard-wrap" id="wizard-wrap">
@@ -722,7 +696,49 @@
 
   </div><!-- /wizard-wrap -->
 
-  <!-- SUCCESS SCREEN -->
+  <!-- SUBSCRIPTION SCREEN -->
+  <div id="subscription-screen" style="display:none;max-width:640px;margin:0 auto;padding:40px 20px;text-align:center;">
+    <div style="font-size:56px;margin-bottom:20px;">🔒</div>
+    <div style="font-family:'Rajdhani',sans-serif;font-size:28px;font-weight:700;color:#fff;margin-bottom:8px;">Требуется подписка</div>
+    <div style="font-size:15px;color:var(--text-dim);margin-bottom:36px;line-height:1.6;">Для публикации турниров на платформе необходима<br>подписка организатора или разовый взнос.</div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:32px;text-align:left;">
+      <!-- Разовый взнос -->
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:24px;">
+        <div style="font-size:13px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Разовый турнир</div>
+        <div style="font-family:'Rajdhani',sans-serif;font-size:36px;font-weight:900;color:#fff;">3 000 ₽</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:16px;">за один турнир</div>
+        <div style="font-size:13px;color:var(--text-dim);line-height:1.8;">
+          ✓ 1 турнир любого формата<br>
+          ✓ До 128 участников<br>
+          ✓ Полная поддержка<br>
+          ✓ Статистика и рейтинг
+        </div>
+      </div>
+      <!-- Подписка -->
+      <div style="background:linear-gradient(135deg,rgba(240,192,64,.12),rgba(240,192,64,.04));border:1px solid rgba(240,192,64,.35);border-radius:14px;padding:24px;position:relative;">
+        <div style="position:absolute;top:-10px;right:16px;background:var(--gold);color:#080c12;font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;">ВЫГОДНЕЕ</div>
+        <div style="font-size:13px;color:var(--gold);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Подписка</div>
+        <div style="font-family:'Rajdhani',sans-serif;font-size:36px;font-weight:900;color:#fff;">15 000 ₽</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:16px;">в месяц</div>
+        <div style="font-size:13px;color:var(--text-dim);line-height:1.8;">
+          ✓ Неограниченные турниры<br>
+          ✓ Брендирование<br>
+          ✓ Приоритетная поддержка<br>
+          ✓ Для вузов — специальные условия
+        </div>
+      </div>
+    </div>
+
+    <div style="background:rgba(96,165,250,.08);border:1px solid rgba(96,165,250,.2);border-radius:10px;padding:16px;margin-bottom:24px;font-size:13px;color:var(--blue);line-height:1.6;">
+      ⚡ Платёжная система в разработке. Для подключения подписки свяжитесь с администрацией платформы.
+    </div>
+
+    <div style="display:flex;gap:12px;justify-content:center;">
+      <a href="/tournaments.html" style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;color:var(--text);text-decoration:none;font-size:14px;">← К турнирам</a>
+      <a href="mailto:smagomadov494@gmail.com?subject=Подписка Game Genesis&body=Здравствуйте! Хочу подключить подписку организатора." style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;background:var(--gold);border-radius:8px;color:#080c12;text-decoration:none;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:14px;">📧 Связаться с администрацией</a>
+    </div>
+  </div>
   <div id="success-screen">
     <div class="success-wrap">
       <div class="success-circle">
@@ -779,17 +795,15 @@
   const totalSteps = 5;
   let selectedType = 'se';
   let payType = 'free';
-  // Храним какие шаги реально прошли валидацию
-  const completedSteps = new Set();
 
   // ── NAVIGATION ──
   function nextStep(from) {
     if (!validateStep(from)) return;
-    completedSteps.add(from);
     goToStep(from + 1);
   }
   function prevStep(from) { goToStep(from - 1); }
 
+  
   var tournamentType = 'open';
   function setTournamentType(type) {
     tournamentType = type;
@@ -799,28 +813,16 @@
 
 function goToStep(n) {
     if (n < 1 || n > totalSteps) return;
-    // Запретить прыжок вперёд через клик на боковой панели если шаг не завершён
-    if (n > currentStep && !completedSteps.has(currentStep)) {
-      // Разрешить только если все промежуточные шаги пройдены
-      for (let i = currentStep; i < n; i++) {
-        if (!completedSteps.has(i)) {
-          // Подсветить текущий как требующий внимания
-          if (typeof validateStep === 'function') validateStep(currentStep);
-          return;
-        }
-      }
+    // mark done
+    for (let i = 1; i < n; i++) {
+      document.getElementById('si-' + i).className = 'step-item done';
     }
-    // Обновляем индикаторы — только реально завершённые шаги получают done
-    for (let i = 1; i <= totalSteps; i++) {
+    // mark active
+    document.getElementById('si-' + n).className = 'step-item active';
+    // mark future
+    for (let i = n + 1; i <= totalSteps; i++) {
       const el = document.getElementById('si-' + i);
-      if (!el) continue;
-      if (i === n) {
-        el.className = 'step-item active';
-      } else if (completedSteps.has(i)) {
-        el.className = 'step-item done';
-      } else {
-        el.className = 'step-item';
-      }
+      if (el) el.className = 'step-item';
     }
     // show section
     document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
@@ -869,6 +871,20 @@ function goToStep(n) {
 
   // ── PAY SELECT ──
   function selectPay(p) {
+    if (p === 'paid') {
+      // Проверяем роль — если не admin, показываем предупреждение
+      var token = localStorage.getItem('gg_token');
+      var isAdmin = false;
+      try {
+        var payload = JSON.parse(atob(token.split('.')[1]));
+        isAdmin = payload.role === 'admin';
+      } catch(e) {}
+
+      if (!isAdmin) {
+        alert('⚠️ Платные турниры временно недоступны.\n\nСоздание платных турниров будет доступно после подключения платёжного шлюза.\n\nСоздайте бесплатный турнир.');
+        return; // не переключаем на платный
+      }
+    }
     payType = p;
     document.getElementById('po-free').classList.toggle('selected', p === 'free');
     document.getElementById('po-paid').classList.toggle('selected', p === 'paid');
@@ -1006,7 +1022,6 @@ function goToStep(n) {
       reg_start: (document.getElementById('t-reg-start')||{value:''}).value,
       reg_end: (document.getElementById('t-reg-end')||{value:''}).value,
       start_time: (document.getElementById('t-start-time')||{value:'18:00'}).value,
-      is_student: tournamentType === 'student',
     };
 
     try {
@@ -1017,7 +1032,16 @@ function goToStep(n) {
         body: JSON.stringify(data)
       });
       const resp = await res.json();
-      if (!res.ok) throw new Error(resp.error || 'Ошибка');
+      if (!res.ok) {
+        if (resp.code === 'NO_SUBSCRIPTION') {
+          // Показываем экран подписки
+          document.getElementById('wizard-wrap').style.display = 'none';
+          document.getElementById('success-screen').style.display = 'none';
+          document.getElementById('subscription-screen').style.display = 'block';
+          return;
+        }
+        throw new Error(resp.error || 'Ошибка');
+      }
 
       document.getElementById('wizard-wrap').style.display = 'none';
       document.getElementById('success-screen').style.display = 'block';
