@@ -152,6 +152,17 @@ async function initDB() {
           adr INT DEFAULT 0,
           created_at TIMESTAMPTZ DEFAULT NOW()
         );
+
+        CREATE TABLE IF NOT EXISTS notifications (
+          id SERIAL PRIMARY KEY,
+          user_id INT REFERENCES users(id) ON DELETE CASCADE,
+          type VARCHAR(50) NOT NULL,
+          text TEXT NOT NULL,
+          link TEXT,
+          is_read BOOLEAN DEFAULT false,
+          created_at TIMESTAMPTZ DEFAULT NOW()
+        );
+        CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id, is_read);
       END $$;
 
     CREATE TABLE IF NOT EXISTS matches (
