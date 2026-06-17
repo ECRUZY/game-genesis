@@ -726,7 +726,7 @@
         </div>
         <h2 class="section-title">Рейтинг игроков</h2>
       </div>
-      <a href="#" class="see-all">Полный рейтинг <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></a>
+      <a href="/ratings.html" class="see-all">Полный рейтинг <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></a>
     </div>
 
     <div class="ratings-grid" id="idx-ratings">
@@ -890,8 +890,8 @@ async function loadIndexData() {
     // Рендерим список турниров
     renderTournaments(tournaments);
 
-    // Загружаем рейтинг
-    var rres = await fetch('/api/users/ratings');
+    // Загружаем рейтинг (ELO из матчей, как на странице рейтинга)
+    var rres = await fetch('/api/users/player-stats');
     if (rres.ok) {
       var ratings = await rres.json();
       renderRatings(ratings.slice(0, 5));
@@ -1009,7 +1009,7 @@ function renderRatings(list) {
         '<div class="player-name">' + name + '</div>' +
         '<div class="player-nick">' + p.username + ' · ' + (p.game||'CS2') + '</div>' +
       '</div>' +
-      '<div><div class="player-pts">' + (p.rating||0).toLocaleString('ru-RU') + '</div><div class="player-pts-label">очков</div></div>' +
+      '<div><div class="player-pts">' + (p.elo||p.rating||0).toLocaleString('ru-RU') + '</div><div class="player-pts-label">очков</div></div>' +
     '</div>';
   }).join('');
 }
