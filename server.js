@@ -5,6 +5,15 @@ const path = require('path')
 
 const app = express()
 
+// ── РЕДИРЕКТ С gamegenesis.ru НА www.gamegenesis.ru ──
+app.use((req, res, next) => {
+  const host = req.headers.host || ''
+  if (host === 'gamegenesis.ru') {
+    return res.redirect(301, 'https://www.gamegenesis.ru' + req.url)
+  }
+  next()
+})
+
 // ── MIDDLEWARE ──
 app.use(cors())
 app.use(express.json({ limit: '10mb' }))
