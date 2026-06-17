@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Матч — Game Genesis</title>
+<style>
+  :root{--bg:#080c12;--bg-card:#0d1520;--bg-card2:#111927;--border:#1e3a5f;--border-hi:#2a4a7a;--text:#c8d8ea;--text-dim:#5c7090;--text-muted:#3a5070;--gold:#f0c040;--gold-dim:rgba(240,192,64,.1);--success:#4ade80;--red:#ef4444;--blue:#60a5fa}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Exo 2',Arial,sans-serif;min-height:100vh;padding-top:64px}
+  a{color:inherit;text-decoration:none}
+  .page{margin-left:220px;padding:24px 32px;max-width:1400px}
+
+  /* HEADER МАТЧА */
+  .match-header{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:28px 32px;margin-bottom:20px}
+  .match-crumb{font-size:12px;color:var(--text-dim);margin-bottom:16px;display:flex;align-items:center;gap:6px}
+  .match-vs{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:24px}
+  .team-side{display:flex;flex-direction:column;gap:6px}
+  .team-side.right{text-align:right;align-items:flex-end}
+  .team-name{font-family:Rajdhani,sans-serif;font-size:32px;font-weight:900;color:#fff}
+  .team-winner{font-size:11px;font-weight:700;color:var(--success);text-transform:uppercase;letter-spacing:1px}
+  .score-box{text-align:center}
+  .score-nums{font-family:Rajdhani,sans-serif;font-size:56px;font-weight:900;color:#fff;letter-spacing:4px;line-height:1}
+  .score-vs{font-size:14px;color:var(--text-dim);margin-top:4px}
+  .match-meta{display:flex;justify-content:center;gap:20px;margin-top:12px;font-size:12px;color:var(--text-dim)}
+  .meta-item{display:flex;align-items:center;gap:5px}
+  .status-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700}
+  .status-badge.live{background:rgba(239,68,68,.15);color:var(--red);border:1px solid rgba(239,68,68,.3)}
+  .status-badge.live::before{content:'';display:block;width:6px;height:6px;border-radius:50%;background:var(--red);animation:pulse 1.2s infinite}
+  .status-badge.done{background:rgba(74,222,128,.1);color:var(--success);border:1px solid rgba(74,222,128,.2)}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+  /* ОСНОВНОЙ LAYOUT */
+  .match-body{display:grid;grid-template-columns:1fr 1fr 340px;gap:16px}
+
+  /* КОМАНДЫ */
+  .team-col{display:flex;flex-direction:column;gap:10px}
+  .col-title{font-family:Rajdhani,sans-serif;font-size:13px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}
+  .player-card{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:12px 14px}
+  .player-card:hover{border-color:var(--border-hi)}
+  .player-top{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+  .player-av{width:38px;height:38px;border-radius:50%;background:var(--bg-card2);border:1px solid var(--border);overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:Rajdhani,sans-serif;font-weight:700;font-size:14px;color:var(--gold)}
+  .player-av img{width:100%;height:100%;object-fit:cover}
+  .player-info{flex:1;min-width:0}
+  .player-nick{font-weight:700;font-size:14px;color:#fff;display:flex;align-items:center;gap:6px}
+  .cap-badge{font-size:9px;background:rgba(240,192,64,.15);color:var(--gold);border:1px solid rgba(240,192,64,.3);border-radius:4px;padding:1px 5px}
+  .player-links{display:flex;gap:6px;margin-top:4px}
+  .ext-link{display:inline-flex;align-items:center;gap:4px;font-size:10px;padding:2px 8px;border-radius:4px;border:1px solid var(--border);color:var(--text-dim);transition:.15s}
+  .ext-link:hover{border-color:var(--gold);color:var(--gold)}
+  .player-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;border-top:1px solid var(--border);padding-top:8px;margin-top:2px}
+  .stat-item{text-align:center}
+  .stat-val{font-family:Rajdhani,sans-serif;font-size:15px;font-weight:700;color:#fff}
+  .stat-val.good{color:var(--success)}
+  .stat-val.bad{color:var(--red)}
+  .stat-key{font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px}
+
+  /* СРЕДНЯЯ КОЛОНКА — пустая для будущего */
+  .mid-col{display:flex;flex-direction:column;gap:12px}
+  .info-card{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+  .info-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
+  .info-row:last-child{border-bottom:none}
+  .info-label{font-size:12px;color:var(--text-dim);min-width:80px}
+  .info-val{font-size:13px;color:#fff;font-weight:500}
+
+  /* FACEIT LINK BANNER */
+  .faceit-banner{background:linear-gradient(135deg,rgba(255,85,0,.12),rgba(255,85,0,.04));border:1px solid rgba(255,85,0,.3);border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:12px}
+  .faceit-banner.hidden{display:none}
+  .faceit-icon{width:32px;height:32px;background:rgba(255,85,0,.2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+
+  /* ЧАТ */
+  .chat-col{display:flex;flex-direction:column;gap:0;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;overflow:hidden;height:fit-content;max-height:600px}
+  .chat-header{padding:12px 14px;border-bottom:1px solid var(--border);font-family:Rajdhani,sans-serif;font-size:14px;font-weight:700;color:#fff;display:flex;align-items:center;justify-content:space-between}
+  .chat-private{font-size:10px;color:var(--text-dim);font-family:'Exo 2',sans-serif;font-weight:400}
+  .chat-locked{padding:20px;text-align:center;color:var(--text-muted);font-size:13px}
+  .chat-locked-icon{font-size:28px;margin-bottom:8px}
+  .chat-messages{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:8px;min-height:200px;max-height:400px}
+  .chat-messages::-webkit-scrollbar{width:4px}
+  .chat-messages::-webkit-scrollbar-track{background:transparent}
+  .chat-messages::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+  .msg{display:flex;gap:8px;align-items:flex-start}
+  .msg-av{width:28px;height:28px;border-radius:50%;background:var(--bg-card2);border:1px solid var(--border);flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--gold)}
+  .msg-av img{width:100%;height:100%;object-fit:cover}
+  .msg-body{flex:1;min-width:0}
+  .msg-head{display:flex;align-items:center;gap:6px;margin-bottom:2px}
+  .msg-user{font-size:11px;font-weight:700;color:#fff}
+  .msg-org{font-size:9px;color:var(--gold);background:rgba(240,192,64,.1);padding:1px 5px;border-radius:3px}
+  .msg-time{font-size:10px;color:var(--text-muted)}
+  .msg-text{font-size:12px;color:var(--text);line-height:1.5;word-break:break-word}
+  .chat-input-wrap{padding:10px;border-top:1px solid var(--border);display:flex;gap:8px}
+  .chat-input{flex:1;background:var(--bg-card2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:13px;color:var(--text);outline:none;font-family:'Exo 2',sans-serif}
+  .chat-input:focus{border-color:var(--border-hi)}
+  .chat-send{background:var(--gold);border:none;border-radius:8px;width:36px;height:36px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .chat-send svg{stroke:#080c12;fill:none;stroke-width:2.5}
+  .org-tools{padding:10px;border-top:1px solid var(--border)}
+  .org-tools-title{font-size:10px;color:var(--text-muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+  .faceit-input-wrap{display:flex;gap:6px}
+  .faceit-input{flex:1;background:var(--bg-card2);border:1px solid rgba(255,85,0,.3);border-radius:6px;padding:6px 10px;font-size:11px;color:var(--text);outline:none}
+  .faceit-btn{background:rgba(255,85,0,.8);border:none;border-radius:6px;padding:6px 10px;font-size:11px;font-weight:700;color:#fff;cursor:pointer;white-space:nowrap}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;700&family=Rajdhani:wght@600;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+<script src="nav.js"></script>
+<div id="nav-root"></div>
+
+<div class="page">
+  <!-- ШАПКА МАТЧА -->
+  <div class="match-header" id="match-header">
+    <div class="match-crumb">
+      <a href="tournaments.html">Турниры</a> /
+      <a href="#" id="crumb-tour">—</a> /
+      <span id="crumb-match">Матч</span>
+    </div>
+    <div class="match-vs" id="match-vs">
+      <div style="text-align:center;padding:40px;color:var(--text-muted);">Загрузка...</div>
+    </div>
+    <div class="match-meta" id="match-meta"></div>
+  </div>
+
+  <!-- ТЕЛО -->
+  <div class="match-body" id="match-body" style="display:none">
+    <!-- Команда 1 -->
+    <div class="team-col">
+      <div class="col-title" id="t1-title">Команда 1</div>
+      <div id="t1-players"></div>
+    </div>
+
+    <!-- Средняя колонка -->
+    <div class="mid-col">
+      <div class="info-card" id="match-info-card"></div>
+      <div class="faceit-banner hidden" id="faceit-banner">
+        <div class="faceit-icon">🎮</div>
+        <div style="flex:1">
+          <div style="font-size:12px;font-weight:700;color:#ff5500;margin-bottom:3px;">Ссылка на матч Faceit</div>
+          <a href="#" id="faceit-link-href" target="_blank" style="font-size:12px;color:var(--text);word-break:break-all;"></a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Команда 2 -->
+    <div class="team-col">
+      <div class="col-title" id="t2-title" style="text-align:right">Команда 2</div>
+      <div id="t2-players"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ЧАТ (fixed справа) -->
+<div id="chat-panel" style="display:none;position:fixed;right:24px;bottom:24px;width:320px;z-index:200;">
+  <div class="chat-col">
+    <div class="chat-header">
+      <span>💬 Чат матча</span>
+      <span class="chat-private">🔒 только участники</span>
+    </div>
+    <div class="chat-messages" id="chat-messages"></div>
+    <div class="chat-input-wrap">
+      <input class="chat-input" id="chat-input" placeholder="Сообщение..." maxlength="500"
+             onkeydown="if(event.key==='Enter')sendMsg()">
+      <button class="chat-send" onclick="sendMsg()">
+        <svg viewBox="0 0 24 24" width="16" height="16"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>
+    <div class="org-tools" id="org-tools" style="display:none">
+      <div class="org-tools-title">Ссылка Faceit (только участникам)</div>
+      <div class="faceit-input-wrap">
+        <input class="faceit-input" id="faceit-link-input" placeholder="https://faceit.com/...">
+        <button class="faceit-btn" onclick="sendFaceitLink()">Отправить</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var TOKEN = localStorage.getItem('gg_token')
+var USER = null
+try { USER = JSON.parse(atob(TOKEN.split('.')[1])) } catch(e) {}
+var TID = null
+var MID = parseInt(new URLSearchParams(location.search).get('id'))
+var IS_PARTICIPANT = false
+var lastTs = 0
+var pollInterval = null
+
+if (!MID) { location.href = '/tournaments.html'; }
+
+// Загрузка
+async function loadMatch() {
+  try {
+    var res = await fetch('/api/matches/' + MID)
+    var data = await res.json()
+    if (!res.ok) throw new Error(data.error)
+    renderMatch(data)
+  } catch(e) {
+    document.getElementById('match-vs').innerHTML = '<div style="color:var(--red);padding:20px">Ошибка загрузки: '+e.message+'</div>'
+  }
+}
+
+function renderMatch(data) {
+  var m = data.match
+  TID = m.tournament_id
+
+  // Хлебные крошки
+  document.getElementById('crumb-tour').textContent = m.tournament_name
+  document.getElementById('crumb-tour').href = '/tournament.html?id=' + TID
+  document.getElementById('crumb-match').textContent = 'Матч #' + m.match_number
+
+  var isW1 = m.winner_team_id === m.team1_id
+  var isW2 = m.winner_team_id === m.team2_id
+
+  // Шапка
+  document.getElementById('match-vs').innerHTML =
+    '<div class="team-side">' +
+      (isW1 ? '<div class="team-winner">🏆 Победитель</div>' : '') +
+      '<div class="team-name">' + (m.team1_name||'TBD') + '</div>' +
+    '</div>' +
+    '<div class="score-box">' +
+      '<div class="score-nums">' +
+        '<span style="color:'+(isW1?'var(--success)':'var(--text))+'">' + (m.score1||0) + '</span>' +
+        '<span style="color:var(--text-dim);font-size:36px;margin:0 8px">:</span>' +
+        '<span style="color:'+(isW2?'var(--success)':'var(--text)')+'"> ' + (m.score2||0) + '</span>' +
+      '</div>' +
+      '<div class="score-vs">' +
+        (m.status==='done'?'<span class="status-badge done">Завершён</span>':'<span class="status-badge live">Live</span>') +
+      '</div>' +
+    '</div>' +
+    '<div class="team-side right">' +
+      (isW2 ? '<div class="team-winner">🏆 Победитель</div>' : '') +
+      '<div class="team-name">' + (m.team2_name||'TBD') + '</div>' +
+    '</div>'
+
+  document.getElementById('match-meta').innerHTML =
+    '<div class="meta-item">🏆 ' + m.tournament_name + '</div>' +
+    '<div class="meta-item">🎮 ' + (m.game||'') + '</div>' +
+    '<div class="meta-item">#' + m.match_number + (m.bracket_type ? ' · ' + m.bracket_type : '') + '</div>'
+
+  // Инфо-карточка
+  document.getElementById('match-info-card').innerHTML =
+    '<div class="col-title" style="margin-bottom:8px">О матче</div>' +
+    '<div class="info-row"><span class="info-label">Турнир</span><span class="info-val">' + m.tournament_name + '</span></div>' +
+    '<div class="info-row"><span class="info-label">Игра</span><span class="info-val">' + (m.game||'—') + '</span></div>' +
+    '<div class="info-row"><span class="info-label">Раунд</span><span class="info-val">' + (m.bracket_type||'—') + ' R' + (m.round||'') + '</span></div>' +
+    '<div class="info-row"><span class="info-label">Статус</span><span class="info-val" style="color:'+(m.status==='done'?'var(--success)':'var(--red)')+'">'+m.status+'</span></div>' +
+    (m.played_at ? '<div class="info-row"><span class="info-label">Сыгран</span><span class="info-val">' + new Date(m.played_at).toLocaleDateString('ru-RU') + '</span></div>' : '')
+
+  // Игроки
+  document.getElementById('t1-title').textContent = m.team1_name || 'Команда 1'
+  document.getElementById('t2-title').textContent = m.team2_name || 'Команда 2'
+  renderPlayers('t1-players', data.team1_players, data.stats, data.profiles)
+  renderPlayers('t2-players', data.team2_players, data.stats, data.profiles)
+
+  document.getElementById('match-body').style.display = 'grid'
+
+  // Проверяем доступ к чату
+  checkChatAccess()
+}
+
+function renderPlayers(containerId, players, stats, profiles) {
+  var el = document.getElementById(containerId)
+  el.innerHTML = players.map(function(p) {
+    var prof = profiles.find(function(u) {
+      return u.username.toLowerCase() === p.nickname.toLowerCase() ||
+             (u.faceit_nick && u.faceit_nick.toLowerCase() === p.nickname.toLowerCase())
+    })
+    var st = stats.find(function(s) { return s.nickname.toLowerCase() === p.nickname.toLowerCase() })
+    var ini = p.nickname.slice(0,2).toUpperCase()
+    var kd = st && st.deaths > 0 ? (st.kills/st.deaths).toFixed(2) : (st ? st.kills+'.00' : '—')
+    var kdColor = st ? (parseFloat(kd)>=1.5?'good':parseFloat(kd)<0.8?'bad':'') : ''
+
+    return '<div class="player-card">' +
+      '<div class="player-top">' +
+        '<div class="player-av">' + (prof?.avatar ? '<img src="'+prof.avatar+'">' : ini) + '</div>' +
+        '<div class="player-info">' +
+          '<div class="player-nick">' + p.nickname + (p.is_captain?'<span class="cap-badge">Капитан</span>':'') + '</div>' +
+          '<div class="player-links">' +
+            (prof?.faceit_nick ?
+              '<a class="ext-link" href="https://faceit.com/en/players/'+prof.faceit_nick+'" target="_blank">⚡ Faceit</a>' : '') +
+            (prof ?
+              '<a class="ext-link" href="/profile.html?user='+prof.username+'">👤 Профиль</a>' : '') +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      (st ?
+        '<div class="player-stats">' +
+          '<div class="stat-item"><div class="stat-val '+kdColor+'">'+kd+'</div><div class="stat-key">K/D</div></div>' +
+          '<div class="stat-item"><div class="stat-val">'+st.kills+'</div><div class="stat-key">Kills</div></div>' +
+          '<div class="stat-item"><div class="stat-val">'+st.deaths+'</div><div class="stat-key">Deaths</div></div>' +
+          '<div class="stat-item"><div class="stat-val">'+(st.hs_pct||0)+'%</div><div class="stat-key">HS%</div></div>' +
+          '<div class="stat-item"><div class="stat-val">'+(st.adr||0)+'</div><div class="stat-key">ADR</div></div>' +
+        '</div>' : '') +
+    '</div>'
+  }).join('')
+}
+
+async function checkChatAccess() {
+  if (!TOKEN) return
+  try {
+    var res = await fetch('/api/matches/' + MID + '/messages?since=0', {
+      headers: { 'Authorization': 'Bearer ' + TOKEN }
+    })
+    if (res.status === 403) return
+    IS_PARTICIPANT = true
+    document.getElementById('chat-panel').style.display = 'block'
+    var role = USER?.role
+    if (role === 'admin' || role === 'organizer') {
+      document.getElementById('org-tools').style.display = 'block'
+    }
+    var data = await res.json()
+    renderMessages(data.messages)
+    if (data.faceitLink) showFaceitBanner(data.faceitLink)
+    lastTs = data.lastTs || 0
+    startPolling()
+  } catch(e) {}
+}
+
+function startPolling() {
+  if (pollInterval) clearInterval(pollInterval)
+  pollInterval = setInterval(async function() {
+    try {
+      var res = await fetch('/api/matches/'+MID+'/messages?since='+lastTs, {
+        headers: { 'Authorization': 'Bearer '+TOKEN }
+      })
+      var data = await res.json()
+      if (data.messages?.length) {
+        renderMessages(data.messages, true)
+        lastTs = data.lastTs
+      }
+      if (data.faceitLink) showFaceitBanner(data.faceitLink)
+    } catch(e) {}
+  }, 3000)
+}
+
+function renderMessages(msgs, append) {
+  var container = document.getElementById('chat-messages')
+  var wasAtBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 40
+  var html = msgs.map(function(m) {
+    var ini = m.username.slice(0,2).toUpperCase()
+    var time = new Date(m.ts).toLocaleTimeString('ru-RU', {hour:'2-digit',minute:'2-digit'})
+    var isOrg = m.role === 'admin' || m.role === 'organizer'
+    return '<div class="msg">' +
+      '<div class="msg-av">' + (m.avatar?'<img src="'+m.avatar+'">':ini) + '</div>' +
+      '<div class="msg-body">' +
+        '<div class="msg-head">' +
+          '<span class="msg-user">'+m.username+'</span>' +
+          (isOrg?'<span class="msg-org">Орг.</span>':'') +
+          '<span class="msg-time">'+time+'</span>' +
+        '</div>' +
+        '<div class="msg-text">'+escHtml(m.text)+'</div>' +
+      '</div>' +
+    '</div>'
+  }).join('')
+  if (append) container.insertAdjacentHTML('beforeend', html)
+  else container.innerHTML = html
+  if (wasAtBottom || !append) container.scrollTop = container.scrollHeight
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+}
+
+async function sendMsg() {
+  var inp = document.getElementById('chat-input')
+  var text = inp.value.trim()
+  if (!text) return
+  inp.value = ''
+  try {
+    await fetch('/api/matches/'+MID+'/messages', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json','Authorization':'Bearer '+TOKEN },
+      body: JSON.stringify({ text })
+    })
+  } catch(e) {}
+}
+
+async function sendFaceitLink() {
+  var link = document.getElementById('faceit-link-input').value.trim()
+  if (!link) return
+  try {
+    await fetch('/api/matches/'+MID+'/faceit-link', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json','Authorization':'Bearer '+TOKEN },
+      body: JSON.stringify({ link })
+    })
+    document.getElementById('faceit-link-input').value = ''
+    showFaceitBanner(link)
+  } catch(e) {}
+}
+
+function showFaceitBanner(link) {
+  var banner = document.getElementById('faceit-banner')
+  var href = document.getElementById('faceit-link-href')
+  banner.classList.remove('hidden')
+  href.href = link
+  href.textContent = link
+}
+
+window.addEventListener('beforeunload', function() {
+  if (pollInterval) clearInterval(pollInterval)
+})
+
+loadMatch()
+</script>
+</body>
+</html>
