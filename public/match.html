@@ -207,25 +207,31 @@ function renderMatch(data) {
   var isW2 = m.winner_team_id === m.team2_id
 
   // Шапка
-  document.getElementById('match-vs').innerHTML =
-    '<div class="team-side">' +
-      (isW1 ? '<div class="team-winner">🏆 Победитель</div>' : '') +
-      '<div class="team-name">' + (m.team1_name||'TBD') + '</div>' +
-    '</div>' +
-    '<div class="score-box">' +
-      '<div class="score-nums">' +
-        '<span style="color:'+(isW1?'var(--success)':'var(--text)')+'">'+' + (m.score1||0) + '</span>' +
-        '<span style="color:var(--text-dim);font-size:36px;margin:0 8px">:</span>' +
-        '<span style="color:'+(isW2?'var(--success)':'var(--text)')+'"> ' + (m.score2||0) + '</span>' +
-      '</div>' +
-      '<div class="score-vs">' +
-        (m.status==='done'?'<span class="status-badge done">Завершён</span>':'<span class="status-badge live">Live</span>') +
-      '</div>' +
-    '</div>' +
-    '<div class="team-side right">' +
-      (isW2 ? '<div class="team-winner">🏆 Победитель</div>' : '') +
-      '<div class="team-name">' + (m.team2_name||'TBD') + '</div>' +
-    '</div>'
+  // Шапка — без вложенных кавычек
+  var c1 = isW1 ? 'var(--success)' : 'var(--text)';
+  var c2 = isW2 ? 'var(--success)' : 'var(--text)';
+  var vsHtml = '';
+  vsHtml += '<div class="team-side">';
+  vsHtml += isW1 ? '<div class="team-winner">🏆 Победитель</div>' : '';
+  vsHtml += '<div class="team-name">' + (m.team1_name||'TBD') + '</div>';
+  vsHtml += '</div>';
+  vsHtml += '<div class="score-box">';
+  vsHtml += '<div class="score-nums">';
+  vsHtml += '<span style="color:' + c1 + '">' + (m.score1||0) + '</span>';
+  vsHtml += '<span style="color:var(--text-dim);font-size:36px;margin:0 8px">:</span>';
+  vsHtml += '<span style="color:' + c2 + '">' + (m.score2||0) + '</span>';
+  vsHtml += '</div>';
+  vsHtml += '<div class="score-vs">';
+  vsHtml += m.status === 'done' ? '<span class="status-badge done">Завершён</span>' : '<span class="status-badge live">Live</span>';
+  vsHtml += '</div>';
+  vsHtml += '</div>';
+  vsHtml += '<div class="team-side right">';
+  vsHtml += isW2 ? '<div class="team-winner">🏆 Победитель</div>' : '';
+  vsHtml += '<div class="team-name">' + (m.team2_name||'TBD') + '</div>';
+  vsHtml += '</div>';
+  document.getElementById('match-vs').innerHTML = vsHtml;
+
+
 
   document.getElementById('match-meta').innerHTML =
     '<div class="meta-item">🏆 ' + m.tournament_name + '</div>' +
