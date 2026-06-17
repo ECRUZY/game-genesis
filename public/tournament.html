@@ -783,11 +783,9 @@ function pubMatchCard(m, extra) {
   var cls = 'bm' + (m.status==='done' ? ' done' : '') + (extra ? ' '+extra : '');
   var t1w = m.status==='done' && m.winner_team_id===m.team1_id;
   var t2w = m.status==='done' && m.winner_team_id===m.team2_id;
-  var isDone = m.status==='done' && m.team1_name && m.team2_name;
-  var matchIdx = window._pubMatches ? window._pubMatches.push(m)-1 : 0;
-  if (!window._pubMatches) window._pubMatches = [m];
-  return '<div class="'+cls+'"'+(isDone ? ' onclick="openMatchModal('+matchIdx+')" style="cursor:pointer;"' : '')+'>'+
-    '<div class="bm-num">Матч #'+m.match_number+(isDone?'<span style="float:right;font-size:9px;color:var(--blue);">📊</span>':'')+
+  var clickable = m.id && (m.team1_name || m.team2_name);
+  return '<div class="'+cls+'"'+(clickable ? ' onclick="location.href=\'/match.html?id='+m.id+'\'" style="cursor:pointer;" title="Открыть страницу матча"' : '')+'>'+
+    '<div class="bm-num">Матч #'+m.match_number+(clickable?'<span style="float:right;font-size:9px;color:var(--blue);opacity:.8;">→</span>':'')+
     '</div>'+
     '<div class="bm-slot">'+
       '<span class="bm-seed">'+(m.team1_seed||'?')+'</span>'+
