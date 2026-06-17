@@ -214,7 +214,7 @@ function renderMatch(data) {
     '</div>' +
     '<div class="score-box">' +
       '<div class="score-nums">' +
-        '<span style="color:'+(isW1?'var(--success)':'var(--text))+'">' + (m.score1||0) + '</span>' +
+        '<span style="color:'+(isW1?'var(--success)':'var(--text)')+'">'+' + (m.score1||0) + '</span>' +
         '<span style="color:var(--text-dim);font-size:36px;margin:0 8px">:</span>' +
         '<span style="color:'+(isW2?'var(--success)':'var(--text)')+'"> ' + (m.score2||0) + '</span>' +
       '</div>' +
@@ -353,7 +353,7 @@ function renderMessages(msgs, append) {
 }
 
 function escHtml(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+  return s.replace(/&/g,'&amp;').replace(/\x3c/g,'&lt;').replace(/\x3e/g,'&gt;')
 }
 
 async function sendMsg() {
