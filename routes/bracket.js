@@ -2,6 +2,7 @@ const express = require('express')
 const router = express.Router()
 const db = require('../db')
 const auth = require('../middleware/auth')
+const { notifyTeam } = require('../utils/notify')
 
 // ─────────────────────────────────────────────
 // УТИЛИТЫ
@@ -84,6 +85,18 @@ router.post('/:tid/generate-bracket', auth, async (req, res) => {
     else                                         msg = await generateSE(tid,seeded)
 
     await db.query("UPDATE tournaments SET bracket_generated=true,status='live' WHERE id=$1",[tid])
+
+    // Уведомить всех участников — сетка сгенерирована, матчи назначены
+    const allTeams = await db.query(
+      "SELECT id FROM teams WHERE tournament_id=$1 AND status='accepted'", [tid]
+    )
+    for (const team of allTeams.rows) {
+      await notifyTeam(team.id, 'match_ready',
+        `⚔️ Сетка турнира «${t.name}» сгенерирована — ваши матчи назначены!`,
+        `/tournament.html?id=${tid}`
+      )
+    }
+
     res.json({success:true,teams:seeded.length,format:fmt,message:msg})
   } catch(e) {
     console.error('❌ generate:',e)

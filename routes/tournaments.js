@@ -149,6 +149,10 @@ router.put('/:id', auth, async (req, res) => {
 
   const { name, status, description, game, team_size, max_slots, start_date, reg_start, reg_end, is_student } = req.body
   try {
+    // Берём старые данные для сравнения
+    const oldT = await db.query('SELECT start_date, status, name FROM tournaments WHERE id=$1', [req.params.id])
+    const old = oldT.rows[0]
+
     const result = await db.query(
       `UPDATE tournaments SET
         name        = COALESCE($1, name),
@@ -167,7 +171,38 @@ router.put('/:id', auth, async (req, res) => {
        is_student !== undefined ? is_student : null,
        req.params.id]
     )
-    res.json(result.rows[0])
+    const updated = result.rows[0]
+
+    // Уведомления всем участникам
+    try {
+      const teams = await db.query(
+        "SELECT id FROM teams WHERE tournament_id=$1 AND status='accepted'", [req.params.id]
+      )
+      const tname = updated.name
+
+      // Перенос даты
+      if (start_date && old && String(old.start_date).slice(0,10) !== String(start_date).slice(0,10)) {
+        const newDate = new Date(start_date).toLocaleDateString('ru-RU', {day:'2-digit',month:'2-digit',year:'numeric'})
+        for (const team of teams.rows) {
+          await notifyTeam(team.id, 'tournament_start',
+            `📅 Турнир «${tname}» перенесён — новая дата: ${newDate}`,
+            `/tournament.html?id=${req.params.id}`
+          )
+        }
+      }
+
+      // Старт турнира (статус стал live)
+      if (status === 'live' && old && old.status !== 'live') {
+        for (const team of teams.rows) {
+          await notifyTeam(team.id, 'tournament_start',
+            `🚀 Турнир «${tname}» начался! Удачи в матчах!`,
+            `/tournament.html?id=${req.params.id}`
+          )
+        }
+      }
+    } catch(e) { console.error('notify update:', e.message) }
+
+    res.json(updated)
   } catch(e) {
     console.error(e)
     res.status(500).json({ error: 'Ошибка обновления' })
@@ -563,6 +598,31 @@ router.post('/:id/teams', auth, async (req, res) => {
       }
     }
 
+    // Уведомить каждого игрока команды (кроме капитана — он сам создал)
+    try {
+      const tname = t.rows[0].name
+      const teamId = team.rows[0].id
+      const captainId = req.user.id
+      // Найти зарегистрированных пользователей среди игроков
+      const playerNicks = players
+        .filter(p => !p.is_captain)
+        .map(p => (p.nickname || '').toLowerCase())
+      if (playerNicks.length > 0) {
+        const found = await db.query(
+          `SELECT id FROM users WHERE LOWER(username) = ANY($1) OR LOWER(faceit_nick) = ANY($1)`,
+          [playerNicks]
+        )
+        for (const u of found.rows) {
+          if (u.id !== captainId) {
+            await notify(u.id, 'team_accepted',
+              `👥 Вас добавили в команду «${team_name}» на турнир «${tname}»`,
+              `/tournament.html?id=${req.params.id}`
+            )
+          }
+        }
+      }
+    } catch(e) { console.error('notify add to team:', e.message) }
+
     res.status(201).json({ success: true, team: team.rows[0] })
   } catch (e) {
     console.error('❌ POST teams error:', e.message)
@@ -731,10 +791,24 @@ router.post('/:id/generate-bracket', auth, async (req, res) => {
 
 // ── ОПУБЛИКОВАТЬ СЕТКУ ──
 router.post('/:id/publish-bracket', auth, async (req, res) => {
-  const t = await db.query('SELECT organizer_id, bracket_generated FROM tournaments WHERE id=$1', [req.params.id])
+  const t = await db.query('SELECT organizer_id, bracket_generated, name FROM tournaments WHERE id=$1', [req.params.id])
   if (!t.rows[0]) return res.status(404).json({ error: 'Не найден' })
   if (!t.rows[0].bracket_generated) return res.status(400).json({ error: 'Сначала сгенерируйте сетку' })
   await db.query('UPDATE tournaments SET bracket_published=true WHERE id=$1', [req.params.id])
+
+  // Уведомить всех участников о публикации сетки
+  try {
+    const teams = await db.query(
+      "SELECT id FROM teams WHERE tournament_id=$1 AND status='accepted'", [req.params.id]
+    )
+    for (const team of teams.rows) {
+      await notifyTeam(team.id, 'match_ready',
+        `📋 Сетка турнира «${t.rows[0].name}» опубликована — проверьте своих соперников!`,
+        `/tournament.html?id=${req.params.id}`
+      )
+    }
+  } catch(e) { console.error('notify publish:', e.message) }
+
   res.json({ success: true })
 })
 
