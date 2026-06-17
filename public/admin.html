@@ -601,8 +601,8 @@ function renderTeams(list, tid) {
       '<td><span class="badge ' + (t.status==='accepted'?'badge-approved':t.status==='rejected'?'badge-rejected':'badge-pending') + '">' + (t.status==='accepted'?'✓ Принята':t.status==='rejected'?'✗ Отклонена':'На рассмотрении') + '</span></td>' +
       '<td style="font-size:12px;color:var(--text-dim);">' + fmtDate(t.created_at) + '</td>' +
       '<td><div class="actions">' +
-        (t.status==='pending'?'<button class="btn btn-approve" onclick="updateTeam('+t.id+',\'accepted\',\''+tid+'\')">✓</button><button class="btn btn-reject" onclick="updateTeam('+t.id+',\'rejected\',\''+tid+'\')">✗</button>':'') +
-        '<button class="btn btn-delete" onclick="deleteTeam('+t.id+',\''+tid+'\')">🗑</button>' +
+        (t.status==='pending'?'<button class="btn btn-approve" onclick="updateTeam('+t.id+',\'accepted\','+t.tournament_id+')">✓</button><button class="btn btn-reject" onclick="updateTeam('+t.id+',\'rejected\','+t.tournament_id+')">✗</button>':'') +
+        '<button class="btn btn-delete" onclick="deleteTeam('+t.id+','+t.tournament_id+')">🗑</button>' +
       '</div></td>' +
     '</tr>';
   }).join('');
