@@ -2,6 +2,7 @@ const express = require('express')
 const router = express.Router()
 const db = require('../db')
 const auth = require('../middleware/auth')
+const { notify, notifyTeam } = require('../utils/notify')
 
 // ── ВСЕ ТУРНИРЫ ──
 router.get('/', async (req, res) => {
@@ -305,6 +306,22 @@ router.put('/:tid/matches/:mid', auth, async (req, res) => {
     // Переходы в следующий раунд
     await applyTransitions(req.params.tid, match, w, l)
 
+    // Уведомляем участников матча о результате
+    const tname = await db.query('SELECT name FROM tournaments WHERE id=$1', [req.params.tid])
+    const tourName = tname.rows[0]?.name || 'турнире'
+    const wTeam = await db.query('SELECT name FROM teams WHERE id=$1', [w])
+    const lTeam = l ? await db.query('SELECT name FROM teams WHERE id=$1', [l]) : null
+    const wName = wTeam.rows[0]?.name || ''
+    const lName = lTeam?.rows[0]?.name || ''
+    await notifyTeam(w, 'match_result',
+      `🏆 Победа! «${wName}» выиграла матч #${match.match_number} в турнире «${tourName}»`,
+      `/match.html?id=${req.params.mid}`
+    )
+    if (l) await notifyTeam(l, 'match_result',
+      `Матч #${match.match_number} завершён. «${wName}» победила в турнире «${tourName}»`,
+      `/match.html?id=${req.params.mid}`
+    )
+
     res.json({ success: true, match: result.rows[0] })
   } catch(e) {
     console.error('❌ match result:', e)
@@ -593,7 +610,25 @@ router.patch('/:tid/teams/:id', auth, async (req, res) => {
   const { status } = req.body
   if (!['accepted','rejected','pending'].includes(status)) return res.status(400).json({ error: 'Неверный статус' })
 
-  const result = await db.query('UPDATE teams SET status=$1 WHERE id=$2 AND tournament_id=$3 RETURNING *', [status, req.params.id, req.params.tid])
+  const result = await db.query(
+    `UPDATE teams SET status=$1 WHERE id=$2 AND tournament_id=$3
+     RETURNING *, (SELECT name FROM tournaments WHERE id=$3) as tname`,
+    [status, req.params.id, req.params.tid]
+  )
+  if (!result.rows[0]) return res.status(404).json({ error: 'Не найдено' })
+
+  const team = result.rows[0]
+  if (status === 'accepted') {
+    await notifyTeam(team.id, 'team_accepted',
+      `✅ Заявка «${team.name}» принята на турнир «${team.tname}»`,
+      `/tournament.html?id=${req.params.tid}`
+    )
+  } else if (status === 'rejected') {
+    await notifyTeam(team.id, 'team_rejected',
+      `❌ Заявка «${team.name}» отклонена на турнире «${team.tname}»`,
+      `/tournament.html?id=${req.params.tid}`
+    )
+  }
   res.json(result.rows[0])
 })
 

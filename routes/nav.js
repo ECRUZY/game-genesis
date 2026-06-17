@@ -248,7 +248,7 @@ const CSS = `
     border: 1px solid transparent;
   }
   .gg-sb-user:hover { background: rgba(255,255,255,.04); border-color: var(--border-hi); }
-  .gg-sb-user.open { background: var(--gold-dim); border-color: rgba(240,192,64,.25); }
+  
 
   .gg-sb-avatar {
     width: 36px; height: 36px; border-radius: 9px;
@@ -274,36 +274,18 @@ const CSS = `
   .gg-sb-user.open .gg-sb-user-chevron { transform: rotate(180deg); }
 
   /* User dropdown (above) */
-  .gg-sb-user-dd {
-    position: absolute; left: 10px; right: 10px;
-    bottom: calc(100% + 8px);
-    background: var(--bg-card); border: 1px solid var(--border-hi);
-    border-radius: 12px; overflow: hidden;
-    box-shadow: 0 -12px 40px rgba(0,0,0,.5);
-    opacity: 0; pointer-events: none; transform: translateY(6px);
-    transition: opacity .2s, transform .2s; z-index: 100;
-  }
-  .gg-sb-user-dd.open { opacity: 1; pointer-events: all; transform: translateY(0); }
+  
+  
 
-  .gg-dd-head {
-    padding: 12px 14px 10px;
-    border-bottom: 1px solid var(--border);
-    background: rgba(0,0,0,.3);
-  }
-  .gg-dd-uname { font-family: 'Rajdhani',sans-serif; font-size: 16px; font-weight: 700; color: #fff; }
-  .gg-dd-email { font-size: 11px; color: var(--text-dim); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  
+  
+  
 
-  .gg-dd-link {
-    display: flex; align-items: center; gap: 10px;
-    padding: 10px 14px; font-size: 13px; color: var(--text-dim);
-    text-decoration: none; cursor: pointer; transition: .2s;
-    border: none; background: none; width: 100%; text-align: left;
-    font-family: 'Exo 2', sans-serif;
-  }
-  .gg-dd-link svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
-  .gg-dd-link:hover { color: var(--text); background: rgba(255,255,255,.04); }
-  .gg-dd-link.danger:hover { color: var(--red); background: rgba(248,113,113,.06); }
-  .gg-dd-sep { height: 1px; background: var(--border); }
+  
+  
+  
+  
+  
 
   body.gg-collapsed .gg-sb-user-info,
   body.gg-collapsed .gg-sb-user-chevron { opacity: 0; }
@@ -472,28 +454,34 @@ const CSS = `
       <div class="gg-sb-bottom">
         ${user ? `
           <!-- Dropdown user menu (above) -->
-          <div class="gg-sb-user-dd" id="gg-user-dd">
-            <div class="gg-dd-head">
-              <div class="gg-dd-uname">${user.full_name || user.username}</div>
-              <div class="gg-dd-email">${user.email || ''}</div>
+          
+
+          <!-- Notifications bell -->
+          <div style="position:relative;margin-bottom:8px;">
+            <button id="gg-notif-btn" onclick="toggleNotifPanel()" style="width:100%;display:flex;align-items:center;gap:10px;padding:9px 12px;background:transparent;border:1px solid var(--border);border-radius:10px;cursor:pointer;color:var(--text-dim);font-family:'Exo 2',sans-serif;font-size:13px;transition:.2s;" onmouseover="this.style.borderColor='var(--border-hi)';this.style.color='var(--text)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-dim)'">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              <span style="flex:1;text-align:left;">Уведомления</span>
+              <span id="gg-notif-badge" style="display:none;background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;min-width:18px;text-align:center;"></span>
+            </button>
+            <!-- Dropdown panel -->
+            <div id="gg-notif-panel" style="display:none;position:absolute;bottom:calc(100% + 6px);left:0;right:0;background:var(--bg-card);border:1px solid var(--border-hi);border-radius:12px;overflow:hidden;z-index:500;box-shadow:0 8px 32px rgba(0,0,0,.4);">
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);">
+                <span style="font-family:Rajdhani,sans-serif;font-size:13px;font-weight:700;color:#fff;">Уведомления</span>
+                <button onclick="markAllRead()" style="background:none;border:none;font-size:11px;color:var(--text-dim);cursor:pointer;font-family:'Exo 2',sans-serif;">Прочитать все</button>
+              </div>
+              <div id="gg-notif-list" style="max-height:320px;overflow-y:auto;"></div>
             </div>
-            <a href="/profile.html" class="gg-dd-link">${I.user} Мой профиль</a>
-            <a href="/profile.html#tournaments" class="gg-dd-link">${I.tournaments} Мои турниры</a>
-            <a href="/profile.html#notifications" class="gg-dd-link">${I.bell} Уведомления</a>
-            <div class="gg-dd-sep"></div>
-            <a href="/profile.html#settings" class="gg-dd-link">${I.settings} Настройки</a>
-            <button class="gg-dd-link danger" onclick="window._ggLogout()">${I.logout} Выйти</button>
           </div>
 
           <!-- User button -->
-          <div class="gg-sb-user" id="gg-user-btn" onclick="window._ggUserMenu()">
+          <a href="/profile.html" class="gg-sb-user" id="gg-user-btn" style="text-decoration:none;">
             <div class="gg-sb-avatar" id="gg-av" style="overflow:hidden;">${user.avatar ? `<img src="${user.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:9px;">` : initials}</div>
             <div class="gg-sb-user-info">
               <div class="gg-sb-user-name">${user.username}</div>
               <div class="gg-sb-user-role">${roleLabel}</div>
             </div>
-            ${I.chevron_down}
-          </div>
+          </a>
+          
         ` : `
           <div class="gg-sb-auth">
             <a href="/auth.html" class="gg-sb-btn-login">
@@ -535,13 +523,7 @@ const CSS = `
       localStorage.setItem('gg_nav_collapsed', collapsed ? '1' : '0');
     };
 
-    window._ggUserMenu = function() {
-      const btn = document.getElementById('gg-user-btn');
-      const dd = document.getElementById('gg-user-dd');
-      if (!btn || !dd) return;
-      btn.classList.toggle('open');
-      dd.classList.toggle('open');
-    };
+    
 
     window._ggLogout = function() {
       localStorage.removeItem('gg_token');
@@ -559,15 +541,7 @@ const CSS = `
       document.getElementById('gg-overlay').classList.remove('open');
     };
 
-    // Закрываем user dropdown при клике вне
-    document.addEventListener('click', function(e) {
-      const btn = document.getElementById('gg-user-btn');
-      const dd = document.getElementById('gg-user-dd');
-      if (btn && dd && !btn.contains(e.target) && !dd.contains(e.target)) {
-        btn.classList.remove('open');
-        dd.classList.remove('open');
-      }
-    });
+
 
     // Убираем старый header/sidebar из DOM если уже отрендерился
     document.querySelectorAll('body > header:not(#gg-sidebar), .page > header').forEach(el => {
@@ -581,4 +555,102 @@ const CSS = `
   } else {
     render();
   }
+
+  // ── УВЕДОМЛЕНИЯ ──
+  var _notifOpen = false;
+
+  window.toggleNotifPanel = function() {
+    var panel = document.getElementById('gg-notif-panel');
+    if (!panel) return;
+    _notifOpen = !_notifOpen;
+    panel.style.display = _notifOpen ? 'block' : 'none';
+    if (_notifOpen) loadNotifications();
+  };
+
+  // Закрыть при клике вне
+  document.addEventListener('click', function(e) {
+    if (!_notifOpen) return;
+    var btn = document.getElementById('gg-notif-btn');
+    var panel = document.getElementById('gg-notif-panel');
+    if (btn && panel && !btn.contains(e.target) && !panel.contains(e.target)) {
+      _notifOpen = false;
+      panel.style.display = 'none';
+    }
+  });
+
+  async function loadNotifications() {
+    var token = localStorage.getItem('gg_token');
+    if (!token) return;
+    try {
+      var res = await fetch('/api/notifications', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      var data = await res.json();
+      renderNotifications(data.notifications || []);
+      updateBadge(data.unread || 0);
+    } catch(e) {}
+  }
+
+  function renderNotifications(list) {
+    var el = document.getElementById('gg-notif-list');
+    if (!el) return;
+    if (!list.length) {
+      el.innerHTML = '<div style="padding:20px;text-align:center;color:#3a5070;font-size:13px;">Нет уведомлений</div>';
+      return;
+    }
+    el.innerHTML = list.map(function(n) {
+      var time = new Date(n.created_at).toLocaleString('ru-RU', {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+      return '<div onclick="clickNotif(' + n.id + ',\'' + (n.link||'') + '\')" style="padding:10px 14px;border-bottom:1px solid #0f1e30;cursor:pointer;background:' + (n.is_read?'transparent':'rgba(240,192,64,.04)') + ';transition:.15s;" onmouseover="this.style.background=\'rgba(255,255,255,.04)\'" onmouseout="this.style.background=\'' + (n.is_read?'transparent':'rgba(240,192,64,.04)') + '\'">' +
+        '<div style="display:flex;align-items:flex-start;gap:8px;">' +
+          (!n.is_read ? '<div style="width:6px;height:6px;border-radius:50%;background:#f0c040;margin-top:5px;flex-shrink:0;"></div>' : '<div style="width:6px;flex-shrink:0;"></div>') +
+          '<div style="flex:1;min-width:0;">' +
+            '<div style="font-size:12px;color:' + (n.is_read?'#5c7090':'#c8d8ea') + ';line-height:1.5;">' + n.text + '</div>' +
+            '<div style="font-size:10px;color:#2e3f58;margin-top:3px;">' + time + '</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  function updateBadge(count) {
+    var badge = document.getElementById('gg-notif-badge');
+    if (!badge) return;
+    if (count > 0) {
+      badge.style.display = 'block';
+      badge.textContent = count > 99 ? '99+' : count;
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+
+  window.clickNotif = async function(id, link) {
+    var token = localStorage.getItem('gg_token');
+    try {
+      await fetch('/api/notifications/' + id + '/read', {
+        method: 'PATCH',
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+    } catch(e) {}
+    if (link) window.location.href = link;
+    else loadNotifications();
+  };
+
+  window.markAllRead = async function() {
+    var token = localStorage.getItem('gg_token');
+    try {
+      await fetch('/api/notifications/read-all', {
+        method: 'PATCH',
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      loadNotifications();
+    } catch(e) {}
+  };
+
+  // Polling каждые 30 сек
+  var token = localStorage.getItem('gg_token');
+  if (token) {
+    loadNotifications();
+    setInterval(loadNotifications, 30000);
+  }
+
 })();
