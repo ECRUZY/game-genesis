@@ -16,6 +16,7 @@ app.use(express.static(path.join(__dirname, 'public')))
 // ── API РОУТЫ ──
 app.use('/api/auth', require('./routes/auth'))
 app.use('/api/users', require('./routes/users'))
+app.use('/api/notifications', require('./routes/notifications'))
 app.use('/api/matches', require('./routes/match'))
 app.use('/api/tournaments', require('./routes/bracket'))
 app.use('/api/tournaments', require('./routes/tournaments'))
