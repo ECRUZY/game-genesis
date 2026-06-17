@@ -204,63 +204,60 @@ router.get('/team-ratings', async (req, res) => {
 // ── РЕЙТИНГ ИГРОКА ПО ИГРАМ ──
 router.get('/:username/ratings', async (req, res) => {
   try {
-    const user = await db.query('SELECT id FROM users WHERE username=$1', [req.params.username])
-    if (!user.rows[0]) return res.status(404).json({ error: 'Не найден' })
-
-    const ratings = await db.query(
-      `SELECT game, rating, wins, losses
-       FROM player_ratings WHERE user_id=$1 ORDER BY rating DESC`,
-      [user.rows[0].id]
+    const user = await db.query(
+      'SELECT id, username, faceit_nick, game, rating, wins, losses FROM users WHERE username=$1',
+      [req.params.username]
     )
+    if (!user.rows[0]) return res.status(404).json({ error: 'Не найден' })
+    const u = user.rows[0]
 
-    // Если нет записей — берём из основного профиля
-    if (!ratings.rows.length) {
-      const u = await db.query('SELECT game, rating, wins, losses FROM users WHERE id=$1', [user.rows[0].id])
-      if (u.rows[0] && u.rows[0].game) {
-        return res.json([{
-          game: u.rows[0].game,
-          rating: u.rows[0].rating || 1000,
-          wins: u.rows[0].wins || 0,
-          losses: u.rows[0].losses || 0
-        }])
-      }
+    // 1. Берём из player_ratings (если записаны)
+    const ratings = await db.query(
+      `SELECT game, rating, wins, losses FROM player_ratings WHERE user_id=$1 ORDER BY rating DESC`,
+      [u.id]
+    )
+    if (ratings.rows.length) return res.json(ratings.rows)
+
+    // 2. Берём из match_player_stats по нику (если зарегался после матчей)
+    const nick = u.faceit_nick || u.username
+    const matchStats = await db.query(
+      `SELECT
+         t.game,
+         COUNT(*) as matches_played,
+         COUNT(CASE WHEN m.winner_team_id = mps.team_id THEN 1 END) as wins,
+         COUNT(CASE WHEN m.winner_team_id != mps.team_id AND m.status='done' THEN 1 END) as losses,
+         1000
+           + 25 * COUNT(CASE WHEN m.winner_team_id = mps.team_id THEN 1 END)
+           - 25 * COUNT(CASE WHEN m.winner_team_id != mps.team_id AND m.status='done' THEN 1 END)
+         as elo
+       FROM match_player_stats mps
+       JOIN matches m ON m.id = mps.match_id
+       JOIN tournaments t ON t.id = m.tournament_id
+       WHERE LOWER(mps.nickname) = LOWER($1)
+         AND m.status = 'done'
+       GROUP BY t.game`,
+      [nick]
+    )
+    if (matchStats.rows.length) {
+      return res.json(matchStats.rows.map(r => ({
+        game: r.game,
+        rating: parseInt(r.elo),
+        wins: parseInt(r.wins),
+        losses: parseInt(r.losses)
+      })))
     }
 
-    res.json(ratings.rows)
-  } catch(e) {
-    console.error(e)
-    res.status(500).json({ error: 'Ошибка сервера' })
-  }
-})
-
-// ── ПУБЛИЧНЫЙ ПРОФИЛЬ ──
-
-// ── РЕЙТИНГ ИГРОКА ПО ИГРАМ ──
-router.get('/:username/ratings', async (req, res) => {
-  try {
-    const user = await db.query('SELECT id FROM users WHERE username=$1', [req.params.username])
-    if (!user.rows[0]) return res.status(404).json({ error: 'Не найден' })
-
-    const ratings = await db.query(
-      `SELECT game, rating, wins, losses
-       FROM player_ratings WHERE user_id=$1 ORDER BY rating DESC`,
-      [user.rows[0].id]
-    )
-
-    // Если нет записей — берём из основного профиля
-    if (!ratings.rows.length) {
-      const u = await db.query('SELECT game, rating, wins, losses FROM users WHERE id=$1', [user.rows[0].id])
-      if (u.rows[0] && u.rows[0].game) {
-        return res.json([{
-          game: u.rows[0].game,
-          rating: u.rows[0].rating || 1000,
-          wins: u.rows[0].wins || 0,
-          losses: u.rows[0].losses || 0
-        }])
-      }
+    // 3. Фоллбэк — базовые данные из профиля
+    if (u.game) {
+      return res.json([{
+        game: u.game,
+        rating: u.rating || 1000,
+        wins: u.wins || 0,
+        losses: u.losses || 0
+      }])
     }
 
-    res.json(ratings.rows)
+    res.json([])
   } catch(e) {
     console.error(e)
     res.status(500).json({ error: 'Ошибка сервера' })
