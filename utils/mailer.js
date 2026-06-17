@@ -1,11 +1,11 @@
 const https = require('https')
 
 async function sendVerificationCode(to, code, username) {
-  const fromDomain = process.env.MAILERSEND_DOMAIN || 'test-vz9dlem65zq4kj50.mlsender.net'
-  
+  const fromDomain = process.env.RESEND_DOMAIN || 'gamegenesis.ru'
+
   const data = JSON.stringify({
-    from: { email: `noreply@${fromDomain}`, name: 'Game Genesis' },
-    to: [{ email: to }],
+    from: `Game Genesis <noreply@${fromDomain}>`,
+    to: [to],
     subject: 'Код подтверждения — Game Genesis',
     html: `
       <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;background:#080c12;color:#fff;border-radius:12px;overflow:hidden;">
@@ -22,7 +22,7 @@ async function sendVerificationCode(to, code, username) {
           <div style="color:#4a6a8a;font-size:12px;">Код действует 10 минут. Если ты не регистрировался — просто проигнорируй.</div>
         </div>
         <div style="background:#0a1428;padding:14px 28px;text-align:center;">
-          <div style="color:#1e3a5f;font-size:11px;">game-genesis-production.up.railway.app</div>
+          <div style="color:#1e3a5f;font-size:11px;">gamegenesis.ru</div>
         </div>
       </div>
     `
@@ -30,12 +30,12 @@ async function sendVerificationCode(to, code, username) {
 
   return new Promise((resolve, reject) => {
     const req = https.request({
-      hostname: 'api.mailersend.com',
-      path: '/v1/email',
+      hostname: 'api.resend.com',
+      path: '/emails',
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.MAILERSEND_API_KEY}`,
+        'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
         'Content-Length': Buffer.byteLength(data)
       }
     }, (res) => {
@@ -45,7 +45,7 @@ async function sendVerificationCode(to, code, username) {
         if (res.statusCode >= 200 && res.statusCode < 300) {
           resolve()
         } else {
-          reject(new Error(`MailerSend error: ${res.statusCode} ${body}`))
+          reject(new Error(`Resend error: ${res.statusCode} ${body}`))
         }
       })
     })
