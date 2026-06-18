@@ -137,6 +137,8 @@ async function initDB() {
         BEGIN ALTER TABLE tournaments ADD COLUMN organizer_paid BOOLEAN DEFAULT false; EXCEPTION WHEN duplicate_column THEN NULL; END;
         BEGIN ALTER TABLE team_players ADD COLUMN student_data JSONB; EXCEPTION WHEN duplicate_column THEN NULL; END;
         BEGIN ALTER TABLE team_players ADD COLUMN student_photo TEXT; EXCEPTION WHEN duplicate_column THEN NULL; END;
+        BEGIN ALTER TABLE users ADD COLUMN reset_token TEXT; EXCEPTION WHEN duplicate_column THEN NULL; END;
+        BEGIN ALTER TABLE users ADD COLUMN reset_token_expires TIMESTAMPTZ; EXCEPTION WHEN duplicate_column THEN NULL; END;
 
         -- Статистика игроков по матчам
         CREATE TABLE IF NOT EXISTS match_player_stats (
