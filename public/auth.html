@@ -960,20 +960,34 @@
     `;
   }
 
-  function sendReset() {
-    const email = document.getElementById('forgot-email');
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) { alert('Введите корректный email'); return; }
+  async function sendReset() {
+    const emailEl = document.getElementById('forgot-email');
+    if (!emailEl || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailEl.value)) { alert('Введите корректный email'); return; }
     const btn = document.querySelector('#panel-login .btn-submit');
     btn.disabled = true; btn.textContent = '⏳ Отправляем...';
-    setTimeout(() => {
-      document.getElementById('panel-login').innerHTML = `
-        <div style="text-align:center;padding:20px 0;">
-          <div class="as-circle" style="margin:0 auto 20px;"><svg viewBox="0 0 24 24" style="width:36px;height:36px;stroke:var(--success);fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round"><polyline points="20 6 9 17 4 12"/></svg></div>
-          <h2 class="auth-title">Письмо отправлено!</h2>
-          <p class="auth-sub">Проверьте почту. Если письмо не пришло — проверьте папку «Спам».</p>
-          <button class="btn-outline" onclick="location.reload()">← Вернуться к входу</button>
-        </div>`;
-    }, 1500);
+    try {
+      const r = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ email: emailEl.value.trim() })
+      });
+      const data = await r.json();
+      if (data.success) {
+        document.getElementById('panel-login').innerHTML = `
+          <div style="text-align:center;padding:20px 0;">
+            <div class="as-circle" style="margin:0 auto 20px;"><svg viewBox="0 0 24 24" style="width:36px;height:36px;stroke:var(--success);fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <h2 class="auth-title">Письмо отправлено!</h2>
+            <p class="auth-sub">Проверьте почту и перейдите по ссылке. Ссылка действует 1 час. Если письмо не пришло — проверьте папку «Спам».</p>
+            <button class="btn-outline" onclick="location.reload()">← Вернуться к входу</button>
+          </div>`;
+      } else {
+        btn.disabled = false; btn.textContent = 'Отправить ссылку';
+        alert(data.error || 'Ошибка отправки');
+      }
+    } catch(e) {
+      btn.disabled = false; btn.textContent = 'Отправить ссылку';
+      alert('Ошибка соединения');
+    }
   }
 </script>
 </body>
