@@ -212,4 +212,62 @@ router.get('/me', authMiddleware, async (req, res) => {
   res.json(result.rows[0])
 })
 
+// ── ЗАБЫЛ ПАРОЛЬ ──
+router.post('/forgot-password', async (req, res) => {
+  const { email } = req.body
+  if (!email) return res.status(400).json({ error: 'Укажите email' })
+
+  try {
+    const result = await db.query('SELECT id, username FROM users WHERE email=$1', [email])
+    // Всегда отвечаем успехом — не раскрываем существование email
+    if (!result.rows[0]) return res.json({ success: true })
+
+    const user = result.rows[0]
+    const crypto = require('crypto')
+    const token = crypto.randomBytes(32).toString('hex')
+    const expires = new Date(Date.now() + 60 * 60 * 1000) // 1 час
+
+    await db.query(
+      'UPDATE users SET reset_token=$1, reset_token_expires=$2 WHERE id=$3',
+      [token, expires, user.id]
+    )
+
+    const resetUrl = `${process.env.APP_URL}/reset-password.html?token=${token}`
+
+    const { sendResetPassword } = require('../utils/mailer')
+    await sendResetPassword(email, resetUrl, user.username)
+
+    res.json({ success: true })
+  } catch(e) {
+    console.error('forgot-password error:', e)
+    res.status(500).json({ error: 'Ошибка сервера' })
+  }
+})
+
+// ── СБРОС ПАРОЛЯ ──
+router.post('/reset-password', async (req, res) => {
+  const { token, password } = req.body
+  if (!token || !password) return res.status(400).json({ error: 'Неверный запрос' })
+  if (password.length < 8) return res.status(400).json({ error: 'Пароль минимум 8 символов' })
+
+  try {
+    const result = await db.query(
+      'SELECT id FROM users WHERE reset_token=$1 AND reset_token_expires > NOW()',
+      [token]
+    )
+    if (!result.rows[0]) return res.status(400).json({ error: 'Ссылка недействительна или истекла' })
+
+    const hash = await bcrypt.hash(password, 10)
+    await db.query(
+      'UPDATE users SET password_hash=$1, reset_token=NULL, reset_token_expires=NULL WHERE id=$2',
+      [hash, result.rows[0].id]
+    )
+
+    res.json({ success: true })
+  } catch(e) {
+    console.error('reset-password error:', e)
+    res.status(500).json({ error: 'Ошибка сервера' })
+  }
+})
+
 module.exports = router
