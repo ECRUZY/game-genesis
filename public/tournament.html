@@ -5,714 +5,517 @@
   <script src="/api.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Турнир Чеченской Республики — Game Genesis</title>
+  <title>Турнир — Game Genesis</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Exo+2:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Chakra+Petch:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --gold: #f0c040;
-      --gold-dim: rgba(240,192,64,0.12);
-      --gold-glow: rgba(240,192,64,0.07);
-      --bg: #080c12;
-      --bg-card: #0d1420;
-      --bg-card2: #111928;
-      --border: #1a2436;
-      --border-hi: #253550;
-      --text: #dde4ef;
-      --text-dim: #5c7090;
-      --text-muted: #2e3f58;
-      --success: #4ade80;
-      --red: #f87171;
-      --blue: #60a5fa;
+      --red:       #E11D48;
+      --red-dim:   rgba(225,29,72,0.12);
+      --red-glow:  rgba(225,29,72,0.08);
+      --bg:        #090d18;
+      --bg2:       #0d1225;
+      --card:      #111827;
+      --card2:     #151f30;
+      --border:    #1e2d47;
+      --border-hi: #2a3f5f;
+      --text:      #e2e8f0;
+      --text-dim:  #64748b;
+      --text-muted:#1a2a40;
+      --success:   #10b981;
+      --err:       #f87171;
+      --blue:      #60a5fa;
+      --gold:      #f59e0b;
     }
-
     html { scroll-behavior: smooth; }
-    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar { width: 4px; }
     ::-webkit-scrollbar-track { background: var(--bg); }
-    ::-webkit-scrollbar-thumb { background: #1e2d42; border-radius: 3px; }
-
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Exo 2', sans-serif;
-      overflow-x: hidden;
-    }
+    ::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 2px; }
+    body { background: var(--bg); color: var(--text); font-family: 'Chakra Petch', sans-serif; overflow-x: hidden; }
 
     .grid-bg {
       position: fixed; inset: 0; z-index: 0; pointer-events: none;
-      background-image:
-        linear-gradient(rgba(240,192,64,0.022) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(240,192,64,0.022) 1px, transparent 1px);
-      background-size: 50px 50px;
+      background-image: linear-gradient(rgba(225,29,72,0.025) 1px,transparent 1px), linear-gradient(90deg,rgba(225,29,72,0.025) 1px,transparent 1px);
+      background-size: 60px 60px;
     }
 
-    /* ── HEADER ── */
-    header {
-      position: fixed; top: 0; left: 0; right: 0; z-index: 200;
-      height: 64px; display: flex; align-items: center;
-      padding: 0 32px;
-      background: rgba(8,12,18,0.9);
-      backdrop-filter: blur(16px);
-      border-bottom: 1px solid var(--border);
-    }
-    .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; margin-right: 40px; }
-    .logo-hex {
-      width: 36px; height: 36px; background: var(--gold);
-      clip-path: polygon(50% 0%,93% 25%,93% 75%,50% 100%,7% 75%,7% 25%);
-      display: flex; align-items: center; justify-content: center;
-    }
-    .logo-hex svg { width: 18px; height: 18px; }
-    .logo-name { font-family: 'Rajdhani', sans-serif; font-size: 18px; font-weight: 700; color: var(--gold); letter-spacing: 2px; }
-    nav { display: flex; align-items: center; gap: 2px; flex: 1; }
-    .nav-a { font-size: 13px; font-weight: 500; color: var(--text-dim); text-decoration: none; padding: 6px 14px; border-radius: 6px; transition: .2s; }
-    .nav-a:hover { color: var(--text); background: rgba(255,255,255,.04); }
-    .nav-a.active { color: var(--gold); background: var(--gold-glow); }
-    .header-right { display: flex; align-items: center; gap: 10px; margin-left: auto; }
-    .btn-login { font-family: 'Exo 2',sans-serif; font-size: 13px; font-weight: 500; padding: 7px 18px; border-radius: 7px; border: 1px solid var(--border-hi); background: transparent; color: var(--text-dim); cursor: pointer; transition: .2s; }
-    .btn-login:hover { border-color: var(--gold); color: var(--gold); }
-    .btn-cta { font-family: 'Rajdhani',sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 1px; padding: 8px 20px; border-radius: 7px; border: none; background: var(--gold); color: #080c12; cursor: pointer; transition: .2s; }
-    .btn-cta:hover { background: #ffd055; box-shadow: 0 0 16px rgba(240,192,64,.3); }
+    .page { margin-left: 56px; padding-top: 60px; position: relative; z-index: 1; }
 
-    /* ── SIDEBAR ── */
-    .sidebar {
-      position: fixed; left: 0; top: 64px; bottom: 0; width: 60px; z-index: 100;
-      display: flex; flex-direction: column; align-items: center;
-      padding: 20px 0; gap: 4px;
-      background: rgba(8,12,18,.9); border-right: 1px solid var(--border); backdrop-filter: blur(10px);
-    }
-    .sb-item { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); cursor: pointer; transition: .2s; position: relative; }
-    .sb-item:hover { color: var(--text); background: rgba(255,255,255,.05); }
-    .sb-item.active { color: var(--gold); background: var(--gold-glow); }
-    .sb-item svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-    .sb-item .tip { position: absolute; left: 52px; top: 50%; transform: translateY(-50%); background: #1a2436; color: var(--text); font-size: 12px; padding: 4px 10px; border-radius: 5px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity .2s; }
-    .sb-item:hover .tip { opacity: 1; }
-    .sb-sep { width: 28px; height: 1px; background: var(--border); margin: 6px 0; }
-
-    /* ── PAGE ── */
-    .page { margin-left: 60px; padding-top: 64px; position: relative; z-index: 1; }
-
-    /* ── TOURNAMENT HERO ── */
-    .t-hero {
-      position: relative; overflow: hidden;
-      min-height: 320px; display: flex; align-items: flex-end;
-      padding: 0 48px 44px;
-    }
+    /* ── HERO ── */
+    .t-hero { position: relative; overflow: hidden; min-height: 300px; display: flex; align-items: flex-end; padding: 0 48px 40px; }
     .t-hero-bg {
       position: absolute; inset: 0;
       background: url('https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/Heart_of_Chechnya_at_night.jpg/1280px-Heart_of_Chechnya_at_night.jpg') center/cover no-repeat;
       z-index: 0;
     }
+    .t-cover-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; display: none; }
     .t-hero-overlay {
       position: absolute; inset: 0; z-index: 1;
       background:
-        linear-gradient(to right, rgba(8,12,18,.97) 40%, rgba(8,12,18,.6) 70%, rgba(8,12,18,.3) 100%),
-        linear-gradient(to top, rgba(8,12,18,.95) 0%, rgba(8,12,18,.3) 50%);
+        linear-gradient(to right, rgba(9,13,24,.97) 40%, rgba(9,13,24,.6) 70%, rgba(9,13,24,.25) 100%),
+        linear-gradient(to top, rgba(9,13,24,.95) 0%, rgba(9,13,24,.3) 55%);
     }
-    .t-hero-scanlines {
-      position: absolute; inset: 0; z-index: 2; pointer-events: none;
-      background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,.06) 3px, rgba(0,0,0,.06) 4px);
-    }
-    .t-hero-content { position: relative; z-index: 3; max-width: 660px; }
+    .t-hero-accent { position: absolute; top: 0; left: 0; width: 3px; height: 100%; background: linear-gradient(to bottom, transparent, var(--red), transparent); z-index: 3; }
+    .t-hero-content { position: relative; z-index: 3; max-width: 680px; }
 
-    .t-breadcrumb { display: flex; align-items: center; gap: 6px; margin-bottom: 14px; font-size: 12px; color: var(--text-dim); }
+    .t-breadcrumb { display: flex; align-items: center; gap: 6px; margin-bottom: 14px; font-size: 11px; color: var(--text-dim); }
     .t-breadcrumb a { color: var(--text-dim); text-decoration: none; transition: color .2s; }
-    .t-breadcrumb a:hover { color: var(--gold); }
-    .t-breadcrumb svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 2; }
+    .t-breadcrumb a:hover { color: var(--red); }
+    .t-breadcrumb svg { width: 10px; height: 10px; stroke: currentColor; fill: none; stroke-width: 2; }
 
     .t-badges { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
-    .badge {
-      display: inline-flex; align-items: center; gap: 5px;
-      border-radius: 6px; padding: 4px 12px;
-      font-size: 11px; font-weight: 600; letter-spacing: .8px; text-transform: uppercase;
-    }
-    .badge-live { background: rgba(248,113,113,.12); color: var(--red); border: 1px solid rgba(248,113,113,.25); }
+    .badge { display: inline-flex; align-items: center; gap: 5px; border-radius: 4px; padding: 4px 10px; font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+    .badge-live { background: rgba(225,29,72,.12); color: var(--red); border: 1px solid rgba(225,29,72,.3); }
     .badge-live-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; animation: blink 1s infinite; }
-    .badge-game { background: rgba(96,165,250,.1); color: var(--blue); border: 1px solid rgba(96,165,250,.2); }
-    .badge-free { background: rgba(74,222,128,.1); color: var(--success); border: 1px solid rgba(74,222,128,.2); }
+    .badge-open { background: rgba(16,185,129,.1); color: var(--success); border: 1px solid rgba(16,185,129,.25); }
+    .badge-game { background: rgba(96,165,250,.08); color: var(--blue); border: 1px solid rgba(96,165,250,.18); }
+    .badge-free { background: rgba(16,185,129,.08); color: var(--success); border: 1px solid rgba(16,185,129,.18); }
+    .badge-paid { background: rgba(245,158,11,.08); color: var(--gold); border: 1px solid rgba(245,158,11,.18); }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.2} }
 
-    .t-title { font-family: 'Rajdhani', sans-serif; font-size: clamp(28px, 4vw, 46px); font-weight: 700; color: #fff; line-height: 1.05; letter-spacing: .5px; margin-bottom: 12px; }
-    .t-title em { color: var(--gold); font-style: normal; }
+    .t-title { font-family: 'Russo One', sans-serif; font-size: clamp(24px, 3.5vw, 42px); color: #fff; line-height: 1.05; margin-bottom: 12px; }
+    .t-desc { font-size: 13px; color: rgba(226,232,240,.5); line-height: 1.75; max-width: 480px; margin-bottom: 24px; font-weight: 400; }
 
-    .t-desc { font-size: 14px; color: rgba(221,228,239,.55); line-height: 1.7; max-width: 500px; margin-bottom: 24px; }
-
-    .t-hero-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-    .btn-primary { font-family: 'Rajdhani', sans-serif; font-size: 15px; font-weight: 700; letter-spacing: 1.5px; padding: 12px 28px; border-radius: 8px; background: var(--gold); color: #080c12; border: none; cursor: pointer; transition: .2s; display: flex; align-items: center; gap: 8px; }
-    .btn-primary:hover { background: #ffd055; box-shadow: 0 0 22px rgba(240,192,64,.3); }
-    .btn-primary svg, .btn-ghost svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
-    .btn-ghost { font-family: 'Rajdhani', sans-serif; font-size: 15px; font-weight: 600; letter-spacing: 1px; padding: 12px 24px; border-radius: 8px; background: transparent; border: 1px solid rgba(255,255,255,.12); color: var(--text); cursor: pointer; transition: .2s; display: flex; align-items: center; gap: 8px; }
+    .t-hero-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .btn-primary { font-family: 'Russo One', sans-serif; font-size: 13px; letter-spacing: 1.5px; padding: 12px 26px; border-radius: 6px; background: var(--red); color: #fff; border: none; cursor: pointer; transition: .2s; display: flex; align-items: center; gap: 8px; }
+    .btn-primary:hover { background: #F43F5E; box-shadow: 0 0 22px rgba(225,29,72,.4); }
+    .btn-primary:disabled { opacity: .5; cursor: not-allowed; box-shadow: none; }
+    .btn-primary svg, .btn-ghost svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+    .btn-ghost { font-family: 'Chakra Petch', sans-serif; font-size: 13px; font-weight: 600; padding: 12px 22px; border-radius: 6px; background: transparent; border: 1px solid rgba(255,255,255,.12); color: var(--text); cursor: pointer; transition: .2s; display: flex; align-items: center; gap: 8px; }
     .btn-ghost:hover { border-color: rgba(255,255,255,.25); background: rgba(255,255,255,.04); }
 
     /* Hero stats panel */
     .t-hero-panel {
       position: absolute; bottom: 0; right: 0; z-index: 3;
       display: flex;
-      background: rgba(11,17,28,.95); border-top: 1px solid var(--border); border-left: 1px solid var(--border);
-      border-radius: 12px 0 0 0; overflow: hidden;
+      background: rgba(11,16,28,.97); border-top: 1px solid var(--border); border-left: 1px solid var(--border);
+      border-radius: 10px 0 0 0;
     }
-    .hp { padding: 14px 24px; text-align: center; border-right: 1px solid var(--border); }
+    .hp { padding: 12px 22px; text-align: center; border-right: 1px solid var(--border); }
     .hp:last-child { border-right: none; }
-    .hp-val { font-family: 'Rajdhani', sans-serif; font-size: 22px; font-weight: 700; color: var(--gold); }
-    .hp-key { font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: .8px; margin-top: 2px; }
+    .hp-val { font-family: 'Russo One', sans-serif; font-size: 20px; color: var(--red); }
+    .hp-key { font-size: 9px; color: var(--text-dim); text-transform: uppercase; letter-spacing: .8px; margin-top: 2px; }
 
     /* ── TABS ── */
     .tabs-bar {
       display: flex; align-items: center; gap: 2px;
       padding: 0 48px;
-      background: rgba(8,12,18,.8);
+      background: rgba(9,13,24,.9);
       border-bottom: 1px solid var(--border);
-      backdrop-filter: blur(10px);
-      position: sticky; top: 64px; z-index: 50;
+      backdrop-filter: blur(12px);
+      position: sticky; top: 60px; z-index: 50;
     }
     .tab {
-      font-family: 'Exo 2', sans-serif; font-size: 13px; font-weight: 500;
-      color: var(--text-dim); padding: 16px 18px;
+      font-family: 'Chakra Petch', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: .3px;
+      color: var(--text-dim); padding: 15px 16px;
       cursor: pointer; border: none; background: none;
       border-bottom: 2px solid transparent; margin-bottom: -1px;
       transition: color .2s, border-color .2s;
-      display: flex; align-items: center; gap: 7px;
+      display: flex; align-items: center; gap: 6px;
     }
-    .tab svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .tab svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
     .tab:hover { color: var(--text); }
-    .tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+    .tab.active { color: var(--red); border-bottom-color: var(--red); }
 
     /* ── TAB PANELS ── */
-    .tab-panel { display: none; padding: 40px 48px 80px; }
+    .tab-panel { display: none; padding: 36px 48px 80px; }
     .tab-panel.active { display: block; }
 
-    /* ── BRACKET ── */
-    .bracket-title { font-family: 'Rajdhani', sans-serif; font-size: 28px; font-weight: 700; color: #fff; text-align: center; margin-bottom: 8px; }
-    .bracket-sub { font-size: 13px; color: var(--text-dim); text-align: center; margin-bottom: 40px; }
+    /* Section titles */
+    .panel-title { font-family: 'Russo One', sans-serif; font-size: 22px; color: #fff; margin-bottom: 6px; display: flex; align-items: center; gap: 12px; }
+    .panel-title::before { content: ''; display: block; width: 3px; height: 22px; background: var(--red); border-radius: 2px; flex-shrink: 0; }
+    .panel-sub { font-size: 12px; color: var(--text-dim); margin-bottom: 28px; padding-left: 15px; }
 
-    .bracket-wrap { overflow-x: auto; padding: 16px 0; }
+    /* ── BRACKET ── */
+    .bracket-wrap { overflow-x: auto; padding: 16px 0 20px; }
     .b-section { margin-bottom: 28px; }
-    .b-section-title { font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; padding: 0 0 10px; display: flex; align-items: center; gap: 8px; }
+    .b-section-title {
+      font-size: 10px; font-weight: 700; color: var(--text-dim);
+      text-transform: uppercase; letter-spacing: 1.5px;
+      padding-bottom: 10px; display: flex; align-items: center; gap: 10px;
+    }
     .b-section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
-    .b-section-title.upper { color: var(--gold); }
+    .b-section-title.upper { color: var(--red); }
     .b-section-title.lower { color: var(--blue); }
     .b-round-label { font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .8px; text-align: center; padding-bottom: 10px; width: 180px; }
-    .bm { width: 180px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
-    .bm.done { border-color: rgba(74,222,128,.35); }
-    .bm.grand { border-color: rgba(96,165,250,.4); background: rgba(96,165,250,.04); }
-    .bm.third { border-color: rgba(240,192,64,.3); background: rgba(240,192,64,.04); }
-    .bm-num { font-size: 9px; color: var(--text-muted); background: var(--bg-card2); padding: 2px 8px; letter-spacing: .3px; }
-    .bm-slot { display: flex; align-items: center; padding: 5px 8px; gap: 6px; height: 26px; }
-    .bm-slot + .bm-slot { border-top: 1px solid rgba(26,36,54,.5); }
-    .bm-seed { font-size: 10px; color: var(--text-muted); min-width: 14px; font-family: 'Rajdhani', sans-serif; font-weight: 700; }
-    .bm-name { flex: 1; font-size: 12px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .bm { width: 180px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; transition: border-color .2s; }
+    .bm:hover { border-color: var(--border-hi); }
+    .bm.done { border-color: rgba(16,185,129,.3); }
+    .bm.grand { border-color: rgba(225,29,72,.4); background: rgba(225,29,72,.04); }
+    .bm.third { border-color: rgba(245,158,11,.3); background: rgba(245,158,11,.04); }
+    .bm-num { font-size: 9px; color: var(--text-muted); background: var(--card2); padding: 3px 8px; letter-spacing: .3px; display: flex; justify-content: space-between; }
+    .bm-slot { display: flex; align-items: center; padding: 5px 8px; gap: 5px; height: 26px; }
+    .bm-slot + .bm-slot { border-top: 1px solid rgba(30,45,71,.4); }
+    .bm-seed { font-size: 9px; color: var(--text-muted); min-width: 14px; font-family: 'Russo One', sans-serif; }
+    .bm-name { flex: 1; font-size: 11px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .bm-name.tbd { color: var(--text-muted); font-style: italic; }
     .bm-name.win { font-weight: 700; color: var(--success); }
-    .bm-score { font-size: 12px; font-weight: 700; color: var(--text-dim); min-width: 18px; text-align: right; }
+    .bm-score { font-size: 12px; font-weight: 700; color: var(--text-dim); min-width: 16px; text-align: right; }
     .bm-score.win { color: var(--success); }
-      overflow-x: auto; padding-bottom: 20px;
-    }
-    .bracket {
-      display: flex; align-items: center; gap: 0;
-      min-width: 900px;
-    }
 
-    .round {
-      display: flex; flex-direction: column;
-      gap: 0; flex: 1;
-    }
-    .round-label {
-      font-family: 'Rajdhani', sans-serif; font-size: 12px; font-weight: 700;
-      color: var(--text-dim); text-transform: uppercase; letter-spacing: 1.5px;
-      text-align: center; padding-bottom: 16px; border-bottom: 1px solid var(--border);
-      margin-bottom: 20px;
-    }
-    .round-label.gold { color: var(--gold); }
-
-    .matches { display: flex; flex-direction: column; justify-content: space-around; flex: 1; padding: 0 8px; }
-
-    .match {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 10px; overflow: hidden;
-      margin: 8px 0;
+    /* ── RATINGS ── */
+    .standings-item {
+      border-radius: 10px; margin-bottom: 8px; overflow: hidden; cursor: pointer;
+      border: 1px solid var(--border); background: var(--card);
       transition: border-color .2s;
-      position: relative;
     }
-    .match:hover { border-color: var(--border-hi); }
-    .match.final { border-color: rgba(240,192,64,.35); }
-    .match.final:hover { border-color: rgba(240,192,64,.6); }
+    .standings-item:hover { border-color: var(--border-hi); }
+    .standings-item.place-1 { border-color: rgba(245,158,11,.35); background: linear-gradient(135deg,rgba(245,158,11,.1),rgba(245,158,11,.03)); }
+    .standings-item.place-2 { border-color: rgba(148,163,184,.25); background: linear-gradient(135deg,rgba(148,163,184,.08),transparent); }
+    .standings-item.place-3 { border-color: rgba(180,120,60,.25); background: linear-gradient(135deg,rgba(180,120,60,.1),transparent); }
+    .standings-row { display: flex; align-items: center; gap: 14px; padding: 13px 16px; }
+    .standings-place { min-width: 44px; text-align: center; }
+    .standings-place-icon { font-size: 26px; line-height: 1; }
+    .standings-place-num { font-family: 'Russo One', sans-serif; font-size: 18px; color: var(--text-dim); }
+    .standings-name { font-family: 'Russo One', sans-serif; font-size: 15px; color: #fff; }
+    .standings-sub { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+    .standings-wl { text-align: right; }
+    .standings-w { font-family: 'Russo One', sans-serif; font-size: 13px; color: var(--success); }
+    .standings-l { font-size: 10px; color: var(--text-muted); }
+    .standings-stats { display: none; border-top: 1px solid var(--border); padding: 10px 14px; }
 
-    .match-header {
-      padding: 5px 10px;
-      font-size: 10px; font-weight: 600; letter-spacing: 1px;
-      color: var(--text-muted); text-transform: uppercase;
-      border-bottom: 1px solid var(--border);
-      background: rgba(0,0,0,.2);
-      display: flex; justify-content: space-between;
+    /* MVP card */
+    .mvp-card {
+      background: linear-gradient(135deg, rgba(225,29,72,.15), rgba(225,29,72,.04));
+      border: 1px solid rgba(225,29,72,.35);
+      border-radius: 10px; padding: 16px 20px;
+      margin-bottom: 20px; display: flex; align-items: center; gap: 16px;
     }
-    .match-header.gold { color: var(--gold); background: rgba(240,192,64,.06); }
+    .mvp-icon { font-size: 32px; line-height: 1; }
+    .mvp-label { font-size: 10px; font-weight: 700; color: var(--red); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 4px; }
+    .mvp-name { font-family: 'Russo One', sans-serif; font-size: 20px; color: #fff; }
+    .mvp-stats { display: flex; gap: 16px; margin-top: 6px; }
+    .mvp-stat { font-size: 12px; color: var(--text-dim); }
+    .mvp-stat strong { color: #fff; }
+    .mvp-stat strong.good { color: var(--success); }
 
-    .team {
-      display: flex; align-items: center; gap: 10px;
-      padding: 9px 12px;
-      border-bottom: 1px solid var(--border);
-      transition: background .2s;
-    }
-    .team:last-child { border-bottom: none; }
-    .team:hover { background: rgba(255,255,255,.02); }
-    .team.winner { background: rgba(240,192,64,.05); }
+    /* Stats grid */
+    .stats-grid { display: grid; grid-template-columns: 1fr 45px 45px 45px 50px 50px; gap: 5px; align-items: center; }
+    .stats-hdr div { font-size: 9px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; text-align: center; padding: 3px 0; }
+    .stats-hdr div:first-child { text-align: left; }
+    .stats-row { background: rgba(255,255,255,.04); border-radius: 6px; }
+    .stats-row div { font-size: 12px; padding: 7px 4px; text-align: center; color: var(--text-dim); }
+    .stats-row div:first-child { text-align: left; font-weight: 600; color: var(--text); padding-left: 8px; }
 
-    .team-seed {
-      width: 18px; height: 18px; border-radius: 4px;
-      background: var(--bg-card2); border: 1px solid var(--border);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 10px; font-weight: 700; color: var(--text-dim);
-      flex-shrink: 0;
-    }
-    .team.winner .team-seed { background: var(--gold-dim); border-color: rgba(240,192,64,.3); color: var(--gold); }
+    /* ── PARTICIPANTS ── */
+    .team-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-bottom: 8px; }
+    .team-card-name { font-family: 'Russo One', sans-serif; font-size: 14px; color: #fff; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+    .team-num { font-size: 12px; color: var(--text-dim); }
+    .team-players { display: flex; flex-wrap: wrap; gap: 6px; }
+    .player-chip { display: flex; align-items: center; gap: 5px; background: var(--card2); border-radius: 5px; padding: 5px 10px; font-size: 12px; color: var(--text); }
+    .player-captain { font-size: 10px; color: var(--red); }
 
-    .team-flag {
-      width: 20px; height: 14px; border-radius: 2px;
-      background: var(--border-hi); overflow: hidden; flex-shrink: 0;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 10px;
-    }
-
-    .team-name { font-size: 13px; font-weight: 500; color: var(--text); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .team.winner .team-name { color: #fff; font-weight: 600; }
-    .team.tbd .team-name { color: var(--text-muted); font-style: italic; }
-
-    .team-score {
-      font-family: 'Rajdhani', sans-serif; font-size: 16px; font-weight: 700;
-      color: var(--text-dim); min-width: 20px; text-align: right;
-    }
-    .team.winner .team-score { color: var(--gold); }
-
-    /* Bracket connector lines */
-    .connector { width: 24px; flex-shrink: 0; position: relative; }
-    .connector-line { position: absolute; right: 0; border-right: 1px solid var(--border); }
-
-    /* Final special */
-    .final-round { flex: 1.4; }
-    .match.final .match-header { font-size: 11px; }
-
-    /* ── RATINGS TABLE ── */
-    .ratings-title { font-family: 'Rajdhani', sans-serif; font-size: 28px; font-weight: 700; color: #fff; margin-bottom: 8px; }
-    .ratings-sub { font-size: 13px; color: var(--text-dim); margin-bottom: 28px; }
-
-    .ratings-table {
-      width: 100%; border-collapse: collapse;
-      background: var(--bg-card);
-      border: 1px solid var(--border); border-radius: 12px; overflow: hidden;
-    }
-    .ratings-table th {
-      padding: 12px 16px; text-align: left;
-      font-size: 11px; font-weight: 600; letter-spacing: .8px; text-transform: uppercase;
-      color: var(--text-dim);
-      background: rgba(0,0,0,.3); border-bottom: 1px solid var(--border);
-    }
-    .ratings-table th:first-child { padding-left: 20px; }
-    .ratings-table td { padding: 13px 16px; font-size: 13px; color: var(--text); border-bottom: 1px solid rgba(26,36,54,.6); vertical-align: middle; }
-    .ratings-table td:first-child { padding-left: 20px; }
-    .ratings-table tr:last-child td { border-bottom: none; }
-    .ratings-table tr:hover td { background: rgba(255,255,255,.02); }
-
-    .rank-num {
-      font-family: 'Rajdhani', sans-serif; font-size: 16px; font-weight: 700;
-      color: var(--text-muted); width: 32px;
-    }
-    .rank-num.r1 { color: #ffd700; }
-    .rank-num.r2 { color: #c0c0c0; }
-    .rank-num.r3 { color: #cd7f32; }
-
-    .player-cell { display: flex; align-items: center; gap: 12px; }
-    .p-avatar {
-      width: 36px; height: 36px; border-radius: 8px;
-      background: var(--bg-card2); border: 1px solid var(--border);
-      display: flex; align-items: center; justify-content: center;
-      font-family: 'Rajdhani', sans-serif; font-size: 14px; font-weight: 700; color: var(--gold);
-      flex-shrink: 0;
-    }
-    .p-name { font-weight: 500; color: var(--text); }
-    .p-nick { font-size: 11px; color: var(--text-dim); }
-
-    .pill {
-      display: inline-block; padding: 2px 10px; border-radius: 20px;
-      font-size: 11px; font-weight: 600; letter-spacing: .3px;
-    }
-    .pill-game { background: rgba(96,165,250,.1); color: var(--blue); border: 1px solid rgba(96,165,250,.18); }
-    .pill-uni { background: rgba(240,192,64,.08); color: var(--gold); border: 1px solid rgba(240,192,64,.2); }
-
-    .pts { font-family: 'Rajdhani', sans-serif; font-size: 16px; font-weight: 700; color: var(--gold); }
-    .wins { font-family: 'Rajdhani', sans-serif; font-size: 15px; font-weight: 700; color: var(--success); }
-    .losses { font-family: 'Rajdhani', sans-serif; font-size: 15px; font-weight: 700; color: var(--red); }
-
-    .rating-note { font-size: 11px; color: var(--text-muted); text-align: center; padding: 14px; }
-
-    /* ── INFO PANEL (tab) ── */
-    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-    .info-block { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
-    .info-block-title { font-family: 'Rajdhani', sans-serif; font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
-    .info-block-title svg { width: 16px; height: 16px; stroke: var(--gold); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-    .info-row { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-bottom: 1px solid rgba(26,36,54,.7); font-size: 13px; }
+    /* ── INFO ── */
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .info-block { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 20px; }
+    .info-block-title { font-family: 'Russo One', sans-serif; font-size: 14px; color: #fff; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+    .info-block-title svg { width: 14px; height: 14px; stroke: var(--red); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .info-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(30,45,71,.5); font-size: 12px; }
     .info-row:last-child { border-bottom: none; }
     .ir-key { color: var(--text-dim); }
-    .ir-val { color: var(--text); font-weight: 500; }
-    .ir-val.gold { color: var(--gold); }
+    .ir-val { color: var(--text); font-weight: 600; }
+    .ir-val.red { color: var(--red); }
     .ir-val.green { color: var(--success); }
+    .ir-val.gold { color: var(--gold); }
 
-    .prize-podium { display: flex; align-items: flex-end; justify-content: center; gap: 12px; padding: 20px 0; }
-    .podium-item { text-align: center; }
-    .podium-bar {
-      width: 70px; border-radius: 6px 6px 0 0;
-      display: flex; align-items: flex-start; justify-content: center; padding-top: 8px;
+    /* Cover change btn */
+    .cover-change-btn {
+      position: absolute; bottom: 12px; right: 16px; z-index: 10;
+      background: rgba(9,13,24,.8); border: 1px solid var(--border-hi);
+      border-radius: 6px; padding: 6px 14px; font-size: 11px; font-weight: 600;
+      color: var(--text-dim); cursor: pointer; transition: .2s; display: none;
     }
-    .podium-place { font-family: 'Rajdhani', sans-serif; font-size: 22px; font-weight: 700; color: #fff; }
-    .podium-1 .podium-bar { height: 90px; background: linear-gradient(to bottom, rgba(255,215,0,.25), rgba(255,215,0,.08)); border: 1px solid rgba(255,215,0,.3); }
-    .podium-2 .podium-bar { height: 65px; background: linear-gradient(to bottom, rgba(192,192,192,.2), rgba(192,192,192,.06)); border: 1px solid rgba(192,192,192,.25); }
-    .podium-3 .podium-bar { height: 48px; background: linear-gradient(to bottom, rgba(205,127,50,.2), rgba(205,127,50,.06)); border: 1px solid rgba(205,127,50,.25); }
-    .podium-prize { font-family: 'Rajdhani', sans-serif; font-size: 16px; font-weight: 700; margin-top: 6px; }
-    .podium-1 .podium-prize { color: #ffd700; }
-    .podium-2 .podium-prize { color: #c0c0c0; }
-    .podium-3 .podium-prize { color: #cd7f32; }
-    .podium-label { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+    .cover-change-btn:hover { border-color: var(--red); color: var(--red); }
+    #cover-upload { display: none; }
 
-    /* ── PARTICIPANTS TAB ── */
-    .participants-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
-    .participant-card {
-      background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px;
-      padding: 14px 16px; display: flex; align-items: center; gap: 12px;
-      transition: .2s;
-    }
-    .participant-card:hover { border-color: var(--border-hi); }
-    .pc-num { font-family: 'Rajdhani', sans-serif; font-size: 13px; font-weight: 700; color: var(--text-muted); width: 24px; flex-shrink: 0; }
-    .pc-avatar { width: 38px; height: 38px; border-radius: 8px; background: var(--bg-card2); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-family: 'Rajdhani', sans-serif; font-size: 14px; font-weight: 700; color: var(--gold); flex-shrink: 0; }
-    .pc-info { flex: 1; min-width: 0; }
-    .pc-name { font-size: 13px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .pc-nick { font-size: 11px; color: var(--text-dim); }
-    .pc-game { font-size: 10px; font-weight: 600; color: var(--blue); background: rgba(96,165,250,.08); border: 1px solid rgba(96,165,250,.15); padding: 1px 7px; border-radius: 4px; flex-shrink: 0; }
+    /* Empty states */
+    .empty-state { text-align: center; padding: 60px 20px; }
+    .empty-icon { font-size: 44px; margin-bottom: 14px; }
+    .empty-title { font-family: 'Russo One', sans-serif; font-size: 18px; color: var(--text-dim); margin-bottom: 6px; }
+    .empty-sub { font-size: 12px; color: var(--text-muted); }
 
-    /* ── FADE IN ── */
-    .fade-up { opacity: 0; transform: translateY(16px); transition: opacity .5s ease, transform .5s ease; }
-    .fade-up.visible { opacity: 1; transform: translateY(0); }
-
-    /* ── FOOTER ── */
-    footer { border-top: 1px solid var(--border); padding: 24px 48px; display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: var(--text-muted); flex-wrap: wrap; gap: 10px; }
+    /* Footer */
+    footer { border-top: 1px solid var(--border); padding: 20px 48px; display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--text-muted); flex-wrap: wrap; gap: 10px; }
     footer a { color: var(--text-dim); text-decoration: none; transition: color .2s; }
-    footer a:hover { color: var(--gold); }
-    .footer-links { display: flex; gap: 20px; }
+    footer a:hover { color: var(--red); }
 
     @media(max-width:768px) {
       .page { margin-left: 0; }
-      .sidebar { display: none; }
-      header { padding: 0 20px; }
-      .t-hero { padding: 0 20px 36px; min-height: 260px; }
+      .t-hero { padding: 0 20px 32px; min-height: 240px; }
       .t-hero-panel { display: none; }
-      .tabs-bar { padding: 0 20px; overflow-x: auto; }
-      .tab-panel { padding: 28px 20px 60px; }
+      .tabs-bar { padding: 0 16px; overflow-x: auto; }
+      .tab-panel { padding: 24px 18px 60px; }
       .info-grid { grid-template-columns: 1fr; }
-      footer { padding: 20px; flex-direction: column; text-align: center; }
+      footer { padding: 18px; flex-direction: column; text-align: center; }
     }
-  
-    /* COVER IMAGE */
-    .cover-wrap { position: relative; overflow: hidden; }
-    .cover-img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; z-index: 0; }
-    .cover-change-btn {
-      position: absolute; bottom: 12px; right: 16px; z-index: 10;
-      background: rgba(0,0,0,.7); border: 1px solid var(--border-hi);
-      border-radius: 8px; padding: 7px 14px; font-size: 12px;
-      color: var(--text-dim); cursor: pointer; transition: .2s;
-      display: none;
-    }
-    .cover-change-btn:hover { border-color: var(--gold); color: var(--gold); }
-    #cover-upload { display: none; }
-</style>
+  </style>
 </head>
 <body>
-
 <div class="grid-bg"></div>
-
-<!-- HEADER -->
-
-
-<!-- SIDEBAR -->
-
 
 <div class="page">
 
   <!-- HERO -->
   <div class="t-hero">
-    <div class="t-hero-bg"></div>
+    <div class="t-hero-bg" id="t-cover-bg"></div>
+    <img class="t-cover-img" id="t-cover-img" alt="обложка">
     <div class="t-hero-overlay"></div>
-    <div class="t-hero-scanlines"></div>
+    <div class="t-hero-accent"></div>
 
     <div class="t-hero-content">
       <div class="t-breadcrumb">
         <a href="index.html">Главная</a>
         <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
-        <a href="#">Турниры</a>
+        <a href="tournaments.html">Турниры</a>
         <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
-        <span>Чемпионат ЧР 2025</span>
+        <span id="breadcrumb-name">Загружаем...</span>
       </div>
 
-      <div class="t-badges">
-        <span class="badge badge-live"><span class="badge-live-dot"></span>Live</span>
-        <span class="badge badge-game">CS2</span>
-        <span class="badge badge-free">Бесплатно</span>
+      <div class="t-badges" id="t-badges">
+        <span class="badge badge-game" id="badge-game">CS2</span>
+        <span class="badge badge-free" id="badge-status">—</span>
       </div>
 
       <h1 class="t-title" id="t-name">Загружаем...</h1>
-      <p class="t-desc">Крупнейший студенческий киберспортивный турнир региона. Команды из университетов Грозного, Гудермеса, Шали и других городов республики сражаются за звание чемпиона.</p>
+      <p class="t-desc" id="t-desc">—</p>
 
       <div class="t-hero-actions">
-        <button class="btn-primary" onclick="location.href='tournament-register.html'">
+        <button class="btn-primary" id="reg-btn">
           <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
           Подать заявку
         </button>
         <button class="btn-ghost">
           <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
-          Смотреть трансляцию
+          Трансляция
         </button>
       </div>
     </div>
 
     <div class="t-hero-panel">
-      <div class="hp"><div class="hp-val" id="hp-participants">— / —</div><div class="hp-key">Участников</div></div>
+      <div class="hp"><div class="hp-val" id="hp-participants">—</div><div class="hp-key">Участников</div></div>
       <div class="hp"><div class="hp-val" id="hp-prize">—</div><div class="hp-key">Призовой фонд</div></div>
       <div class="hp"><div class="hp-val" id="hp-date">—</div><div class="hp-key">Дата начала</div></div>
-      <div class="hp"><div class="hp-val" id="hp-status">—</div><div class="hp-key">Прогресс</div></div>
+      <div class="hp"><div class="hp-val" id="hp-status">—</div><div class="hp-key">Статус</div></div>
     </div>
+
+    <button class="cover-change-btn" id="cover-change-btn" onclick="document.getElementById('cover-upload').click()">
+      📷 Изменить обложку
+    </button>
+    <input type="file" id="cover-upload" accept="image/*" onchange="uploadCover(this)">
   </div>
 
   <!-- TABS -->
   <div class="tabs-bar">
-    <button class="tab active" onclick="switchTab('bracket', this)">
+    <button class="tab active" onclick="switchTab('bracket',this)">
       <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-      Сетка турнира
+      Сетка
     </button>
-    <button class="tab" onclick="switchTab('ratings', this)">
+    <button class="tab" onclick="switchTab('ratings',this)">
       <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
       Рейтинг турнира
     </button>
-    <button class="tab" onclick="switchTab('participants', this)">
+    <button class="tab" onclick="switchTab('participants',this)">
       <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
       Участники
     </button>
-    <button class="tab" onclick="switchTab('info', this)">
+    <button class="tab" onclick="switchTab('info',this)">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
       О турнире
     </button>
   </div>
 
-  <!-- ── BRACKET TAB ── -->
+  <!-- BRACKET -->
   <div id="tab-bracket" class="tab-panel active">
+    <div class="panel-title">Сетка турнира</div>
+    <p class="panel-sub" id="bracket-sub">Кликни на матч для перехода к его странице</p>
     <div id="bracket-wrap"></div>
   </div>
 
-    <div id="tab-ratings" class="tab-panel">
-    <div id="ratings-content" style="padding:20px;"></div>
+  <!-- RATINGS -->
+  <div id="tab-ratings" class="tab-panel">
+    <div class="panel-title">Рейтинг участников</div>
+    <p class="panel-sub">Итоговые места по результатам матчей</p>
+    <div id="mvp-block"></div>
+    <div id="ratings-content"></div>
   </div>
 
-    <div id="tab-participants" class="tab-panel">
-    <div id="participants-wrap" style="padding:20px;"></div>
+  <!-- PARTICIPANTS -->
+  <div id="tab-participants" class="tab-panel">
+    <div class="panel-title">Команды</div>
+    <p class="panel-sub" id="participants-sub">Принятые участники</p>
+    <div id="participants-wrap"></div>
   </div>
 
-    <div id="tab-info" class="tab-panel">
-    <div id="info-content" style="padding:20px;"></div>
+  <!-- INFO -->
+  <div id="tab-info" class="tab-panel">
+    <div class="panel-title">О турнире</div>
+    <p class="panel-sub">Полная информация и правила</p>
+    <div id="info-content"></div>
   </div>
 
-  <!-- FOOTER -->
   <footer>
     <div style="display:flex;align-items:center;gap:10px;">
-      <div class="logo-hex" style="width:26px;height:26px;">
-        <svg viewBox="0 0 18 18" fill="none" style="width:14px;height:14px;"><polygon points="9,1 16,4.5 16,13.5 9,17 2,13.5 2,4.5" stroke="#080c12" stroke-width="1.5"/><circle cx="9" cy="9" r="2.5" fill="#080c12"/></svg>
-      </div>
-      <span style="font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;color:var(--gold);letter-spacing:1.5px;">GAME GENESIS</span>
-      <span>© 2024–2025</span>
+      <span style="font-family:'Russo One',sans-serif;font-size:13px;color:#fff;letter-spacing:1.5px;">GAME <span style="color:var(--red);">GENESIS</span></span>
+      <span>© 2025</span>
     </div>
-    <div class="footer-links">
-      <a href="#">Правила платформы</a>
-      <a href="#">Связаться с нами</a>
-      <a href="#">Cookie Policy</a>
-    </div>
+    <div style="display:flex;gap:20px;"><a href="#">Правила</a><a href="#">Поддержка</a></div>
   </footer>
 
 </div>
 
-
-
 <script>
+var TID   = new URLSearchParams(window.location.search).get('id');
+var TOKEN = localStorage.getItem('gg_token');
+var ME    = null;
+try { ME = JSON.parse(localStorage.getItem('gg_user')); } catch(e) {}
 
-// ── ОБЛОЖКА ТУРНИРА ──
-function applyCoverImage(imageData) {
-  var img = document.getElementById('t-cover-img');
-  var bg = document.getElementById('t-cover-bg');
-  if (imageData && img) {
-    img.src = imageData;
-    img.style.display = 'block';
-    if (bg) bg.style.opacity = '0.3';
-  }
-}
+function fmtDate(d) { return d ? new Date(d).toLocaleDateString('ru-RU',{day:'numeric',month:'long'}) : '—'; }
+function set(id, val) { var el=document.getElementById(id); if(el) el.textContent=val; }
 
-function compressImage(base64, maxWidth, quality) {
-  return new Promise(function(resolve) {
-    var img = new Image();
-    img.onload = function() {
-      var canvas = document.createElement('canvas');
-      var ratio = Math.min(maxWidth / img.width, maxWidth / img.height, 1);
-      canvas.width = img.width * ratio;
-      canvas.height = img.height * ratio;
-      var ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      resolve(canvas.toDataURL('image/jpeg', quality));
-    };
-    img.src = base64;
-  });
-}
-
-async function uploadCover(input) {
-  var file = input.files[0];
-  if (!file) return;
-  if (file.size > 5 * 1024 * 1024) { alert('Максимальный размер: 5 МБ'); return; }
-
-  var btn = document.getElementById('cover-change-btn');
-  btn.textContent = '⏳ Загружаем...';
-  btn.disabled = true;
-
-  var reader = new FileReader();
-  reader.onload = async function(e) {
-    // Сжимаем изображение перед отправкой
-    var base64 = await compressImage(e.target.result, 1200, 0.8);
-    try {
-      var res = await fetch('/api/tournaments/' + TID + '/cover', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + TOKEN },
-        body: JSON.stringify({ cover_image: base64 })
-      });
-      if (!res.ok) throw new Error('Ошибка загрузки');
-      applyCoverImage(base64);
-      btn.textContent = '✓ Обложка обновлена';
-      setTimeout(function() {
-        btn.textContent = '📷 Изменить обложку';
-        btn.disabled = false;
-      }, 2000);
-    } catch(err) {
-      alert('Ошибка: ' + err.message);
-      btn.textContent = '📷 Изменить обложку';
-      btn.disabled = false;
-    }
-  };
-  reader.readAsDataURL(file);
-}
-
+// ── TABS ──
 function switchTab(id, btn) {
   document.querySelectorAll('.tab-panel').forEach(function(p){ p.classList.remove('active'); });
   document.querySelectorAll('.tab').forEach(function(b){ b.classList.remove('active'); });
-  var panel = document.getElementById('tab-' + id);
+  var panel = document.getElementById('tab-'+id);
   if (panel) panel.classList.add('active');
   if (btn) btn.classList.add('active');
 }
 
-var TID = new URLSearchParams(window.location.search).get('id');
-var TOKEN = localStorage.getItem('gg_token');
-
-function fmtDate(d) {
-  return d ? new Date(d).toLocaleDateString('ru-RU',{day:'numeric',month:'long'}) : '—';
+// ── COVER ──
+function applyCoverImage(src) {
+  var img = document.getElementById('t-cover-img');
+  var bg  = document.getElementById('t-cover-bg');
+  if (src && img) { img.src = src; img.style.display = 'block'; if (bg) bg.style.opacity = '.2'; }
+}
+async function uploadCover(input) {
+  var file = input.files[0];
+  if (!file) return;
+  if (file.size > 5*1024*1024) { alert('Максимум 5MB'); return; }
+  var btn = document.getElementById('cover-change-btn');
+  btn.textContent = '⏳ Загружаем...'; btn.disabled = true;
+  var reader = new FileReader();
+  reader.onload = async function(e) {
+    var b64 = e.target.result;
+    try {
+      var res = await fetch('/api/tournaments/'+TID+'/cover', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json','Authorization':'Bearer '+TOKEN},
+        body: JSON.stringify({cover_image: b64})
+      });
+      if (!res.ok) throw new Error('Ошибка загрузки');
+      applyCoverImage(b64);
+      btn.textContent = '✓ Обновлено';
+      setTimeout(function(){ btn.textContent='📷 Изменить обложку'; btn.disabled=false; }, 2000);
+    } catch(err) { alert('Ошибка: '+err.message); btn.textContent='📷 Изменить обложку'; btn.disabled=false; }
+  };
+  reader.readAsDataURL(file);
 }
 
+// ── LOAD TOURNAMENT ──
 async function loadTournament() {
-  if (!TID) { document.getElementById('t-name').textContent = 'Укажите ID турнира в URL'; return; }
+  if (!TID) { set('t-name','Укажите ID турнира в URL'); return; }
   try {
-    var res = await fetch('/api/tournaments/' + TID);
+    var res = await fetch('/api/tournaments/'+TID);
     if (!res.ok) throw new Error('Турнир не найден');
     var data = await res.json();
     var t = data.tournament;
     var participants = data.participants || [];
-    // Считаем реальных игроков из принятых команд
-    var acceptedTeams = participants.filter(function(p){ return p.status === 'accepted'; });
-    var totalPlayers = acceptedTeams.reduce(function(sum, team){
-      var pl = (team.players||[]).filter(function(p){ return p && p.nickname; });
-      return sum + pl.length;
+    var accepted = participants.filter(function(p){ return p.status==='accepted'; });
+    var totalPlayers = accepted.reduce(function(sum,team){
+      return sum + (team.players||[]).filter(function(p){ return p&&p.nickname; }).length;
     }, 0);
 
     document.title = t.name + ' — Game Genesis';
-    document.getElementById('t-name').textContent = t.name;
-
-    function set(id, val) { var el=document.getElementById(id); if(el) el.textContent=val; }
+    set('t-name', t.name);
+    set('breadcrumb-name', t.name);
+    set('t-desc', t.description || 'Соревнование на платформе Game Genesis');
     set('hp-participants', totalPlayers + ' / ' + (t.max_slots||16));
     set('hp-prize', t.prize_pool>0 ? t.prize_pool.toLocaleString('ru-RU')+' ₽' : 'Без призов');
     set('hp-date', fmtDate(t.start_date));
-    set('hp-status', {live:'Live',open:'Открыта',soon:'Скоро',done:'Завершён'}[t.status]||t.status);
 
-    // Обложка
+    var statusMap = {live:'Live',open:'Открыта',soon:'Скоро',done:'Завершён'};
+    set('hp-status', statusMap[t.status]||t.status);
+
+    // Badges
+    var badgeGame = document.getElementById('badge-game');
+    if (badgeGame) badgeGame.textContent = t.game || 'CS2';
+    var badgeStatus = document.getElementById('badge-status');
+    if (badgeStatus) {
+      badgeStatus.textContent = statusMap[t.status]||t.status;
+      badgeStatus.className = 'badge ' + (t.status==='live'?'badge-live':t.status==='open'?'badge-open':'badge-game');
+    }
+    if (t.entry_fee > 0) {
+      var badges = document.getElementById('t-badges');
+      var pb = document.createElement('span');
+      pb.className = 'badge badge-paid'; pb.textContent = t.entry_fee.toLocaleString('ru-RU')+' ₽';
+      if (badges) badges.appendChild(pb);
+    } else {
+      var badges = document.getElementById('t-badges');
+      var fb = document.createElement('span');
+      fb.className = 'badge badge-free'; fb.textContent = 'Бесплатно';
+      if (badges) badges.appendChild(fb);
+    }
+
+    // Cover
     if (t.cover_image) applyCoverImage(t.cover_image);
 
-    // Показываем кнопку смены обложки только организатору/админу
+    // Cover change button for organizer/admin
     var coverBtn = document.getElementById('cover-change-btn');
-    if (coverBtn && ME && (ME.role === 'admin' || (t.organizer_id && ME.id === t.organizer_id))) {
+    if (coverBtn && ME && (ME.role==='admin' || (t.organizer_id && ME.id===t.organizer_id))) {
       coverBtn.style.display = 'block';
     }
 
-    // Кнопки регистрации — показываем только если статус 'open' и есть места
+    // Reg button
     var teamSize = parseInt((t.team_size||'1x1').split('x')[0]) || 1;
     var maxTeams = Math.floor((t.max_slots||16) / teamSize);
-    var acceptedCount = participants.filter(function(p){ return p.status === 'accepted'; }).length;
-    var isFull = acceptedCount >= maxTeams;
+    var isFull = accepted.length >= maxTeams;
     var isOpen = t.status === 'open';
-
-    document.querySelectorAll('[onclick*="tournament-register"], .btn-register').forEach(function(btn) {
+    var regBtn = document.getElementById('reg-btn');
+    if (regBtn) {
       if (!isOpen || isFull) {
-        btn.disabled = true;
-        btn.style.opacity = '0.5';
-        btn.style.cursor = 'not-allowed';
-        btn.title = isFull ? 'Все места заняты' : 'Регистрация закрыта';
-        btn.onclick = function(e){ e.preventDefault(); };
-        // Меняем текст
-        var txt = btn.querySelector('span') || btn;
-        if (isFull) txt.textContent = 'Мест нет';
-        else if (t.status === 'live') txt.textContent = 'Идёт турнир';
-        else if (t.status === 'done') txt.textContent = 'Завершён';
-        else txt.textContent = 'Закрыта';
+        regBtn.disabled = true;
+        regBtn.innerHTML = (isFull ? 'Мест нет' : t.status==='live' ? 'Идёт турнир' : t.status==='done' ? 'Завершён' : 'Регистрация закрыта');
       } else {
-        btn.onclick = function(){ location.href='/tournament-register.html?id='+TID; };
+        regBtn.onclick = function(){ location.href='/tournament-register.html?id='+TID; };
       }
-    });
+    }
 
-    renderParticipants(participants);
-    renderInfo(t, participants);
-    // Рейтинг — подгружаем матчи для расчёта мест
-    fetch('/api/tournaments/' + TID + '/bracket', {
-      headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('gg_token')||'') }
-    }).then(function(r){return r.json();}).then(function(bd){
-      renderRatings(bd.matches||[], bd.teams||[], bd.format||'se');
-    }).catch(function(){ renderRatings([], [], 'se'); });
-    await loadBracket();
-  } catch(e) {
-    document.getElementById('t-name').textContent = e.message;
-  }
+    renderParticipants(accepted);
+    renderInfo(t, participants, totalPlayers);
+
+    // Load bracket + ratings
+    fetch('/api/tournaments/'+TID+'/bracket', {
+      headers: TOKEN ? {'Authorization':'Bearer '+TOKEN} : {}
+    }).then(function(r){ return r.json(); }).then(function(bd) {
+      renderBracket(bd);
+      renderRatings(bd.matches||[], bd.teams||[]);
+    }).catch(function(){ renderBracket({}); renderRatings([], []); });
+
+  } catch(e) { set('t-name', e.message); }
 }
 
-function renderParticipants(list) {
+// ── PARTICIPANTS ──
+function renderParticipants(teams) {
   var wrap = document.getElementById('participants-wrap');
   if (!wrap) return;
-  // Только принятые команды
-  var teams = list.filter(function(t){ return t.status === 'accepted'; });
+  set('participants-sub', teams.length + ' команд принято');
   if (!teams.length) {
-    wrap.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);">Принятых участников пока нет</div>';
+    wrap.innerHTML = '<div class="empty-state"><div class="empty-icon">👥</div><div class="empty-title">Участников пока нет</div><div class="empty-sub">Заявки появятся здесь после одобрения</div></div>';
     return;
   }
   var html = '';
   teams.forEach(function(team, i) {
-    var players = (team.players||[]).filter(function(p){ return p && p.nickname; });
-    html += '<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:10px;">' +
-      '<div style="font-family:Rajdhani,sans-serif;font-size:15px;font-weight:700;color:#fff;margin-bottom:'+(players.length?'10px':'0')+';">' +
-        '<span style="color:var(--text-dim);margin-right:8px;font-size:13px;">#'+(i+1)+'</span>' +
-        (team.team_name||'Команда') +
-      '</div>';
+    var players = (team.players||[]).filter(function(p){ return p&&p.nickname; });
+    html += '<div class="team-card">' +
+      '<div class="team-card-name"><span class="team-num">#'+(i+1)+'</span>'+(team.team_name||'Команда')+'</div>';
     if (players.length) {
-      html += '<div style="display:flex;flex-wrap:wrap;gap:6px;">';
+      html += '<div class="team-players">';
       players.forEach(function(p) {
-        html += '<div style="display:flex;align-items:center;gap:5px;background:var(--bg-card2);border-radius:7px;padding:5px 10px;">' +
-          (p.is_captain ? '<span style="font-size:10px;color:var(--gold);">★</span>' : '') +
-          '<span style="font-size:12px;color:var(--text);">' + p.nickname + '</span>' +
-        '</div>';
+        html += '<div class="player-chip">' +
+          (p.is_captain ? '<span class="player-captain">★</span>' : '') +
+          '<span>'+p.nickname+'</span></div>';
       });
       html += '</div>';
     }
@@ -721,400 +524,231 @@ function renderParticipants(list) {
   wrap.innerHTML = html;
 }
 
-function renderInfo(t, participants) {
+// ── INFO ──
+function renderInfo(t, participants, totalPlayers) {
   var wrap = document.getElementById('info-content');
   if (!wrap) return;
-  var fmtMap = {single_elimination:'Single Elimination',double_elimination:'Double Elimination',round_robin:'Round Robin'};
+  var fmtMap = {single_elimination:'Single Elimination',se:'Single Elimination',double_elimination:'Double Elimination',de:'Double Elimination',round_robin:'Round Robin',rr:'Round Robin'};
   var statusMap = {open:'Открыта регистрация',live:'Идёт',soon:'Скоро',done:'Завершён'};
-  var row = function(k,v,color){ return '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(26,36,54,.5);font-size:13px;"><span style="color:var(--text-dim);">'+k+'</span><span style="color:'+(color||'var(--text)')+';font-weight:500;">'+v+'</span></div>'; };
+  var row = function(k,v,cls){ return '<div class="info-row"><span class="ir-key">'+k+'</span><span class="ir-val'+(cls?' '+cls:'')+'" >'+v+'</span></div>'; };
   wrap.innerHTML =
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">' +
-    '<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;">' +
-      '<div style="font-family:Rajdhani,sans-serif;font-size:16px;font-weight:700;color:#fff;margin-bottom:14px;">Основная информация</div>' +
-      row('Название', t.name) +
-      row('Игра', t.game) +
+    '<div class="info-grid">' +
+    '<div class="info-block">' +
+      '<div class="info-block-title"><svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/></svg>Основная информация</div>' +
+      row('Игра', t.game||'—') +
       row('Формат', fmtMap[t.format]||t.format||'—') +
-      row('Тип сетки', t.team_size||'1x1') +
+      row('Команда', t.team_size||'1x1') +
+      row('Участников', totalPlayers+' / '+(t.max_slots||16)) +
       row('Дата начала', fmtDate(t.start_date)) +
-      row('Взнос', t.entry_fee>0?t.entry_fee.toLocaleString('ru-RU')+' ₽':'Бесплатно', t.entry_fee>0?'':'var(--success)') +
-      row('Статус', statusMap[t.status]||t.status, t.status==='live'?'var(--red)':t.status==='open'?'var(--success)':'') +
-      row('Участников', (function(){
-        var ac = participants.filter(function(p){return p.status==='accepted';});
-        var n = ac.reduce(function(s,t){return s+((t.players||[]).filter(function(p){return p&&p.nickname;}).length);},0);
-        return n+' / '+(t.max_slots||16);
-      })()) +
+      row('Регистрация', fmtDate(t.reg_start)+' — '+fmtDate(t.reg_end)) +
+      row('Взнос', t.entry_fee>0?t.entry_fee.toLocaleString('ru-RU')+' ₽':'Бесплатно', t.entry_fee>0?'gold':'green') +
+      row('Призовой фонд', t.prize_pool>0?t.prize_pool.toLocaleString('ru-RU')+' ₽':'Без призов', t.prize_pool>0?'red':'') +
+      row('Статус', statusMap[t.status]||t.status, t.status==='live'?'red':t.status==='open'?'green':'') +
     '</div>' +
-    '<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;">' +
-      '<div style="font-family:Rajdhani,sans-serif;font-size:16px;font-weight:700;color:#fff;margin-bottom:14px;">О турнире</div>' +
-      '<div style="font-size:14px;color:var(--text-dim);line-height:1.7;">'+(t.description||'Описание не указано')+'</div>' +
+    '<div class="info-block">' +
+      '<div class="info-block-title"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Описание</div>' +
+      '<div style="font-size:13px;color:var(--text-dim);line-height:1.75;font-weight:400;">'+(t.description||'Описание не указано')+'</div>' +
+      (t.rules_link ? '<div style="margin-top:16px;"><a href="'+t.rules_link+'" target="_blank" style="color:var(--red);font-size:12px;font-weight:600;">→ Правила турнира</a></div>' : '') +
     '</div>' +
     '</div>';
 }
 
-async function loadBracket() {
-  var wrap = document.getElementById('bracket-wrap');
-  if (!wrap) return;
-  try {
-    var headers = TOKEN ? {'Authorization':'Bearer '+TOKEN} : {};
-    var res = await fetch('/api/tournaments/'+TID+'/bracket', {headers:headers});
-    var data = await res.json();
-    if (!data.generated) {
-      wrap.innerHTML = '<div style="text-align:center;padding:60px 20px;"><div style="font-size:48px;margin-bottom:16px;">⚙️</div><h3 style="font-family:Rajdhani,sans-serif;font-size:22px;font-weight:700;color:var(--text-dim);margin-bottom:8px;">Сетка не сгенерирована</h3><p style="font-size:14px;color:var(--text-muted);">Организатор создаст сетку после закрытия регистрации</p></div>';
-      return;
-    }
-    if (!data.published) {
-      wrap.innerHTML = '<div style="text-align:center;padding:60px 20px;"><div style="font-size:48px;margin-bottom:16px;">🔒</div><h3 style="font-family:Rajdhani,sans-serif;font-size:22px;font-weight:700;color:var(--text-dim);margin-bottom:8px;">Сетка не опубликована</h3><p style="font-size:14px;color:var(--text-muted);">Организатор скоро откроет сетку</p></div>';
-      return;
-    }
-    renderBracket(data);
-  } catch(e) { console.error(e); }
-}
+// ── BRACKET ──
+function grpRounds(arr){ var r={}; arr.forEach(function(m){ if(!r[m.round])r[m.round]=[]; r[m.round].push(m); }); return r; }
+function getRL(r,maxR){ var d=maxR-r; if(d===0)return'Финал'; if(d===1)return'1/2 финала'; if(d===2)return'1/4 финала'; return'Раунд '+r; }
 
-function grpRounds(arr){var r={};arr.forEach(function(m){if(!r[m.round])r[m.round]=[];r[m.round].push(m);});return r;}
-
-function getRL(r,maxR){var d=maxR-r;if(d===0)return'Финал';if(d===1)return'1/2 финала';if(d===2)return'1/4 финала';return'Раунд '+r;}
-
-function closeMatchModal() {
-  var o = document.getElementById('match-modal-overlay');
-  if (o) o.remove();
-}
-
-function pubMatchCard(m, extra) {
-  var cls = 'bm' + (m.status==='done' ? ' done' : '') + (extra ? ' '+extra : '');
+function matchCard(m, extra) {
+  var cls = 'bm'+(m.status==='done'?' done':'')+(extra?' '+extra:'');
   var t1w = m.status==='done' && m.winner_team_id===m.team1_id;
   var t2w = m.status==='done' && m.winner_team_id===m.team2_id;
-  var clickable = m.id && (m.team1_name || m.team2_name);
-  return '<div class="'+cls+'"'+(clickable ? ' onclick="location.href=\'/match.html?id='+m.id+'\'" style="cursor:pointer;" title="Открыть страницу матча"' : '')+'>'+
-    '<div class="bm-num">Матч #'+m.match_number+(clickable?'<span style="float:right;font-size:9px;color:var(--blue);opacity:.8;">→</span>':'')+
-    '</div>'+
+  var clickable = m.id && (m.team1_name||m.team2_name);
+  return '<div class="'+cls+'"'+(clickable?' onclick="location.href=\'/match.html?id='+m.id+'\'" style="cursor:pointer;"':'')+'>'+
+    '<div class="bm-num">Матч #'+m.match_number+(clickable?'<span style="color:var(--blue);opacity:.7;">→</span>':'')+'</div>'+
     '<div class="bm-slot">'+
       '<span class="bm-seed">'+(m.team1_seed||'?')+'</span>'+
-      '<span class="bm-name '+(t1w?'win':'')+(m.team1_name?'':'tbd')+'">'+(m.team1_name||'TBD')+'</span>'+
-      (m.status==='done'?'<span class="bm-score '+(t1w?'win':'')+'">'+m.score1+'</span>':'')+
+      '<span class="bm-name'+(t1w?' win':'')+(m.team1_name?'':' tbd')+'">'+(m.team1_name||'TBD')+'</span>'+
+      (m.status==='done'?'<span class="bm-score'+(t1w?' win':'')+'">'+m.score1+'</span>':'')+
     '</div>'+
     '<div class="bm-slot">'+
       '<span class="bm-seed">'+(m.team2_seed||'?')+'</span>'+
-      '<span class="bm-name '+(t2w?'win':'')+(m.team2_name?'':'tbd')+'">'+(m.team2_name||'TBD')+'</span>'+
-      (m.status==='done'?'<span class="bm-score '+(t2w?'win':'')+'">'+m.score2+'</span>':'')+
+      '<span class="bm-name'+(t2w?' win':'')+(m.team2_name?'':' tbd')+'">'+(m.team2_name||'TBD')+'</span>'+
+      (m.status==='done'?'<span class="bm-score'+(t2w?' win':'')+'">'+m.score2+'</span>':'')+
     '</div>'+
   '</div>';
 }
 
-function openMatchModal(idx) {
-  if (!window._pubMatches || !window._pubMatches[idx]) return;
-  var m = window._pubMatches[idx];
-  closeMatchModal();
-
-  var isW1 = m.winner_team_id === m.team1_id;
-  var t1 = m.team1_name || 'TBD';
-  var t2 = m.team2_name || 'TBD';
-
-  var overlay = document.createElement('div');
-  overlay.id = 'match-modal-overlay';
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:900;display:flex;align-items:center;justify-content:center;padding:16px;';
-  overlay.addEventListener('click', function(e){ if(e.target===overlay) closeMatchModal(); });
-
-  var modal = document.createElement('div');
-  modal.style.cssText = 'background:var(--bg-card);border:1px solid rgba(255,255,255,.15);border-radius:14px;width:100%;max-width:580px;overflow:hidden;';
-
-  // Header
-  var hdr = document.createElement('div');
-  hdr.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.08);';
-  hdr.innerHTML = '<div style="font-family:Rajdhani,sans-serif;font-size:17px;font-weight:700;color:#fff;">📊 Статистика матча</div>';
-  var xBtn = document.createElement('button');
-  xBtn.textContent = '✕';
-  xBtn.style.cssText = 'background:none;border:none;color:rgba(255,255,255,.4);font-size:20px;cursor:pointer;';
-  xBtn.addEventListener('click', closeMatchModal);
-  hdr.appendChild(xBtn);
-
-  // Score row
-  var scoreRow = document.createElement('div');
-  scoreRow.style.cssText = 'display:flex;align-items:center;justify-content:center;gap:20px;padding:20px;border-bottom:1px solid rgba(255,255,255,.08);';
-  scoreRow.innerHTML =
-    '<div style="flex:1;text-align:right;">'+
-      '<div style="font-family:Rajdhani,sans-serif;font-size:17px;font-weight:700;color:'+(isW1?'var(--success)':'rgba(255,255,255,.4)')+';">'+t1+'</div>'+
-      (isW1?'<div style="font-size:11px;color:var(--success);">🏆 Победитель</div>':'')+
-    '</div>'+
-    '<div style="font-family:Rajdhani,sans-serif;font-size:40px;font-weight:900;color:#fff;min-width:100px;text-align:center;">'+m.score1+' : '+m.score2+'</div>'+
-    '<div style="flex:1;text-align:left;">'+
-      '<div style="font-family:Rajdhani,sans-serif;font-size:17px;font-weight:700;color:'+(!isW1?'var(--success)':'rgba(255,255,255,.4)')+';">'+t2+'</div>'+
-      (!isW1?'<div style="font-size:11px;color:var(--success);">🏆 Победитель</div>':'')+
-    '</div>';
-
-  // Stats area
-  var statsDiv = document.createElement('div');
-  statsDiv.style.cssText = 'padding:16px 18px;min-height:60px;';
-  statsDiv.innerHTML = '<div style="text-align:center;color:rgba(255,255,255,.4);font-size:13px;padding:12px;">Загрузка...</div>';
-
-  modal.appendChild(hdr);
-  modal.appendChild(scoreRow);
-  modal.appendChild(statsDiv);
-  overlay.appendChild(modal);
-  document.body.appendChild(overlay);
-
-  // Load stats
-  fetch('/api/tournaments/'+TID+'/matches/'+m.id+'/stats', {
-    headers: { 'Authorization': 'Bearer '+(localStorage.getItem('gg_token')||'') }
-  }).then(function(r){ return r.json(); }).then(function(stats) {
-    if (!stats.length) {
-      statsDiv.innerHTML = '<div style="text-align:center;color:rgba(255,255,255,.4);font-size:13px;padding:16px;">Статистика не введена</div>';
-      return;
-    }
-    var hdrRow = '<div style="display:grid;grid-template-columns:1fr 45px 45px 45px 50px 50px;gap:6px;padding:4px 8px;margin-bottom:6px;">' +
-      ['Игрок','K','D','A','HS%','ADR'].map(function(h){
-        return '<div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;'+(h!='Игрок'?'text-align:center':'')+'">' + h + '</div>';
-      }).join('') + '</div>';
-    var rows = stats.map(function(s) {
-      var kd = s.deaths > 0 ? (s.kills/s.deaths).toFixed(2) : (s.kills||0)+'.00';
-      var col = parseFloat(kd)>=1.5 ? 'var(--success)' : parseFloat(kd)<0.8 ? 'var(--red)' : '#fff';
-      return '<div style="display:grid;grid-template-columns:1fr 45px 45px 45px 50px 50px;gap:6px;padding:7px 8px;background:rgba(255,255,255,.04);border-radius:8px;margin-bottom:4px;align-items:center;">' +
-        '<div style="font-size:13px;font-weight:600;color:#fff;">'+s.nickname+'</div>' +
-        '<div style="font-size:13px;font-weight:700;color:'+col+';text-align:center;">'+s.kills+'</div>' +
-        '<div style="font-size:13px;color:rgba(255,255,255,.5);text-align:center;">'+s.deaths+'</div>' +
-        '<div style="font-size:13px;color:rgba(255,255,255,.5);text-align:center;">'+s.assists+'</div>' +
-        '<div style="font-size:13px;color:rgba(255,255,255,.5);text-align:center;">'+(s.hs_pct||0)+'%</div>' +
-        '<div style="font-size:13px;color:rgba(255,255,255,.5);text-align:center;">'+(s.adr||0)+'</div>' +
-      '</div>';
-    }).join('');
-    statsDiv.innerHTML = hdrRow + rows;
-  }).catch(function() {
-    statsDiv.innerHTML = '<div style="text-align:center;color:rgba(255,255,255,.4);padding:16px;">Нет данных</div>';
-  });
-}
-
-
-function pubSection(matches){
-  var rounds=grpRounds(matches);
-  var rNums=Object.keys(rounds).map(Number).sort(function(a,b){return a-b;});
-  var maxR=Math.max.apply(null,rNums);
-  var html='<div style="display:flex;align-items:flex-start;overflow-x:auto;gap:0;padding-bottom:8px">';
-  rNums.forEach(function(r,ri){
-    var ms=rounds[r];
-    var topPad=ri===0?0:(Math.pow(2,ri)-1)*(58+8)/2;
-    var matchGap=Math.pow(2,ri)*(58+8)-58;
-    html+='<div style="flex-shrink:0;margin-right:'+(ri<rNums.length-1?'60px':'0')+'">';
-    html+='<div class="b-round-label">'+getRL(r,maxR)+'</div>';
-    html+='<div style="position:relative">';
-    ms.forEach(function(m,mi){
-      html+='<div style="margin-bottom:8px;margin-top:'+(mi===0?topPad:matchGap)+'px;position:relative">';
-      html+=pubMatchCard(m,'');
-      if(ri<rNums.length-1){
-        var isTop=mi%2===0;
-        var vLen=Math.pow(2,ri)*(58+8)/2;
-        var svgH=vLen+2;
-        html+='<svg style="position:absolute;top:28px;right:-61px;width:61px;height:'+svgH+'px;overflow:visible" viewBox="0 0 61 '+svgH+'">'+
-          '<path d="M0 1 L30 1 L30 '+(isTop?svgH:1)+' L61 '+(isTop?svgH:1)+'" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="0.5"/>'+
+function renderSection(matches) {
+  var rounds = grpRounds(matches);
+  var rNums = Object.keys(rounds).map(Number).sort(function(a,b){return a-b;});
+  var maxR = Math.max.apply(null, rNums);
+  var html = '<div style="display:flex;align-items:flex-start;overflow-x:auto;gap:0;padding-bottom:8px;">';
+  rNums.forEach(function(r,ri) {
+    var ms = rounds[r];
+    var topPad = ri===0 ? 0 : (Math.pow(2,ri)-1)*(58+8)/2;
+    var matchGap = Math.pow(2,ri)*(58+8)-58;
+    html += '<div style="flex-shrink:0;margin-right:'+(ri<rNums.length-1?'60px':'0')+';"><div class="b-round-label">'+getRL(r,maxR)+'</div><div style="position:relative;">';
+    ms.forEach(function(m,mi) {
+      html += '<div style="margin-bottom:8px;margin-top:'+(mi===0?topPad:matchGap)+'px;position:relative;">';
+      html += matchCard(m,'');
+      if (ri<rNums.length-1) {
+        var isTop = mi%2===0;
+        var vLen = Math.pow(2,ri)*(58+8)/2;
+        var svgH = vLen+2;
+        html += '<svg style="position:absolute;top:28px;right:-61px;width:61px;height:'+svgH+'px;overflow:visible;" viewBox="0 0 61 '+svgH+'">'+
+          '<path d="M0 1 L30 1 L30 '+(isTop?svgH:1)+' L61 '+(isTop?svgH:1)+'" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="1"/>'+
         '</svg>';
       }
-      html+='</div>';
+      html += '</div>';
     });
-    html+='</div></div>';
+    html += '</div></div>';
   });
-  return html+'</div>';
+  return html + '</div>';
 }
 
-function renderRatings(matches, teams, format) {
-  var wrap = document.getElementById('ratings-content');
+function renderBracket(data) {
+  var wrap = document.getElementById('bracket-wrap');
   if (!wrap) return;
+  if (!data.generated) {
+    wrap.innerHTML = '<div class="empty-state"><div class="empty-icon">⚙️</div><div class="empty-title">Сетка не сгенерирована</div><div class="empty-sub">Организатор создаст сетку после закрытия регистрации</div></div>';
+    return;
+  }
+  if (!data.published) {
+    wrap.innerHTML = '<div class="empty-state"><div class="empty-icon">🔒</div><div class="empty-title">Сетка не опубликована</div><div class="empty-sub">Организатор скоро откроет сетку для просмотра</div></div>';
+    return;
+  }
+  var matches = data.matches||[];
+  var upper = matches.filter(function(m){ return m.bracket_type==='upper'; });
+  var lower = matches.filter(function(m){ return m.bracket_type==='lower'; });
+  var grand = matches.filter(function(m){ return m.bracket_type==='grand_final'; });
+  var tp    = matches.filter(function(m){ return m.bracket_type==='third_place'; });
+  var robin = matches.filter(function(m){ return m.bracket_type==='robin'; });
+  var html = '<div class="bracket-wrap">';
+  if (robin.length) {
+    html += '<div class="b-section"><div class="b-section-title">🔄 Круговой этап</div>'+renderSection(robin)+'</div>';
+  } else {
+    if (upper.length) html += '<div class="b-section"><div class="b-section-title upper">▲ Верхняя сетка</div>'+renderSection(upper)+'</div>';
+    if (lower.length) html += '<div class="b-section"><div class="b-section-title lower">▼ Нижняя сетка</div>'+renderSection(lower)+'</div>';
+    if (tp.length) {
+      html += '<div class="b-section"><div class="b-section-title" style="color:var(--gold);">🥉 Матч за 3-е место</div><div style="display:flex;gap:14px;flex-wrap:wrap;">';
+      tp.forEach(function(m){ html += matchCard(m,'third'); });
+      html += '</div></div>';
+    }
+    if (grand.length) {
+      html += '<div class="b-section"><div class="b-section-title" style="color:var(--red);">🏆 Гранд-Финал</div><div style="display:flex;gap:14px;flex-wrap:wrap;">';
+      grand.forEach(function(m){ html += matchCard(m,'grand'); });
+      html += '</div></div>';
+    }
+  }
+  wrap.innerHTML = html + '</div>';
+}
 
-  if (!matches || !matches.length) {
-    wrap.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);">Рейтинг формируется по результатам матчей</div>';
+// ── RATINGS ──
+function renderRatings(matches, teams) {
+  var wrap = document.getElementById('ratings-content');
+  var mvpBlock = document.getElementById('mvp-block');
+  if (!wrap) return;
+  if (!matches.length) {
+    wrap.innerHTML = '<div class="empty-state"><div class="empty-icon">📊</div><div class="empty-title">Рейтинг формируется</div><div class="empty-sub">Появится после завершения матчей</div></div>';
     return;
   }
 
-  // Строим teamMap
+  // Build teamMap
   var teamMap = {};
-  teams.forEach(function(t) {
-    teamMap[t.id] = { id:t.id, name:t.name, seed:t.seed,
-      players:(t.players||[]).filter(function(p){return p&&p.nickname;}),
-      wins:0, losses:0 };
-  });
-  matches.forEach(function(m) {
-    if (m.status!=='done'||!m.winner_team_id) return;
+  teams.forEach(function(t){ teamMap[t.id]={id:t.id,name:t.name,players:(t.players||[]).filter(function(p){return p&&p.nickname;}),wins:0,losses:0}; });
+  matches.forEach(function(m){
+    if(m.status!=='done'||!m.winner_team_id) return;
     var w=m.winner_team_id, l=(w===m.team1_id)?m.team2_id:m.team1_id;
     if(teamMap[w]) teamMap[w].wins++;
     if(l&&teamMap[l]) teamMap[l].losses++;
   });
 
-  // Места
-  var standings = {};
-  var gf = matches.find(function(m){return m.bracket_type==='grand_final'&&m.status==='done';});
-  var ufinal = matches.filter(function(m){return m.bracket_type==='upper'&&m.status==='done';}).sort(function(a,b){return b.round-a.round;})[0];
-  var topFinal = gf||ufinal;
-  if(topFinal&&topFinal.winner_team_id){ var w1=topFinal.winner_team_id,l1=(w1===topFinal.team1_id)?topFinal.team2_id:topFinal.team1_id; standings[w1]=1; if(l1)standings[l1]=2; }
-  var tp=matches.find(function(m){return m.bracket_type==='third_place'&&m.status==='done';});
-  if(tp&&tp.winner_team_id){ var w3=tp.winner_team_id,l3=(w3===tp.team1_id)?tp.team2_id:tp.team1_id; if(!standings[w3])standings[w3]=3; if(l3&&!standings[l3])standings[l3]=4; }
+  // Standings
+  var standings={};
+  var gf=matches.find(function(m){return m.bracket_type==='grand_final'&&m.status==='done';});
+  var uf=matches.filter(function(m){return m.bracket_type==='upper'&&m.status==='done';}).sort(function(a,b){return b.round-a.round;})[0];
+  var topF=gf||uf;
+  if(topF&&topF.winner_team_id){var w1=topF.winner_team_id,l1=(w1===topF.team1_id)?topF.team2_id:topF.team1_id;standings[w1]=1;if(l1)standings[l1]=2;}
+  var tp2=matches.find(function(m){return m.bracket_type==='third_place'&&m.status==='done';});
+  if(tp2&&tp2.winner_team_id){var w3=tp2.winner_team_id,l3=(w3===tp2.team1_id)?tp2.team2_id:tp2.team1_id;if(!standings[w3])standings[w3]=3;if(l3&&!standings[l3])standings[l3]=4;}
   var unranked=Object.values(teamMap).filter(function(t){return !standings[t.id]&&(t.wins>0||t.losses>0);}).sort(function(a,b){return b.wins-a.wins||a.losses-b.losses;});
-  var np=5,ii=0;
-  while(ii<unranked.length){
-    var sw=unranked[ii].wins,grp=[],jj=ii;
-    while(jj<unranked.length&&unranked[jj].wins===sw){grp.push(unranked[jj]);jj++;}
-    if(grp.length===1){standings[grp[0].id]=np++;}
-    else{var re=np+grp.length-1;grp.forEach(function(t){standings[t.id]=np+'-'+re;});np+=grp.length;}
-    ii=jj;
-  }
+  var np=5;
+  unranked.forEach(function(t,i){ standings[t.id]=np+i; });
   Object.values(teamMap).forEach(function(t){if(!standings[t.id])standings[t.id]='—';});
 
   var sorted=Object.values(teamMap).filter(function(t){return t.wins>0||t.losses>0;});
-  sorted.sort(function(a,b){
-    var pa=standings[a.id],pb=standings[b.id];
-    if(pa==='—'&&pb==='—')return 0; if(pa==='—')return 1; if(pb==='—')return -1;
-    return parseInt(String(pa))-parseInt(String(pb));
-  });
+  sorted.sort(function(a,b){ var pa=standings[a.id],pb=standings[b.id]; if(pa==='—'&&pb==='—')return 0; if(pa==='—')return 1; if(pb==='—')return -1; return parseInt(String(pa))-parseInt(String(pb)); });
 
-  if (!sorted.length) {
-    wrap.innerHTML='<div style="text-align:center;padding:40px;color:var(--text-muted);">Рейтинг будет доступен после завершения матчей</div>';
-    return;
-  }
-
-  // ── MVP ТУРНИРА (загружаем статы) ──
-  var html = '<div style="max-width:700px;margin:0 auto;">';
-
+  // MVP
   fetch('/api/tournaments/'+TID+'/stats').then(function(r){return r.json();}).then(function(allStats){
-    // Агрегируем по нику
-    var nickStats = {};
+    var nickStats={};
     allStats.forEach(function(s){
-      if(!nickStats[s.nickname]) nickStats[s.nickname]={nickname:s.nickname,kills:0,deaths:0,assists:0,hs_sum:0,adr_sum:0,n:0};
-      var ns=nickStats[s.nickname];
-      ns.kills+=s.kills||0; ns.deaths+=s.deaths||0; ns.assists+=s.assists||0;
-      ns.hs_sum+=(s.hs_pct||0); ns.adr_sum+=(s.adr||0); ns.n++;
+      if(!nickStats[s.nickname])nickStats[s.nickname]={nickname:s.nickname,kills:0,deaths:0,hs_sum:0,adr_sum:0,n:0};
+      var ns=nickStats[s.nickname]; ns.kills+=s.kills||0; ns.deaths+=s.deaths||0; ns.hs_sum+=(s.hs_pct||0); ns.adr_sum+=(s.adr||0); ns.n++;
     });
-    var mvpArr=Object.values(nickStats).sort(function(a,b){
-      var kdA=a.deaths>0?a.kills/a.deaths:a.kills, kdB=b.deaths>0?b.kills/b.deaths:b.kills;
-      return kdB-kdA;
-    });
-    if(mvpArr.length){
+    var mvpArr=Object.values(nickStats).sort(function(a,b){ var ka=a.deaths>0?a.kills/a.deaths:a.kills,kb=b.deaths>0?b.kills/b.deaths:b.kills; return kb-ka; });
+    if(mvpArr.length&&mvpBlock){
       var mvp=mvpArr[0];
       var kd=mvp.deaths>0?(mvp.kills/mvp.deaths).toFixed(2):mvp.kills+'.00';
-      var avgHS=mvp.n>0?Math.round(mvp.hs_sum/mvp.n):0;
-      var avgADR=mvp.n>0?Math.round(mvp.adr_sum/mvp.n):0;
-      var mvpEl=document.getElementById('mvp-block');
-      if(mvpEl) mvpEl.innerHTML=
-        '<div style="background:linear-gradient(135deg,rgba(240,192,64,.2),rgba(240,192,64,.05));border:1px solid rgba(240,192,64,.4);border-radius:14px;padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;gap:16px;">' +
-          '<div style="font-size:36px;line-height:1;">🌟</div>' +
-          '<div style="flex:1;">' +
-            '<div style="font-size:10px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">MVP ТУРНИРА</div>' +
-            '<div style="font-family:Rajdhani,sans-serif;font-size:22px;font-weight:900;color:#fff;">'+mvp.nickname+'</div>' +
-            '<div style="display:flex;gap:16px;margin-top:6px;">' +
-              '<span style="font-size:12px;color:var(--text-dim);">K/D <strong style="color:var(--success);">'+kd+'</strong></span>' +
-              '<span style="font-size:12px;color:var(--text-dim);">Убийства <strong style="color:#fff;">'+mvp.kills+'</strong></span>' +
-              '<span style="font-size:12px;color:var(--text-dim);">HS% <strong style="color:#fff;">'+avgHS+'%</strong></span>' +
-              '<span style="font-size:12px;color:var(--text-dim);">ADR <strong style="color:#fff;">'+avgADR+'</strong></span>' +
-            '</div>' +
-          '</div>' +
-        '</div>';
+      mvpBlock.innerHTML='<div class="mvp-card">'+
+        '<div class="mvp-icon">⚡</div>'+
+        '<div><div class="mvp-label">MVP турнира</div><div class="mvp-name">'+mvp.nickname+'</div>'+
+        '<div class="mvp-stats">'+
+          '<div class="mvp-stat">K/D <strong class="good">'+kd+'</strong></div>'+
+          '<div class="mvp-stat">Убийства <strong>'+mvp.kills+'</strong></div>'+
+          '<div class="mvp-stat">HS% <strong>'+Math.round(mvp.hs_sum/mvp.n)+'%</strong></div>'+
+          '<div class="mvp-stat">ADR <strong>'+Math.round(mvp.adr_sum/mvp.n)+'</strong></div>'+
+        '</div></div></div>';
     }
   }).catch(function(){});
 
-  html += '<div id="mvp-block" style="margin-bottom:16px;"></div>';
-
-  // ── МЕСТА ──
-  var placeIcons={1:'🥇',2:'🥈',3:'🥉'};
-  var placeBg={1:'linear-gradient(135deg,rgba(240,192,64,.15),rgba(240,192,64,.04))',2:'linear-gradient(135deg,rgba(180,180,190,.1),rgba(180,180,190,.02))',3:'linear-gradient(135deg,rgba(180,120,60,.12),rgba(180,120,60,.03))'};
-  var placeBorder={1:'rgba(240,192,64,.35)',2:'rgba(200,200,210,.2)',3:'rgba(180,120,60,.25)'};
-
-  sorted.forEach(function(team) {
-    var place=standings[team.id], placeNum=parseInt(String(place)), icon=placeIcons[placeNum]||'';
-    var bg=placeBg[placeNum]||'transparent', border=placeBorder[placeNum]||'var(--border)';
-    var tid = team.id;
-
-    html +=
-      '<div style="background:'+bg+';border:1px solid '+border+';border-radius:12px;margin-bottom:10px;overflow:hidden;">' +
-        '<div style="display:flex;align-items:center;gap:14px;padding:14px 16px;cursor:pointer;" onclick="toggleTeamStats(this)" data-tsid="ts-' + tid + '">' +
-          '<div style="min-width:48px;text-align:center;">' +
-            (icon?'<div style="font-size:'+(placeNum===1?'28px':'22px')+';line-height:1;">'+icon+'</div>':'<div style="font-family:Rajdhani,sans-serif;font-size:20px;font-weight:700;color:var(--text-dim);">'+place+'</div>') +
-          '</div>' +
-          '<div style="flex:1;">' +
-            '<div style="font-family:Rajdhani,sans-serif;font-size:'+(placeNum<=3?'17px':'15px')+';font-weight:700;color:'+(placeNum<=3?'#fff':'var(--text)')+';">'+team.name+'</div>' +
-            '<div style="font-size:12px;color:var(--text-muted);margin-top:2px;">'+team.wins+' побед · '+team.losses+' пораж. · нажмите для статистики ▾</div>' +
-          '</div>' +
-          '<div style="text-align:right;">' +
-            '<div style="font-family:Rajdhani,sans-serif;font-size:14px;color:var(--success);">'+team.wins+'W</div>' +
-            '<div style="font-size:11px;color:var(--text-muted);">'+team.losses+'L</div>' +
-          '</div>' +
-        '</div>' +
-        '<div id="ts-'+tid+'" style="display:none;border-top:1px solid var(--border);padding:12px 16px;" data-tid="'+tid+'">' +
-          '<div style="color:var(--text-muted);font-size:12px;">Загрузка...</div>' +
-        '</div>' +
-      '</div>';
+  // Standings list
+  var placeIcon={1:'🥇',2:'🥈',3:'🥉'};
+  var html='';
+  sorted.forEach(function(team){
+    var p=standings[team.id], pn=parseInt(String(p));
+    html+='<div class="standings-item'+(pn<=3?' place-'+pn:'')+'" onclick="toggleTeamStats(this,\''+team.id+'\')">'+
+      '<div class="standings-row">'+
+        '<div class="standings-place">'+(placeIcon[pn]?'<div class="standings-place-icon">'+placeIcon[pn]+'</div>':'<div class="standings-place-num">'+p+'</div>')+'</div>'+
+        '<div style="flex:1;"><div class="standings-name">'+team.name+'</div><div class="standings-sub">'+team.wins+' побед · '+team.losses+' поражений · нажмите для статистики ▾</div></div>'+
+        '<div class="standings-wl"><div class="standings-w">'+team.wins+'W</div><div class="standings-l">'+team.losses+'L</div></div>'+
+      '</div>'+
+      '<div class="standings-stats" id="ts-'+team.id+'" data-tid="'+team.id+'"><div style="color:var(--text-muted);font-size:12px;">Загрузка...</div></div>'+
+    '</div>';
   });
-
-  html += '</div>';
   wrap.innerHTML = html;
 }
 
-function toggleTeamStats(btn) {
-  var tsId = btn.dataset ? btn.dataset.tsid : btn;
-  if (!tsId) return;
-  var el = document.getElementById(tsId);
-  if (!el) return;
-  if (el.style.display !== 'none') { el.style.display='none'; return; }
-  el.style.display = 'block';
-  if (el.dataset.loaded) return;
-  el.dataset.loaded = '1';
-  var teamId = el.dataset.tid;
-
-  // Загружаем статы этой команды из всех матчей турнира
-  fetch('/api/tournaments/'+TID+'/stats?team_id='+teamId).then(function(r){return r.json();}).then(function(stats){
-    if(!stats.length){ el.innerHTML='<div style="color:var(--text-muted);font-size:12px;padding:4px;">Статистика не введена</div>'; return; }
-    var hdr='<div style="display:grid;grid-template-columns:1fr 45px 45px 45px 50px 50px;gap:6px;padding:4px 8px;margin-bottom:6px;">' +
-      ['Игрок','K','D','A','HS%','ADR'].map(function(h){
-        return '<div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;'+(h!='Игрок'?'text-align:center':'')+'">' + h + '</div>';
-      }).join('')+'</div>';
-    // Агрегируем по нику
+function toggleTeamStats(el, teamId) {
+  var stats = document.getElementById('ts-'+teamId);
+  if (!stats) return;
+  if (stats.style.display !== 'none' && stats.style.display !== '') { stats.style.display = 'none'; return; }
+  stats.style.display = 'block';
+  if (stats.dataset.loaded) return;
+  stats.dataset.loaded = '1';
+  fetch('/api/tournaments/'+TID+'/stats?team_id='+teamId).then(function(r){return r.json();}).then(function(data){
+    if (!data.length) { stats.innerHTML='<div style="color:var(--text-muted);font-size:12px;padding:4px;">Статистика не введена</div>'; return; }
     var agg={};
-    stats.forEach(function(s){
-      if(!agg[s.nickname])agg[s.nickname]={nickname:s.nickname,k:0,d:0,a:0,hs_s:0,adr_s:0,n:0};
+    data.forEach(function(s){
+      if(!agg[s.nickname])agg[s.nickname]={n:s.nickname,k:0,d:0,a:0,hs:0,adr:0,cnt:0};
       agg[s.nickname].k+=s.kills||0; agg[s.nickname].d+=s.deaths||0; agg[s.nickname].a+=s.assists||0;
-      agg[s.nickname].hs_s+=(s.hs_pct||0); agg[s.nickname].adr_s+=(s.adr||0); agg[s.nickname].n++;
+      agg[s.nickname].hs+=(s.hs_pct||0); agg[s.nickname].adr+=(s.adr||0); agg[s.nickname].cnt++;
     });
-    var rows=Object.values(agg).sort(function(a,b){
-      var ka=a.d>0?a.k/a.d:a.k, kb=b.d>0?b.k/b.d:b.k; return kb-ka;
-    }).map(function(s){
+    var rows=Object.values(agg).sort(function(a,b){ var ka=a.d>0?a.k/a.d:a.k,kb=b.d>0?b.k/b.d:b.k; return kb-ka; });
+    var html='<div class="stats-grid stats-hdr"><div>Игрок</div><div>K</div><div>D</div><div>A</div><div>HS%</div><div>ADR</div></div>';
+    rows.forEach(function(s){
       var kd=s.d>0?(s.k/s.d).toFixed(2):s.k+'.00';
-      var c=parseFloat(kd)>=1.5?'var(--success)':parseFloat(kd)<0.8?'var(--red)':'var(--text)';
-      return '<div style="display:grid;grid-template-columns:1fr 45px 45px 45px 50px 50px;gap:6px;padding:7px 8px;background:rgba(255,255,255,.04);border-radius:8px;margin-bottom:4px;align-items:center;">' +
-        '<div style="font-size:13px;font-weight:600;color:#fff;">'+s.nickname+'</div>' +
-        '<div style="font-size:13px;font-weight:700;color:'+c+';text-align:center;">'+s.k+'</div>' +
-        '<div style="font-size:13px;color:var(--text-dim);text-align:center;">'+s.d+'</div>' +
-        '<div style="font-size:13px;color:var(--text-dim);text-align:center;">'+s.a+'</div>' +
-        '<div style="font-size:13px;color:var(--text-dim);text-align:center;">'+Math.round(s.hs_s/s.n)+'%</div>' +
-        '<div style="font-size:13px;color:var(--text-dim);text-align:center;">'+Math.round(s.adr_s/s.n)+'</div>' +
+      var c=parseFloat(kd)>=1.5?'var(--success)':parseFloat(kd)<0.8?'var(--err)':'var(--text)';
+      html+='<div class="stats-grid stats-row">'+
+        '<div>'+s.n+'</div>'+
+        '<div style="color:'+c+';font-weight:700;">'+s.k+'</div>'+
+        '<div>'+s.d+'</div>'+
+        '<div>'+s.a+'</div>'+
+        '<div>'+Math.round(s.hs/s.cnt)+'%</div>'+
+        '<div>'+Math.round(s.adr/s.cnt)+'</div>'+
       '</div>';
-    }).join('');
-    el.innerHTML = hdr+rows;
-  }).catch(function(){ el.innerHTML='<div style="color:var(--text-muted);font-size:12px;">Нет данных</div>'; });
-}
-
-
-function renderBracket(data) {
-  var wrap = document.getElementById('bracket-wrap');
-  var matches = data.matches||[];
-  var upper=matches.filter(function(m){return m.bracket_type==='upper';});
-  var lower=matches.filter(function(m){return m.bracket_type==='lower';});
-  var grand=matches.filter(function(m){return m.bracket_type==='grand_final';});
-  var tp=matches.filter(function(m){return m.bracket_type==='third_place';});
-  var robin=matches.filter(function(m){return m.bracket_type==='robin';});
-
-  var html='<div class="bracket-wrap">';
-
-  if(robin.length){
-    html+='<div class="b-section"><div class="b-section-title">🔄 Круговой этап</div>'+pubSection(robin)+'</div>';
-  } else {
-    if(upper.length) html+='<div class="b-section"><div class="b-section-title upper">⬆ Верхняя сетка</div>'+pubSection(upper)+'</div>';
-    if(lower.length) html+='<div class="b-section"><div class="b-section-title lower">⬇ Нижняя сетка</div>'+pubSection(lower)+'</div>';
-    if(tp.length){
-      html+='<div class="b-section"><div class="b-section-title" style="color:var(--gold)">🥉 Матч за 3-е место</div><div style="display:flex;gap:16px;flex-wrap:wrap">';
-      tp.forEach(function(m){html+=pubMatchCard(m,'third');});
-      html+='</div></div>';
-    }
-    if(grand.length){
-      html+='<div class="b-section"><div class="b-section-title" style="color:#fff">🏆 Гранд-Финал</div><div style="display:flex;gap:16px;flex-wrap:wrap">';
-      grand.forEach(function(m){html+=pubMatchCard(m,'grand');});
-      html+='</div></div>';
-    }
-  }
-  wrap.innerHTML=html+'</div>';
+    });
+    stats.innerHTML = html;
+  }).catch(function(){ stats.innerHTML='<div style="color:var(--text-muted);font-size:12px;">Нет данных</div>'; });
 }
 
 loadTournament();

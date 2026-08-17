@@ -6,36 +6,36 @@
   <title>Панель организатора — Game Genesis</title>
   <script src="/nav.js"></script>
   <script src="/api.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Exo+2:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Chakra+Petch:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    :root{--gold:#f0c040;--gold-dim:rgba(240,192,64,0.1);--bg:#080c12;--bg-card:#0d1420;--bg-card2:#111928;--bg-input:#0a1018;--border:#1a2436;--border-hi:#253550;--text:#dde4ef;--text-dim:#5c7090;--text-muted:#2e3f58;--success:#4ade80;--red:#f87171;--blue:#60a5fa}
+    :root{--gold:#E11D48;--gold-dim:rgba(225,29,72,0.1);--bg:#090d18;--bg-card:#111827;--bg-card2:#151f30;--bg-input:#0a1020;--border:#1e2d47;--border-hi:#2a3f5f;--text:#e2e8f0;--text-dim:#64748b;--text-muted:#1a2a40;--success:#10b981;--red:#f87171;--blue:#60a5fa}
     ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:#1e2d42;border-radius:3px}
-    body{background:var(--bg);color:var(--text);font-family:'Exo 2',sans-serif}
-    .grid-bg{position:fixed;inset:0;z-index:0;pointer-events:none;background-image:linear-gradient(rgba(240,192,64,.02) 1px,transparent 1px),linear-gradient(90deg,rgba(240,192,64,.02) 1px,transparent 1px);background-size:50px 50px}
+    body{background:var(--bg);color:var(--text);font-family:'Chakra Petch',sans-serif}
+    .grid-bg{position:fixed;inset:0;z-index:0;pointer-events:none;background-image:linear-gradient(rgba(225,29,72,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(225,29,72,.025) 1px,transparent 1px);background-size:60px 60px}
     .page{position:relative;z-index:1;min-height:100vh}
 
     /* TOP */
     .top{padding:24px 40px 0;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
-    .top h1{font-family:'Rajdhani',sans-serif;font-size:26px;font-weight:700;color:#fff}
+    .top h1{font-family:'Russo One',sans-serif;font-size:26px;font-weight:700;color:#fff}
     .top p{font-size:13px;color:var(--text-dim);margin-top:2px}
-    .t-sel{background:var(--bg-card);border:1px solid var(--border-hi);border-radius:10px;padding:8px 32px 8px 14px;font-size:13px;color:var(--text);font-family:'Exo 2',sans-serif;outline:none;cursor:pointer;min-width:280px;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%235c7090' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+    .t-sel{background:var(--bg-card);border:1px solid var(--border-hi);border-radius:10px;padding:8px 32px 8px 14px;font-size:13px;color:var(--text);font-family:'Chakra Petch',sans-serif;outline:none;cursor:pointer;min-width:280px;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
     .t-sel:focus{border-color:var(--gold)}
-    .t-sel option{background:#0d1420}
+    .t-sel option{background:#111827}
 
     /* STATS */
     .stats-row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;padding:20px 40px 0}
     .sc{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:14px 18px}
-    .sc-val{font-family:'Rajdhani',sans-serif;font-size:24px;font-weight:700}
+    .sc-val{font-family:'Russo One',sans-serif;font-size:24px;font-weight:700}
     .sc-key{font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
     .sc.gold .sc-val{color:var(--gold)}.sc.green .sc-val{color:var(--success)}.sc.red .sc-val{color:var(--red)}.sc.blue .sc-val{color:var(--blue)}
 
     /* TABS */
     .tabs{display:flex;gap:2px;padding:16px 40px 0;border-bottom:1px solid var(--border)}
-    .tab{font-family:'Exo 2',sans-serif;font-size:13px;font-weight:500;color:var(--text-dim);padding:12px 16px;cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-1px;transition:.2s;display:flex;align-items:center;gap:7px;white-space:nowrap}
+    .tab{font-family:'Chakra Petch',sans-serif;font-size:13px;font-weight:500;color:var(--text-dim);padding:12px 16px;cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-1px;transition:.2s;display:flex;align-items:center;gap:7px;white-space:nowrap}
     .tab svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
     .tab:hover{color:var(--text)}.tab.active{color:var(--gold);border-bottom-color:var(--gold)}
-    .tb{display:inline-flex;align-items:center;justify-content:center;background:var(--gold);color:#080c12;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;font-family:'Rajdhani',sans-serif;margin-left:2px}
+    .tb{display:inline-flex;align-items:center;justify-content:center;background:var(--gold);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;font-family:'Russo One',sans-serif;margin-left:2px}
 
     /* PANEL */
     .panel{display:none;padding:28px 40px 80px}.panel.active{display:block}
@@ -43,21 +43,21 @@
     /* BLOCK */
     .blk{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;margin-bottom:18px;overflow:hidden}
     .blk-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:10px}
-    .blk-title{font-family:'Rajdhani',sans-serif;font-size:17px;font-weight:700;color:#fff;display:flex;align-items:center;gap:9px}
+    .blk-title{font-family:'Russo One',sans-serif;font-size:17px;font-weight:700;color:#fff;display:flex;align-items:center;gap:9px}
     .blk-title svg{width:16px;height:16px;stroke:var(--gold);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
     .blk-actions{display:flex;gap:8px;flex-wrap:wrap}
 
     /* BUTTONS */
-    .btn-gold{font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;letter-spacing:1px;padding:9px 20px;border-radius:8px;background:var(--gold);color:#080c12;border:none;cursor:pointer;transition:.2s;display:flex;align-items:center;gap:7px;white-space:nowrap}
-    .btn-gold:hover{background:#ffd055;box-shadow:0 0 14px rgba(240,192,64,.3)}
+    .btn-gold{font-family:'Russo One',sans-serif;font-size:13px;letter-spacing:1px;padding:9px 20px;border-radius:6px;background:var(--gold);color:#fff;border:none;cursor:pointer;transition:.2s;display:flex;align-items:center;gap:7px;white-space:nowrap}
+    .btn-gold:hover{background:#F43F5E;box-shadow:0 0 14px rgba(225,29,72,.4)}
     .btn-gold:disabled{background:var(--border-hi);color:var(--text-muted);cursor:not-allowed;box-shadow:none}
     .btn-gold svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
-    .btn-outline{font-family:'Exo 2',sans-serif;font-size:13px;padding:9px 18px;border-radius:8px;border:1px solid var(--border-hi);background:transparent;color:var(--text-dim);cursor:pointer;transition:.2s;display:flex;align-items:center;gap:7px;white-space:nowrap}
+    .btn-outline{font-family:'Chakra Petch',sans-serif;font-size:13px;padding:9px 18px;border-radius:8px;border:1px solid var(--border-hi);background:transparent;color:var(--text-dim);cursor:pointer;transition:.2s;display:flex;align-items:center;gap:7px;white-space:nowrap}
     .btn-outline:hover{border-color:var(--gold);color:var(--gold)}
     .btn-outline svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-    .btn-red{font-family:'Exo 2',sans-serif;font-size:13px;padding:7px 14px;border-radius:7px;border:1px solid rgba(248,113,113,.3);background:transparent;color:var(--red);cursor:pointer;transition:.2s;white-space:nowrap}
+    .btn-red{font-family:'Chakra Petch',sans-serif;font-size:13px;padding:7px 14px;border-radius:7px;border:1px solid rgba(248,113,113,.3);background:transparent;color:var(--red);cursor:pointer;transition:.2s;white-space:nowrap}
     .btn-red:hover{background:rgba(248,113,113,.08)}
-    .btn-green{font-family:'Exo 2',sans-serif;font-size:13px;padding:7px 14px;border-radius:7px;border:1px solid rgba(74,222,128,.3);background:transparent;color:var(--success);cursor:pointer;transition:.2s;white-space:nowrap}
+    .btn-green{font-family:'Chakra Petch',sans-serif;font-size:13px;padding:7px 14px;border-radius:7px;border:1px solid rgba(74,222,128,.3);background:transparent;color:var(--success);cursor:pointer;transition:.2s;white-space:nowrap}
     .btn-green:hover{background:rgba(74,222,128,.08)}
 
     /* TABLE */
@@ -66,12 +66,12 @@
     .tbl td{padding:12px 16px;font-size:13px;color:var(--text);border-bottom:1px solid rgba(26,36,54,.5);vertical-align:middle}
     .tbl tr:last-child td{border-bottom:none}.tbl tr:hover td{background:rgba(255,255,255,.02)}
     .pill{display:inline-flex;align-items:center;gap:4px;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600}
-    .pill-pending{background:rgba(240,192,64,.1);color:var(--gold);border:1px solid rgba(240,192,64,.2)}
+    .pill-pending{background:rgba(225,29,72,.12);color:var(--gold);border:1px solid rgba(225,29,72,.25)}
     .pill-accepted{background:rgba(74,222,128,.1);color:var(--success);border:1px solid rgba(74,222,128,.2)}
     .pill-rejected{background:rgba(248,113,113,.1);color:var(--red);border:1px solid rgba(248,113,113,.2)}
     .act-btns{display:flex;gap:6px}
     .av{display:flex;align-items:center;gap:10px}
-    .av-ic{width:32px;height:32px;border-radius:8px;background:var(--bg-card2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;color:var(--gold);flex-shrink:0}
+    .av-ic{width:32px;height:32px;border-radius:8px;background:var(--bg-card2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:'Russo One',sans-serif;font-size:13px;font-weight:700;color:var(--gold);flex-shrink:0}
     .av-name{font-weight:500}.av-sub{font-size:11px;color:var(--text-dim)}
 
     /* TEAM EXPAND */
@@ -79,7 +79,7 @@
     .team-players.open{display:block}
     .player-row{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(26,36,54,.3);font-size:12px}
     .player-row:last-child{border-bottom:none}
-    .cap-badge{background:var(--gold);color:#080c12;font-size:9px;font-weight:700;padding:1px 6px;border-radius:4px;font-family:'Rajdhani',sans-serif}
+    .cap-badge{background:var(--gold);color:#fff;font-size:9px;font-weight:700;padding:1px 6px;border-radius:4px;font-family:'Russo One',sans-serif}
     .expand-btn{background:none;border:none;color:var(--text-dim);cursor:pointer;padding:4px;transition:.2s;display:flex;align-items:center}
     .expand-btn:hover{color:var(--gold)}
     .expand-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s}
@@ -98,11 +98,11 @@
     .bm:hover{border-color:var(--border-hi);transform:translateY(-1px)}
     .bm.done{border-color:rgba(74,222,128,.35)}
     .bm.grand{border-color:rgba(96,165,250,.4);background:rgba(96,165,250,.04)}
-    .bm.third{border-color:rgba(240,192,64,.3);background:rgba(240,192,64,.04)}
+    .bm.third{border-color:rgba(225,29,72,.4);background:rgba(240,192,64,.04)}
     .bm-num{font-size:9px;color:var(--text-muted);background:var(--bg-card2);padding:2px 8px;letter-spacing:.3px}
     .bm-slot{display:flex;align-items:center;padding:5px 8px;gap:6px;height:26px}
     .bm-slot+.bm-slot{border-top:1px solid rgba(26,36,54,.5)}
-    .bm-seed{font-size:10px;color:var(--text-muted);min-width:14px;font-family:'Rajdhani',sans-serif;font-weight:700}
+    .bm-seed{font-size:10px;color:var(--text-muted);min-width:14px;font-family:'Russo One',sans-serif;font-weight:700}
     .bm-name{flex:1;font-size:12px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .bm-name.tbd{color:var(--text-muted);font-style:italic}
     .bm-name.win{font-weight:700;color:var(--success)}
@@ -112,16 +112,16 @@
     .bracket{display:flex;gap:0;min-width:900px}
     .b-match{background:var(--bg-card2);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin:8px 0;cursor:pointer;transition:.2s}
     .b-match:hover{border-color:var(--border-hi)}
-    .b-match.done{opacity:.7}.b-match.grand{border-color:rgba(240,192,64,.35)}
+    .b-match.done{opacity:.7}.b-match.grand{border-color:rgba(225,29,72,.4)}
     .b-match-hdr{padding:4px 10px;font-size:10px;color:var(--text-muted);background:rgba(0,0,0,.2);display:flex;justify-content:space-between}
     .b-match-hdr.upper-hdr{color:rgba(240,192,64,.6)}.b-match-hdr.lower-hdr{color:rgba(96,165,250,.6)}
     .b-team{display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--border);transition:background .2s}
     .b-team:last-child{border-bottom:none}.b-team:hover{background:rgba(255,255,255,.02)}
-    .b-team.winner{background:rgba(240,192,64,.05)}.b-team.tbd .b-tname{color:var(--text-muted);font-style:italic}
+    .b-team.winner{background:rgba(225,29,72,.05)}.b-team.tbd .b-tname{color:var(--text-muted);font-style:italic}
     .b-seed{width:18px;height:18px;border-radius:4px;background:var(--bg-card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--text-dim);flex-shrink:0}
-    .b-team.winner .b-seed{background:var(--gold-dim);border-color:rgba(240,192,64,.3);color:var(--gold)}
+    .b-team.winner .b-seed{background:var(--gold-dim);border-color:rgba(225,29,72,.4);color:var(--gold)}
     .b-tname{font-size:13px;font-weight:500;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .b-score{font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;color:var(--text-dim)}
+    .b-score{font-family:'Russo One',sans-serif;font-size:16px;font-weight:700;color:var(--text-dim)}
     .b-team.winner .b-score{color:var(--gold)}
 
     /* MATCH MODAL */
@@ -130,20 +130,20 @@
     .modal{background:var(--bg-card);border:1px solid var(--border-hi);border-radius:16px;width:100%;max-width:500px;transform:scale(.95);transition:transform .2s}
     .modal-bg.open .modal{transform:scale(1)}
     .modal-head{display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid var(--border)}
-    .modal-title{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;color:#fff}
+    .modal-title{font-family:'Russo One',sans-serif;font-size:20px;font-weight:700;color:#fff}
     .modal-close{width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text-dim);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s}
     .modal-close:hover{border-color:var(--red);color:var(--red)}
     .modal-close svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
     .modal-body{padding:24px}
     .score-row{display:flex;align-items:center;gap:16px;margin-bottom:20px}
     .score-team{flex:1;text-align:center}
-    .score-tname{font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;color:#fff;margin-bottom:8px}
-    .score-input{width:80px;height:56px;background:var(--bg-input);border:2px solid var(--border);border-radius:10px;font-family:'Rajdhani',sans-serif;font-size:32px;font-weight:700;color:var(--gold);text-align:center;outline:none;transition:border-color .2s;-moz-appearance:textfield}
+    .score-tname{font-family:'Russo One',sans-serif;font-size:16px;font-weight:700;color:#fff;margin-bottom:8px}
+    .score-input{width:80px;height:56px;background:var(--bg-input);border:2px solid var(--border);border-radius:10px;font-family:'Russo One',sans-serif;font-size:32px;font-weight:700;color:var(--gold);text-align:center;outline:none;transition:border-color .2s;-moz-appearance:textfield}
     .score-input::-webkit-outer-spin-button,.score-input::-webkit-inner-spin-button{-webkit-appearance:none}
     .score-input:focus{border-color:var(--gold)}
-    .score-vs{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;color:var(--text-muted)}
+    .score-vs{font-family:'Russo One',sans-serif;font-size:22px;font-weight:700;color:var(--text-muted)}
     .winner-btns{display:flex;gap:8px;justify-content:center;margin-top:8px}
-    .wb{padding:5px 16px;border-radius:20px;border:1px solid var(--border);background:transparent;font-size:12px;font-weight:600;color:var(--text-dim);cursor:pointer;transition:.2s;font-family:'Exo 2',sans-serif}
+    .wb{padding:5px 16px;border-radius:20px;border:1px solid var(--border);background:transparent;font-size:12px;font-weight:600;color:var(--text-dim);cursor:pointer;transition:.2s;font-family:'Chakra Petch',sans-serif}
     .wb.sel{border-color:var(--success);color:var(--success);background:rgba(74,222,128,.08)}
 
     /* CONFIRM */
@@ -151,12 +151,12 @@
     .conf-bg.open{opacity:1;pointer-events:all}
     .conf-box{background:var(--bg-card);border:1px solid rgba(248,113,113,.3);border-radius:14px;padding:28px;max-width:380px;width:100%;text-align:center}
     .conf-icon{font-size:36px;margin-bottom:14px}
-    .conf-title{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;color:#fff;margin-bottom:8px}
+    .conf-title{font-family:'Russo One',sans-serif;font-size:22px;font-weight:700;color:#fff;margin-bottom:8px}
     .conf-text{font-size:13px;color:var(--text-dim);line-height:1.6;margin-bottom:20px}
     .conf-btns{display:flex;gap:10px}
-    .conf-cancel{flex:1;padding:11px;border:1px solid var(--border-hi);border-radius:8px;background:transparent;color:var(--text-dim);cursor:pointer;font-family:'Exo 2',sans-serif;font-size:13px;transition:.2s}
+    .conf-cancel{flex:1;padding:11px;border:1px solid var(--border-hi);border-radius:8px;background:transparent;color:var(--text-dim);cursor:pointer;font-family:'Chakra Petch',sans-serif;font-size:13px;transition:.2s}
     .conf-cancel:hover{border-color:var(--text-dim);color:var(--text)}
-    .conf-ok{flex:1;padding:11px;border:none;border-radius:8px;background:var(--red);color:#fff;cursor:pointer;font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;transition:.2s}
+    .conf-ok{flex:1;padding:11px;border:none;border-radius:8px;background:var(--red);color:#fff;cursor:pointer;font-family:'Russo One',sans-serif;font-size:15px;font-weight:700;transition:.2s}
     .conf-ok:hover{background:#ef4444}
 
     /* TOAST */
@@ -168,16 +168,16 @@
     /* EMPTY */
     .empty{text-align:center;padding:48px 20px;color:var(--text-dim)}
     .empty-icon{font-size:40px;margin-bottom:12px}
-    .empty h3{font-family:'Rajdhani',sans-serif;font-size:18px;margin-bottom:6px}
+    .empty h3{font-family:'Russo One',sans-serif;font-size:18px;margin-bottom:6px}
     .empty p{font-size:13px;color:var(--text-muted)}
 
     /* BRACKET STATUS BANNER */
     .bracket-banner{padding:20px;border-radius:12px;margin-bottom:16px;font-size:14px;line-height:1.6}
-    .bracket-banner.waiting{background:rgba(240,192,64,.06);border:1px solid rgba(240,192,64,.2);color:var(--gold)}
+    .bracket-banner.waiting{background:rgba(225,29,72,.06);border:1px solid rgba(225,29,72,.25);color:var(--gold)}
     .bracket-banner.ready{background:rgba(74,222,128,.06);border:1px solid rgba(74,222,128,.2);color:var(--success)}
 
     @keyframes spin{to{transform:rotate(360deg)}}
-    .spin{width:16px;height:16px;border:2px solid rgba(8,12,18,.3);border-top-color:#080c12;border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
+    .spin{width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
 
     @media(max-width:900px){.stats-row{grid-template-columns:repeat(2,1fr)}.top,.stats-row,.tabs,.panel{padding-left:20px;padding-right:20px}}
   </style>
@@ -245,6 +245,10 @@
             <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
             Принять все
           </button>
+          <button class="btn-outline" onclick="exportTeamsCSV()" title="Скачать список команд и игроков в CSV">
+            <svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Экспорт CSV
+          </button>
           <button class="btn-outline" onclick="recalculateBracket()" title="Заполнить следующие раунды по уже сыгранным матчам" style="display:flex;align-items:center;gap:6px;font-size:13px;">
             <svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;flex-shrink:0;"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.58"/></svg>
             Пересчитать
@@ -285,17 +289,17 @@
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:20px;">
         <div>
           <label style="display:block;font-size:11px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;">Название</label>
-          <input id="set-name" type="text" style="width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text);font-family:'Exo 2',sans-serif;outline:none;box-sizing:border-box;">
+          <input id="set-name" type="text" style="width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text);font-family:'Chakra Petch',sans-serif;outline:none;box-sizing:border-box;">
         </div>
         <div>
           <label style="display:block;font-size:11px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;">Игра</label>
-          <select id="set-game" style="width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text);font-family:'Exo 2',sans-serif;outline:none;cursor:pointer;box-sizing:border-box;">
+          <select id="set-game" style="width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text);font-family:'Chakra Petch',sans-serif;outline:none;cursor:pointer;box-sizing:border-box;">
             <option>CS2</option><option>Dota 2</option><option>Valorant</option><option>FIFA 25</option><option>Mobile Legends</option>
           </select>
         </div>
         <div>
           <label style="display:block;font-size:11px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;">Статус</label>
-          <select id="set-status" style="width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text);font-family:'Exo 2',sans-serif;outline:none;cursor:pointer;box-sizing:border-box;">
+          <select id="set-status" style="width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text);font-family:'Chakra Petch',sans-serif;outline:none;cursor:pointer;box-sizing:border-box;">
             <option value="open">Открыта регистрация</option>
             <option value="soon">Скоро</option>
             <option value="live">Идёт</option>
@@ -304,46 +308,46 @@
         </div>
         <div>
           <label style="display:block;font-size:11px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;">Формат</label>
-          <select id="set-team-size" style="width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text);font-family:'Exo 2',sans-serif;outline:none;cursor:pointer;box-sizing:border-box;">
+          <select id="set-team-size" style="width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text);font-family:'Chakra Petch',sans-serif;outline:none;cursor:pointer;box-sizing:border-box;">
             <option value="1x1">1x1 (Соло)</option><option value="2x2">2x2</option><option value="3x3">3x3</option><option value="5x5">5x5</option>
           </select>
         </div>
         <div>
           <label style="display:block;font-size:11px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;">Макс. слотов</label>
-          <input id="set-max-slots" type="number" min="2" max="256" style="width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text);font-family:'Exo 2',sans-serif;outline:none;box-sizing:border-box;">
+          <input id="set-max-slots" type="number" min="2" max="256" style="width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text);font-family:'Chakra Petch',sans-serif;outline:none;box-sizing:border-box;">
         </div>
         <div>
           <label style="display:block;font-size:11px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;">Дата начала</label>
-          <input id="set-start" type="date" style="width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text);font-family:'Exo 2',sans-serif;outline:none;box-sizing:border-box;">
+          <input id="set-start" type="date" style="width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text);font-family:'Chakra Petch',sans-serif;outline:none;box-sizing:border-box;">
         </div>
         <div>
           <label style="display:block;font-size:11px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;">Начало регистрации</label>
-          <input id="set-reg-start" type="date" style="width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text);font-family:'Exo 2',sans-serif;outline:none;box-sizing:border-box;">
+          <input id="set-reg-start" type="date" style="width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text);font-family:'Chakra Petch',sans-serif;outline:none;box-sizing:border-box;">
         </div>
         <div>
           <label style="display:block;font-size:11px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;">Конец регистрации</label>
-          <input id="set-reg-end" type="date" style="width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text);font-family:'Exo 2',sans-serif;outline:none;box-sizing:border-box;">
+          <input id="set-reg-end" type="date" style="width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text);font-family:'Chakra Petch',sans-serif;outline:none;box-sizing:border-box;">
         </div>
         <div style="grid-column:1/-1;">
           <label style="display:block;font-size:11px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;">Описание</label>
-          <textarea id="set-desc" rows="3" style="width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text);font-family:'Exo 2',sans-serif;outline:none;resize:vertical;box-sizing:border-box;"></textarea>
+          <textarea id="set-desc" rows="3" style="width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text);font-family:'Chakra Petch',sans-serif;outline:none;resize:vertical;box-sizing:border-box;"></textarea>
         </div>
         <div style="grid-column:1/-1;display:flex;align-items:center;gap:10px;">
           <input type="checkbox" id="set-is-student" style="width:18px;height:18px;cursor:pointer;">
           <label for="set-is-student" style="font-size:14px;color:var(--text);cursor:pointer;">Студенческий турнир</label>
         </div>
         <div style="grid-column:1/-1;">
-          <button onclick="saveTournamentSettings()" style="background:var(--gold);border:none;border-radius:8px;padding:12px 28px;font-family:Rajdhani,sans-serif;font-size:15px;font-weight:700;color:#080c12;cursor:pointer;">Сохранить изменения</button>
+          <button onclick="saveTournamentSettings()" style="background:var(--gold);border:none;border-radius:8px;padding:12px 28px;font-family:'Russo One',sans-serif;font-size:14px;color:#fff;cursor:pointer;">Сохранить изменения</button>
         </div>
 
         <!-- Завершение турнира -->
         <div style="grid-column:1/-1;border-top:1px solid var(--border);padding-top:20px;margin-top:4px;">
           <div style="font-size:13px;color:var(--text-dim);margin-bottom:12px;">⚠️ Опасная зона — действие нельзя отменить</div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;">
-            <button onclick="finishTournament()" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:10px 20px;font-family:Rajdhani,sans-serif;font-size:14px;font-weight:700;color:var(--red);cursor:pointer;">
+            <button onclick="finishTournament()" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:10px 20px;font-family:'Russo One',sans-serif;font-size:14px;font-weight:700;color:var(--red);cursor:pointer;">
               🏁 Завершить турнир
             </button>
-            <button onclick="reopenTournament()" style="background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.2);border-radius:8px;padding:10px 20px;font-family:Rajdhani,sans-serif;font-size:14px;font-weight:700;color:var(--success);cursor:pointer;">
+            <button onclick="reopenTournament()" style="background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.2);border-radius:8px;padding:10px 20px;font-family:'Russo One',sans-serif;font-size:14px;font-weight:700;color:var(--success);cursor:pointer;">
               🔄 Переоткрыть регистрацию
             </button>
           </div>
@@ -413,25 +417,25 @@ if (!TOKEN) {
   window.location.href = '/auth.html?redirect=/organizer.html';
 } else if (!USER || (USER.role !== 'admin' && USER.role !== 'organizer')) {
   document.body.innerHTML = `
-    <div style="display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center;padding:40px;font-family:'Exo 2',sans-serif;color:#5c7090;background:#080c12;">
+    <div style="display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center;padding:40px;font-family:'Chakra Petch',sans-serif;color:#64748b;background:#090d18;">
       <div style="max-width:520px;">
         <div style="font-size:56px;margin-bottom:20px;">🏆</div>
-        <div style="font-family:Rajdhani,sans-serif;font-size:28px;font-weight:700;color:#fff;margin-bottom:10px;">Хотите организовывать турниры?</div>
+        <div style="font-family:'Russo One',sans-serif;font-size:28px;font-weight:700;color:#fff;margin-bottom:10px;">Хотите организовывать турниры?</div>
         <div style="font-size:15px;color:#5c7090;line-height:1.7;margin-bottom:32px;">
-          Панель организатора доступна пользователям со статусом <b style="color:#f0c040;">Организатор</b>.<br>
+          Панель организатора доступна пользователям со статусом <b style="color:#E11D48;">Организатор</b>.<br>
           Для получения статуса необходима подписка или разовый взнос.
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:28px;text-align:left;">
           <div style="background:#0f1e35;border:1px solid #1e3a5f;border-radius:12px;padding:20px;">
             <div style="font-size:12px;color:#4a6a8a;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Разовый турнир</div>
-            <div style="font-family:Rajdhani,sans-serif;font-size:30px;font-weight:900;color:#fff;">3 000 ₽</div>
+            <div style="font-family:'Russo One',sans-serif;font-size:30px;font-weight:900;color:#fff;">3 000 ₽</div>
             <div style="font-size:12px;color:#4a6a8a;margin-bottom:12px;">за один турнир</div>
             <div style="font-size:13px;color:#5c7090;line-height:1.8;">✓ 1 турнир любого формата<br>✓ До 128 участников<br>✓ Статистика и рейтинг</div>
           </div>
-          <div style="background:linear-gradient(135deg,rgba(240,192,64,.1),rgba(240,192,64,.03));border:1px solid rgba(240,192,64,.3);border-radius:12px;padding:20px;position:relative;">
-            <div style="position:absolute;top:-10px;right:12px;background:#f0c040;color:#080c12;font-family:Rajdhani,sans-serif;font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;">ВЫГОДНЕЕ</div>
-            <div style="font-size:12px;color:#f0c040;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Подписка</div>
-            <div style="font-family:Rajdhani,sans-serif;font-size:30px;font-weight:900;color:#fff;">15 000 ₽</div>
+          <div style="background:linear-gradient(135deg,rgba(225,29,72,.12),rgba(240,192,64,.03));border:1px solid rgba(225,29,72,.4);border-radius:12px;padding:20px;position:relative;">
+            <div style="position:absolute;top:-10px;right:12px;background:#E11D48;color:#fff;font-family:'Russo One',sans-serif;font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;">ВЫГОДНЕЕ</div>
+            <div style="font-size:12px;color:#E11D48;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Подписка</div>
+            <div style="font-family:'Russo One',sans-serif;font-size:30px;font-weight:900;color:#fff;">15 000 ₽</div>
             <div style="font-size:12px;color:#4a6a8a;margin-bottom:12px;">в месяц</div>
             <div style="font-size:13px;color:#5c7090;line-height:1.8;">✓ Безлимитные турниры<br>✓ Приоритетная поддержка<br>✓ Для вузов — спец. условия</div>
           </div>
@@ -441,7 +445,7 @@ if (!TOKEN) {
         </div>
         <div style="display:flex;gap:12px;justify-content:center;">
           <a href="/tournaments.html" style="display:inline-flex;align-items:center;padding:12px 22px;background:#0f1e35;border:1px solid #1e3a5f;border-radius:8px;color:#fff;text-decoration:none;font-size:14px;">← Турниры</a>
-          <a href="mailto:smagomadov494@gmail.com?subject=Статус организатора Game Genesis&body=Здравствуйте! Хочу получить статус организатора." style="display:inline-flex;align-items:center;padding:12px 22px;background:#f0c040;border-radius:8px;color:#080c12;text-decoration:none;font-family:Rajdhani,sans-serif;font-weight:700;font-size:14px;">📧 Связаться</a>
+          <a href="mailto:smagomadov494@gmail.com?subject=Статус организатора Game Genesis&body=Здравствуйте! Хочу получить статус организатора." style="display:inline-flex;align-items:center;padding:12px 22px;background:#E11D48;border-radius:8px;color:#fff;text-decoration:none;font-family:'Russo One',sans-serif;font-weight:700;font-size:14px;">📧 Связаться</a>
         </div>
       </div>
     </div>`;
@@ -502,6 +506,45 @@ async function loadTeams() {
   } catch(e) { toast('Ошибка загрузки команд', 'err'); }
 }
 
+// ── ЭКСПОРТ CSV (новая функция) ──
+function exportTeamsCSV() {
+  if (!currentTeams || !currentTeams.length) { toast('Нет команд для экспорта', 'err'); return; }
+  var rows = [['Команда', 'Статус', 'Игрок', 'Ник', 'Капитан', 'Дата подачи']];
+  currentTeams.forEach(function(t) {
+    var statusLbl = {pending:'Ожидает', accepted:'Принята', rejected:'Отклонена'}[t.status] || t.status;
+    var players = (t.players || []).filter(function(p){ return p && p.nickname; });
+    if (!players.length) {
+      rows.push([t.name, statusLbl, '', '', '', t.created_at ? new Date(t.created_at).toLocaleDateString('ru-RU') : '']);
+    } else {
+      players.forEach(function(p) {
+        rows.push([
+          t.name, statusLbl,
+          p.full_name || '', p.nickname || '',
+          p.is_captain ? 'Да' : 'Нет',
+          t.created_at ? new Date(t.created_at).toLocaleDateString('ru-RU') : ''
+        ]);
+      });
+    }
+  });
+  var csv = '\uFEFF' + rows.map(function(r) {
+    return r.map(function(cell) {
+      var s = String(cell == null ? '' : cell);
+      return /[",\n;]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+    }).join(';');
+  }).join('\r\n');
+  var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  var tname = (document.getElementById('t-sel').selectedOptions[0] || {}).textContent || 'tournament';
+  a.href = url;
+  a.download = 'команды_' + tname.replace(/[^a-zA-Zа-яА-Я0-9]/g, '_') + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('CSV скачан!');
+}
+
 async function loadBracket() {
   try {
     var res = await fetch('/api/tournaments/' + currentTid + '/bracket', {
@@ -528,7 +571,7 @@ function renderTeams() {
   var mergeBar = soloTeams.length >= 2
     ? '<div style="background:rgba(96,165,250,.08);border:1px solid rgba(96,165,250,.2);border-radius:10px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;gap:12px;">' +
         '<span style="font-size:13px;color:var(--text-dim);flex:1;">🔗 Есть свободные агенты — выберите нескольких и объедините в команду</span>' +
-        '<button onclick="mergeSelectedAgents()" style="background:var(--blue);border:none;border-radius:7px;padding:8px 16px;font-family:Rajdhani,sans-serif;font-size:13px;font-weight:700;color:#fff;cursor:pointer;">Объединить (' + selectedForMerge.length + ')</button>' +
+        '<button onclick="mergeSelectedAgents()" style="background:var(--blue);border:none;border-radius:7px;padding:8px 16px;font-family:'Russo One',sans-serif;font-size:13px;font-weight:700;color:#fff;cursor:pointer;">Объединить (' + selectedForMerge.length + ')</button>' +
       '</div>'
     : '';
 
@@ -590,7 +633,7 @@ function renderTeams() {
       '<td>' + (isSolo && t.status !== 'rejected'
         ? '<input type="checkbox" ' + (isSelected ? 'checked' : '') + ' onchange="toggleMergeSelect(' + t.id + ')" style="width:16px;height:16px;cursor:pointer;accent-color:var(--blue);">'
         : '') + '</td>' +
-      '<td style="color:var(--text-muted);font-family:Rajdhani,sans-serif;font-size:15px;font-weight:700;">' + (i+1) + '</td>' +
+      '<td style="color:var(--text-muted);font-family:'Russo One',sans-serif;font-size:15px;font-weight:700;">' + (i+1) + '</td>' +
       '<td><div class="av"><div class="av-ic">' + ini + '</div><div><div class="av-name">' + t.name + typeTag + '</div>' +
         '<div class="av-sub">' + players.length + ' игроков</div></div></div></td>' +
       '<td><button class="expand-btn" id="eb-' + t.id + '" onclick="togglePlayers(' + t.id + ')"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></button></td>' +
@@ -784,7 +827,7 @@ function showRoster(teamId) {
   header.style.cssText = 'display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;';
 
   var title = document.createElement('div');
-  title.style.cssText = "font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;color:#fff;";
+  title.style.cssText = "font-family:'Russo One',sans-serif;font-size:16px;font-weight:700;color:#fff;";
   title.textContent = team.name;
 
   var closeBtn = document.createElement('button');
@@ -1252,7 +1295,7 @@ function openStats(m) {
   teams.forEach(function(team) {
     if (!team.id) return;
     html += '<div style="margin-bottom:16px;">';
-    html += '<div style="font-family:Rajdhani,sans-serif;font-size:14px;font-weight:700;color:'+(team.id===m.winner_team_id?'var(--success)':'var(--text)')+';margin-bottom:8px;">'+
+    html += '<div style="font-family:'Russo One',sans-serif;font-size:14px;font-weight:700;color:'+(team.id===m.winner_team_id?'var(--success)':'var(--text)')+';margin-bottom:8px;">'+
       (team.id===m.winner_team_id?'🏆 ':'')+team.name+'</div>';
 
     // Заголовок колонок
@@ -1344,7 +1387,7 @@ loadMyTournaments();
 <div class="modal-bg" id="stats-modal">
   <div class="modal" style="max-width:700px;width:95%;">
     <div class="modal-head">
-      <div id="stats-modal-title" style="font-family:Rajdhani,sans-serif;font-size:18px;font-weight:700;">📊 Статистика матча</div>
+      <div id="stats-modal-title" style="font-family:'Russo One',sans-serif;font-size:18px;font-weight:700;">📊 Статистика матча</div>
       <button class="modal-close" onclick="closeStatsModal()">✕</button>
     </div>
     <div style="padding:16px;overflow-y:auto;max-height:65vh;">
