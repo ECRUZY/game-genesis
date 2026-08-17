@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <script src="/nav.js"></script>
+  <script src="/api.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Турнир — Game Genesis</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Chakra+Petch:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --red:       #E11D48;
+      --red-dim:   rgba(225,29,72,0.12);
+      --red-glow:  rgba(225,29,72,0.08);
+      --bg:        #090d18;
+      --bg2:       #0d1225;
+      --card:      #111827;
+      --card2:     #151f30;
+      --border:    #1e2d47;
+      --border-hi: #2a3f5f;
+      --text:      #e2e8f0;
+      --text-dim:  #64748b;
+      --text-muted:#1a2a40;
+      --success:   #10b981;
+      --err:       #f87171;
+      --blue:      #60a5fa;
+      --gold:      #f59e0b;
+    }
+    html { scroll-behavior: smooth; }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 2px; }
+    body { background: var(--bg); color: var(--text); font-family: 'Chakra Petch', sans-serif; overflow-x: hidden; }
+
+    .grid-bg {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background-image: linear-gradient(rgba(225,29,72,0.025) 1px,transparent 1px), linear-gradient(90deg,rgba(225,29,72,0.025) 1px,transparent 1px);
+      background-size: 60px 60px;
+    }
+
+    .page { margin-left: 56px; padding-top: 60px; position: relative; z-index: 1; }
+
+    /* ── HERO ── */
+    .t-hero { position: relative; overflow: hidden; min-height: 300px; display: flex; align-items: flex-end; padding: 0 48px 40px; }
+    .t-hero-bg {
+      position: absolute; inset: 0;
+      background: url('https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/Heart_of_Chechnya_at_night.jpg/1280px-Heart_of_Chechnya_at_night.jpg') center/cover no-repeat;
+      z-index: 0;
+    }
+    .t-cover-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; display: none; }
+    .t-hero-overlay {
+      position: absolute; inset: 0; z-index: 1;
+      background:
+        linear-gradient(to right, rgba(9,13,24,.97) 40%, rgba(9,13,24,.6) 70%, rgba(9,13,24,.25) 100%),
+        linear-gradient(to top, rgba(9,13,24,.95) 0%, rgba(9,13,24,.3) 55%);
+    }
+    .t-hero-accent { position: absolute; top: 0; left: 0; width: 3px; height: 100%; background: linear-gradient(to bottom, transparent, var(--red), transparent); z-index: 3; }
+    .t-hero-content { position: relative; z-index: 3; max-width: 680px; }
+
+    .t-breadcrumb { display: flex; align-items: center; gap: 6px; margin-bottom: 14px; font-size: 11px; color: var(--text-dim); }
+    .t-breadcrumb a { color: var(--text-dim); text-decoration: none; transition: color .2s; }
+    .t-breadcrumb a:hover { color: var(--red); }
+    .t-breadcrumb svg { width: 10px; height: 10px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+    .t-badges { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+    .badge { display: inline-flex; align-items: center; gap: 5px; border-radius: 4px; padding: 4px 10px; font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+    .badge-live { background: rgba(225,29,72,.12); color: var(--red); border: 1px solid rgba(225,29,72,.3); }
+    .badge-live-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; animation: blink 1s infinite; }
+    .badge-open { background: rgba(16,185,129,.1); color: var(--success); border: 1px solid rgba(16,185,129,.25); }
+    .badge-game { background: rgba(96,165,250,.08); color: var(--blue); border: 1px solid rgba(96,165,250,.18); }
+    .badge-free { background: rgba(16,185,129,.08); color: var(--success); border: 1px solid rgba(16,185,129,.18); }
+    .badge-paid { background: rgba(245,158,11,.08); color: var(--gold); border: 1px solid rgba(245,158,11,.18); }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.2} }
+
+    .t-title { font-family: 'Russo One', sans-serif; font-size: clamp(24px, 3.5vw, 42px); color: #fff; line-height: 1.05; margin-bottom: 12px; }
+    .t-desc { font-size: 13px; color: rgba(226,232,240,.5); line-height: 1.75; max-width: 480px; margin-bottom: 24px; font-weight: 400; }
+
+    .t-hero-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .btn-primary { font-family: 'Russo One', sans-serif; font-size: 13px; letter-spacing: 1.5px; padding: 12px 26px; border-radius: 6px; background: var(--red); color: #fff; border: none; cursor: pointer; transition: .2s; display: flex; align-items: center; gap: 8px; }
+    .btn-primary:hover { background: #F43F5E; box-shadow: 0 0 22px rgba(225,29,72,.4); }
+    .btn-primary:disabled { opacity: .5; cursor: not-allowed; box-shadow: none; }
+    .btn-primary svg, .btn-ghost svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+    .btn-ghost { font-family: 'Chakra Petch', sans-serif; font-size: 13px; font-weight: 600; padding: 12px 22px; border-radius: 6px; background: transparent; border: 1px solid rgba(255,255,255,.12); color: var(--text); cursor: pointer; transition: .2s; display: flex; align-items: center; gap: 8px; }
+    .btn-ghost:hover { border-color: rgba(255,255,255,.25); background: rgba(255,255,255,.04); }
+
+    /* Hero stats panel */
+    .t-hero-panel {
+      position: absolute; bottom: 0; right: 0; z-index: 3;
+      display: flex;
+      background: rgba(11,16,28,.97); border-top: 1px solid var(--border); border-left: 1px solid var(--border);
+      border-radius: 10px 0 0 0;
+    }
+    .hp { padding: 12px 22px; text-align: center; border-right: 1px solid var(--border); }
+    .hp:last-child { border-right: none; }
+    .hp-val { font-family: 'Russo One', sans-serif; font-size: 20px; color: var(--red); }
+    .hp-key { font-size: 9px; color: var(--text-dim); text-transform: uppercase; letter-spacing: .8px; margin-top: 2px; }
+
+    /* ── TABS ── */
+    .tabs-bar {
+      display: flex; align-items: center; gap: 2px;
+      padding: 0 48px;
+      background: rgba(9,13,24,.9);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(12px);
+      position: sticky; top: 60px; z-index: 50;
+    }
+    .tab {
+      font-family: 'Chakra Petch', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: .3px;
+      color: var(--text-dim); padding: 15px 16px;
+      cursor: pointer; border: none; background: none;
+      border-bottom: 2px solid transparent; margin-bottom: -1px;
+      transition: color .2s, border-color .2s;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .tab svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .tab:hover { color: var(--text); }
+    .tab.active { color: var(--red); border-bottom-color: var(--red); }
+
+    /* ── TAB PANELS ── */
+    .tab-panel { display: none; padding: 36px 48px 80px; }
+    .tab-panel.active { display: block; }
+
+    /* Section titles */
+    .panel-title { font-family: 'Russo One', sans-serif; font-size: 22px; color: #fff; margin-bottom: 6px; display: flex; align-items: center; gap: 12px; }
+    .panel-title::before { content: ''; display: block; width: 3px; height: 22px; background: var(--red); border-radius: 2px; flex-shrink: 0; }
+    .panel-sub { font-size: 12px; color: var(--text-dim); margin-bottom: 28px; padding-left: 15px; }
+
+    /* ── BRACKET ── */
+    .bracket-wrap { overflow-x: auto; padding: 16px 0 20px; }
+    .b-section { margin-bottom: 28px; }
+    .b-section-title {
+      font-size: 10px; font-weight: 700; color: var(--text-dim);
+      text-transform: uppercase; letter-spacing: 1.5px;
+      padding-bottom: 10px; display: flex; align-items: center; gap: 10px;
+    }
+    .b-section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+    .b-section-title.upper { color: var(--red); }
+    .b-section-title.lower { color: var(--blue); }
+    .b-round-label { font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .8px; text-align: center; padding-bottom: 10px; width: 180px; }
+
+    .bm { width: 180px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; transition: border-color .2s; }
+    .bm:hover { border-color: var(--border-hi); }
+    .bm.done { border-color: rgba(16,185,129,.3); }
+    .bm.grand { border-color: rgba(225,29,72,.4); background: rgba(225,29,72,.04); }
+    .bm.third { border-color: rgba(245,158,11,.3); background: rgba(245,158,11,.04); }
+    .bm-num { font-size: 9px; color: var(--text-muted); background: var(--card2); padding: 3px 8px; letter-spacing: .3px; display: flex; justify-content: space-between; }
+    .bm-slot { display: flex; align-items: center; padding: 5px 8px; gap: 5px; height: 26px; }
+    .bm-slot + .bm-slot { border-top: 1px solid rgba(30,45,71,.4); }
+    .bm-seed { font-size: 9px; color: var(--text-muted); min-width: 14px; font-family: 'Russo One', sans-serif; }
+    .bm-name { flex: 1; font-size: 11px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .bm-name.tbd { color: var(--text-muted); font-style: italic; }
+    .bm-name.win { font-weight: 700; color: var(--success); }
+    .bm-score { font-size: 12px; font-weight: 700; color: var(--text-dim); min-width: 16px; text-align: right; }
+    .bm-score.win { color: var(--success); }
+
+    /* ── RATINGS ── */
+    .standings-item {
+      border-radius: 10px; margin-bottom: 8px; overflow: hidden; cursor: pointer;
+      border: 1px solid var(--border); background: var(--card);
+      transition: border-color .2s;
+    }
+    .standings-item:hover { border-color: var(--border-hi); }
+    .standings-item.place-1 { border-color: rgba(245,158,11,.35); background: linear-gradient(135deg,rgba(245,158,11,.1),rgba(245,158,11,.03)); }
+    .standings-item.place-2 { border-color: rgba(148,163,184,.25); background: linear-gradient(135deg,rgba(148,163,184,.08),transparent); }
+    .standings-item.place-3 { border-color: rgba(180,120,60,.25); background: linear-gradient(135deg,rgba(180,120,60,.1),transparent); }
+    .standings-row { display: flex; align-items: center; gap: 14px; padding: 13px 16px; }
+    .standings-place { min-width: 44px; text-align: center; }
+    .standings-place-icon { font-size: 26px; line-height: 1; }
+    .standings-place-num { font-family: 'Russo One', sans-serif; font-size: 18px; color: var(--text-dim); }
+    .standings-name { font-family: 'Russo One', sans-serif; font-size: 15px; color: #fff; }
+    .standings-sub { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+    .standings-wl { text-align: right; }
+    .standings-w { font-family: 'Russo One', sans-serif; font-size: 13px; color: var(--success); }
+    .standings-l { font-size: 10px; color: var(--text-muted); }
+    .standings-stats { display: none; border-top: 1px solid var(--border); padding: 10px 14px; }
+
+    /* MVP card */
+    .mvp-card {
+      background: linear-gradient(135deg, rgba(225,29,72,.15), rgba(225,29,72,.04));
+      border: 1px solid rgba(225,29,72,.35);
+      border-radius: 10px; padding: 16px 20px;
+      margin-bottom: 20px; display: flex; align-items: center; gap: 16px;
+    }
+    .mvp-icon { font-size: 32px; line-height: 1; }
+    .mvp-label { font-size: 10px; font-weight: 700; color: var(--red); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 4px; }
+    .mvp-name { font-family: 'Russo One', sans-serif; font-size: 20px; color: #fff; }
+    .mvp-stats { display: flex; gap: 16px; margin-top: 6px; }
+    .mvp-stat { font-size: 12px; color: var(--text-dim); }
+    .mvp-stat strong { color: #fff; }
+    .mvp-stat strong.good { color: var(--success); }
+
+    /* Stats grid */
+    .stats-grid { display: grid; grid-template-columns: 1fr 45px 45px 45px 50px 50px; gap: 5px; align-items: center; }
+    .stats-hdr div { font-size: 9px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; text-align: center; padding: 3px 0; }
+    .stats-hdr div:first-child { text-align: left; }
+    .stats-row { background: rgba(255,255,255,.04); border-radius: 6px; }
+    .stats-row div { font-size: 12px; padding: 7px 4px; text-align: center; color: var(--text-dim); }
+    .stats-row div:first-child { text-align: left; font-weight: 600; color: var(--text); padding-left: 8px; }
+
+    /* ── PARTICIPANTS ── */
+    .team-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-bottom: 8px; }
+    .team-card-name { font-family: 'Russo One', sans-serif; font-size: 14px; color: #fff; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+    .team-num { font-size: 12px; color: var(--text-dim); }
+    .team-players { display: flex; flex-wrap: wrap; gap: 6px; }
+    .player-chip { display: flex; align-items: center; gap: 5px; background: var(--card2); border-radius: 5px; padding: 5px 10px; font-size: 12px; color: var(--text); }
+    .player-captain { font-size: 10px; color: var(--red); }
+
+    /* ── INFO ── */
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .info-block { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 20px; }
+    .info-block-title { font-family: 'Russo One', sans-serif; font-size: 14px; color: #fff; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+    .info-block-title svg { width: 14px; height: 14px; stroke: var(--red); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .info-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(30,45,71,.5); font-size: 12px; }
+    .info-row:last-child { border-bottom: none; }
+    .ir-key { color: var(--text-dim); }
+    .ir-val { color: var(--text); font-weight: 600; }
+    .ir-val.red { color: var(--red); }
+    .ir-val.green { color: var(--success); }
+    .ir-val.gold { color: var(--gold); }
+
+    /* Cover change btn */
+    .cover-change-btn {
+      position: absolute; bottom: 12px; right: 16px; z-index: 10;
+      background: rgba(9,13,24,.8); border: 1px solid var(--border-hi);
+      border-radius: 6px; padding: 6px 14px; font-size: 11px; font-weight: 600;
+      color: var(--text-dim); cursor: pointer; transition: .2s; display: none;
+    }
+    .cover-change-btn:hover { border-color: var(--red); color: var(--red); }
+    #cover-upload { display: none; }
+
+    /* Empty states */
+    .empty-state { text-align: center; padding: 60px 20px; }
+    .empty-icon { font-size: 44px; margin-bottom: 14px; }
+    .empty-title { font-family: 'Russo One', sans-serif; font-size: 18px; color: var(--text-dim); margin-bottom: 6px; }
+    .empty-sub { font-size: 12px; color: var(--text-muted); }
+
+    /* Footer */
+    footer { border-top: 1px solid var(--border); padding: 20px 48px; display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--text-muted); flex-wrap: wrap; gap: 10px; }
+    footer a { color: var(--text-dim); text-decoration: none; transition: color .2s; }
+    footer a:hover { color: var(--red); }
+
+    @media(max-width:768px) {
+      .page { margin-left: 0; }
+      .t-hero { padding: 0 20px 32px; min-height: 240px; }
+      .t-hero-panel { display: none; }
+      .tabs-bar { padding: 0 16px; overflow-x: auto; }
+      .tab-panel { padding: 24px 18px 60px; }
+      .info-grid { grid-template-columns: 1fr; }
+      footer { padding: 18px; flex-direction: column; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+<div class="grid-bg"></div>
+
+<div class="page">
+
+  <!-- HERO -->
+  <div class="t-hero">
+    <div class="t-hero-bg" id="t-cover-bg"></div>
+    <img class="t-cover-img" id="t-cover-img" alt="обложка">
+    <div class="t-hero-overlay"></div>
+    <div class="t-hero-accent"></div>
+
+    <div class="t-hero-content">
+      <div class="t-breadcrumb">
+        <a href="index.html">Главная</a>
+        <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        <a href="tournaments.html">Турниры</a>
+        <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        <span id="breadcrumb-name">Загружаем...</span>
+      </div>
+
+      <div class="t-badges" id="t-badges">
+        <span class="badge badge-game" id="badge-game">CS2</span>
+        <span class="badge badge-free" id="badge-status">—</span>
+      </div>
+
+      <h1 class="t-title" id="t-name">Загружаем...</h1>
+      <p class="t-desc" id="t-desc">—</p>
+
+      <div class="t-hero-actions">
+        <button class="btn-primary" id="reg-btn">
+          <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          Подать заявку
+        </button>
+        <button class="btn-ghost">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+          Трансляция
+        </button>
+      </div>
+    </div>
+
+    <div class="t-hero-panel">
+      <div class="hp"><div class="hp-val" id="hp-participants">—</div><div class="hp-key">Участников</div></div>
+      <div class="hp"><div class="hp-val" id="hp-prize">—</div><div class="hp-key">Призовой фонд</div></div>
+      <div class="hp"><div class="hp-val" id="hp-date">—</div><div class="hp-key">Дата начала</div></div>
+      <div class="hp"><div class="hp-val" id="hp-status">—</div><div class="hp-key">Статус</div></div>
+    </div>
+
+    <button class="cover-change-btn" id="cover-change-btn" onclick="document.getElementById('cover-upload').click()">
+      📷 Изменить обложку
+    </button>
+    <input type="file" id="cover-upload" accept="image/*" onchange="uploadCover(this)">
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs-bar">
+    <button class="tab active" onclick="switchTab('bracket',this)">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Сетка
+    </button>
+    <button class="tab" onclick="switchTab('ratings',this)">
+      <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      Рейтинг турнира
+    </button>
+    <button class="tab" onclick="switchTab('participants',this)">
+      <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Участники
+    </button>
+    <button class="tab" onclick="switchTab('info',this)">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      О турнире
+    </button>
+  </div>
+
+  <!-- BRACKET -->
+  <div id="tab-bracket" class="tab-panel active">
+    <div class="panel-title">Сетка турнира</div>
+    <p class="panel-sub" id="bracket-sub">Кликни на матч для перехода к его странице</p>
+    <div id="bracket-wrap"></div>
+  </div>
+
+  <!-- RATINGS -->
+  <div id="tab-ratings" class="tab-panel">
+    <div class="panel-title">Рейтинг участников</div>
+    <p class="panel-sub">Итоговые места по результатам матчей</p>
+    <div id="mvp-block"></div>
+    <div id="ratings-content"></div>
+  </div>
+
+  <!-- PARTICIPANTS -->
+  <div id="tab-participants" class="tab-panel">
+    <div class="panel-title">Команды</div>
+    <p class="panel-sub" id="participants-sub">Принятые участники</p>
+    <div id="participants-wrap"></div>
+  </div>
+
+  <!-- INFO -->
+  <div id="tab-info" class="tab-panel">
+    <div class="panel-title">О турнире</div>
+    <p class="panel-sub">Полная информация и правила</p>
+    <div id="info-content"></div>
+  </div>
+
+  <footer>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span style="font-family:'Russo One',sans-serif;font-size:13px;color:#fff;letter-spacing:1.5px;">GAME <span style="color:var(--red);">GENESIS</span></span>
+      <span>© 2025</span>
+    </div>
+    <div style="display:flex;gap:20px;"><a href="#">Правила</a><a href="#">Поддержка</a></div>
+  </footer>
+
+</div>
+
+<script>
+var TID   = new URLSearchParams(window.location.search).get('id');
+var TOKEN = localStorage.getItem('gg_token');
+var ME    = null;
+try { ME = JSON.parse(localStorage.getItem('gg_user')); } catch(e) {}
+
+function fmtDate(d) { return d ? new Date(d).toLocaleDateString('ru-RU',{day:'numeric',month:'long'}) : '—'; }
+function set(id, val) { var el=document.getElementById(id); if(el) el.textContent=val; }
+
+// ── TABS ──
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab-panel').forEach(function(p){ p.classList.remove('active'); });
+  document.querySelectorAll('.tab').forEach(function(b){ b.classList.remove('active'); });
+  var panel = document.getElementById('tab-'+id);
+  if (panel) panel.classList.add('active');
+  if (btn) btn.classList.add('active');
+}
+
+// ── COVER ──
+function applyCoverImage(src) {
+  var img = document.getElementById('t-cover-img');
+  var bg  = document.getElementById('t-cover-bg');
+  if (src && img) { img.src = src; img.style.display = 'block'; if (bg) bg.style.opacity = '.2'; }
+}
+async function uploadCover(input) {
+  var file = input.files[0];
+  if (!file) return;
+  if (file.size > 5*1024*1024) { alert('Максимум 5MB'); return; }
+  var btn = document.getElementById('cover-change-btn');
+  btn.textContent = '⏳ Загружаем...'; btn.disabled = true;
+  var reader = new FileReader();
+  reader.onload = async function(e) {
+    var b64 = e.target.result;
+    try {
+      var res = await fetch('/api/tournaments/'+TID+'/cover', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json','Authorization':'Bearer '+TOKEN},
+        body: JSON.stringify({cover_image: b64})
+      });
+      if (!res.ok) throw new Error('Ошибка загрузки');
+      applyCoverImage(b64);
+      btn.textContent = '✓ Обновлено';
+      setTimeout(function(){ btn.textContent='📷 Изменить обложку'; btn.disabled=false; }, 2000);
+    } catch(err) { alert('Ошибка: '+err.message); btn.textContent='📷 Изменить обложку'; btn.disabled=false; }
+  };
+  reader.readAsDataURL(file);
+}
+
+// ── LOAD TOURNAMENT ──
+async function loadTournament() {
+  if (!TID) { set('t-name','Укажите ID турнира в URL'); return; }
+  try {
+    var res = await fetch('/api/tournaments/'+TID);
+    if (!res.ok) throw new Error('Турнир не найден');
+    var data = await res.json();
+    var t = data.tournament;
+    var participants = data.participants || [];
+    var accepted = participants.filter(function(p){ return p.status==='accepted'; });
+    var totalPlayers = accepted.reduce(function(sum,team){
+      return sum + (team.players||[]).filter(function(p){ return p&&p.nickname; }).length;
+    }, 0);
+
+    document.title = t.name + ' — Game Genesis';
+    set('t-name', t.name);
+    set('breadcrumb-name', t.name);
+    set('t-desc', t.description || 'Соревнование на платформе Game Genesis');
+    set('hp-participants', totalPlayers + ' / ' + (t.max_slots||16));
+    set('hp-prize', t.prize_pool>0 ? t.prize_pool.toLocaleString('ru-RU')+' ₽' : 'Без призов');
+    set('hp-date', fmtDate(t.start_date));
+
+    var statusMap = {live:'Live',open:'Открыта',soon:'Скоро',done:'Завершён'};
+    set('hp-status', statusMap[t.status]||t.status);
+
+    // Badges
+    var badgeGame = document.getElementById('badge-game');
+    if (badgeGame) badgeGame.textContent = t.game || 'CS2';
+    var badgeStatus = document.getElementById('badge-status');
+    if (badgeStatus) {
+      badgeStatus.textContent = statusMap[t.status]||t.status;
+      badgeStatus.className = 'badge ' + (t.status==='live'?'badge-live':t.status==='open'?'badge-open':'badge-game');
+    }
+    if (t.entry_fee > 0) {
+      var badges = document.getElementById('t-badges');
+      var pb = document.createElement('span');
+      pb.className = 'badge badge-paid'; pb.textContent = t.entry_fee.toLocaleString('ru-RU')+' ₽';
+      if (badges) badges.appendChild(pb);
+    } else {
+      var badges = document.getElementById('t-badges');
+      var fb = document.createElement('span');
+      fb.className = 'badge badge-free'; fb.textContent = 'Бесплатно';
+      if (badges) badges.appendChild(fb);
+    }
+
+    // Cover
+    if (t.cover_image) applyCoverImage(t.cover_image);
+
+    // Cover change button for organizer/admin
+    var coverBtn = document.getElementById('cover-change-btn');
+    if (coverBtn && ME && (ME.role==='admin' || (t.organizer_id && ME.id===t.organizer_id))) {
+      coverBtn.style.display = 'block';
+    }
+
+    // Reg button
+    var teamSize = parseInt((t.team_size||'1x1').split('x')[0]) || 1;
+    var maxTeams = Math.floor((t.max_slots||16) / teamSize);
+    var isFull = accepted.length >= maxTeams;
+    var isOpen = t.status === 'open';
+    var regBtn = document.getElementById('reg-btn');
+    if (regBtn) {
+      if (!isOpen || isFull) {
+        regBtn.disabled = true;
+        regBtn.innerHTML = (isFull ? 'Мест нет' : t.status==='live' ? 'Идёт турнир' : t.status==='done' ? 'Завершён' : 'Регистрация закрыта');
+      } else {
+        regBtn.onclick = function(){ location.href='/tournament-register.html?id='+TID; };
+      }
+    }
+
+    renderParticipants(accepted);
+    renderInfo(t, participants, totalPlayers);
+
+    // Load bracket + ratings
+    fetch('/api/tournaments/'+TID+'/bracket', {
+      headers: TOKEN ? {'Authorization':'Bearer '+TOKEN} : {}
+    }).then(function(r){ return r.json(); }).then(function(bd) {
+      renderBracket(bd);
+      renderRatings(bd.matches||[], bd.teams||[]);
+    }).catch(function(){ renderBracket({}); renderRatings([], []); });
+
+  } catch(e) { set('t-name', e.message); }
+}
+
+// ── PARTICIPANTS ──
+function renderParticipants(teams) {
+  var wrap = document.getElementById('participants-wrap');
+  if (!wrap) return;
+  set('participants-sub', teams.length + ' команд принято');
+  if (!teams.length) {
+    wrap.innerHTML = '<div class="empty-state"><div class="empty-icon">👥</div><div class="empty-title">Участников пока нет</div><div class="empty-sub">Заявки появятся здесь после одобрения</div></div>';
+    return;
+  }
+  var html = '';
+  teams.forEach(function(team, i) {
+    var players = (team.players||[]).filter(function(p){ return p&&p.nickname; });
+    html += '<div class="team-card">' +
+      '<div class="team-card-name"><span class="team-num">#'+(i+1)+'</span>'+(team.team_name||'Команда')+'</div>';
+    if (players.length) {
+      html += '<div class="team-players">';
+      players.forEach(function(p) {
+        html += '<div class="player-chip">' +
+          (p.is_captain ? '<span class="player-captain">★</span>' : '') +
+          '<span>'+p.nickname+'</span></div>';
+      });
+      html += '</div>';
+    }
+    html += '</div>';
+  });
+  wrap.innerHTML = html;
+}
+
+// ── INFO ──
+function renderInfo(t, participants, totalPlayers) {
+  var wrap = document.getElementById('info-content');
+  if (!wrap) return;
+  var fmtMap = {single_elimination:'Single Elimination',se:'Single Elimination',double_elimination:'Double Elimination',de:'Double Elimination',round_robin:'Round Robin',rr:'Round Robin'};
+  var statusMap = {open:'Открыта регистрация',live:'Идёт',soon:'Скоро',done:'Завершён'};
+  var row = function(k,v,cls){ return '<div class="info-row"><span class="ir-key">'+k+'</span><span class="ir-val'+(cls?' '+cls:'')+'" >'+v+'</span></div>'; };
+  wrap.innerHTML =
+    '<div class="info-grid">' +
+    '<div class="info-block">' +
+      '<div class="info-block-title"><svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/></svg>Основная информация</div>' +
+      row('Игра', t.game||'—') +
+      row('Формат', fmtMap[t.format]||t.format||'—') +
+      row('Команда', t.team_size||'1x1') +
+      row('Участников', totalPlayers+' / '+(t.max_slots||16)) +
+      row('Дата начала', fmtDate(t.start_date)) +
+      row('Регистрация', fmtDate(t.reg_start)+' — '+fmtDate(t.reg_end)) +
+      row('Взнос', t.entry_fee>0?t.entry_fee.toLocaleString('ru-RU')+' ₽':'Бесплатно', t.entry_fee>0?'gold':'green') +
+      row('Призовой фонд', t.prize_pool>0?t.prize_pool.toLocaleString('ru-RU')+' ₽':'Без призов', t.prize_pool>0?'red':'') +
+      row('Статус', statusMap[t.status]||t.status, t.status==='live'?'red':t.status==='open'?'green':'') +
+    '</div>' +
+    '<div class="info-block">' +
+      '<div class="info-block-title"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Описание</div>' +
+      '<div style="font-size:13px;color:var(--text-dim);line-height:1.75;font-weight:400;">'+(t.description||'Описание не указано')+'</div>' +
+      (t.rules_link ? '<div style="margin-top:16px;"><a href="'+t.rules_link+'" target="_blank" style="color:var(--red);font-size:12px;font-weight:600;">→ Правила турнира</a></div>' : '') +
+    '</div>' +
+    '</div>';
+}
+
+// ── BRACKET ──
+function grpRounds(arr){ var r={}; arr.forEach(function(m){ if(!r[m.round])r[m.round]=[]; r[m.round].push(m); }); return r; }
+function getRL(r,maxR){ var d=maxR-r; if(d===0)return'Финал'; if(d===1)return'1/2 финала'; if(d===2)return'1/4 финала'; return'Раунд '+r; }
+
+function matchCard(m, extra) {
+  var cls = 'bm'+(m.status==='done'?' done':'')+(extra?' '+extra:'');
+  var t1w = m.status==='done' && m.winner_team_id===m.team1_id;
+  var t2w = m.status==='done' && m.winner_team_id===m.team2_id;
+  var clickable = m.id && (m.team1_name||m.team2_name);
+  return '<div class="'+cls+'"'+(clickable?' onclick="location.href=\'/match.html?id='+m.id+'\'" style="cursor:pointer;"':'')+'>'+
+    '<div class="bm-num">Матч #'+m.match_number+(clickable?'<span style="color:var(--blue);opacity:.7;">→</span>':'')+'</div>'+
+    '<div class="bm-slot">'+
+      '<span class="bm-seed">'+(m.team1_seed||'?')+'</span>'+
+      '<span class="bm-name'+(t1w?' win':'')+(m.team1_name?'':' tbd')+'">'+(m.team1_name||'TBD')+'</span>'+
+      (m.status==='done'?'<span class="bm-score'+(t1w?' win':'')+'">'+m.score1+'</span>':'')+
+    '</div>'+
+    '<div class="bm-slot">'+
+      '<span class="bm-seed">'+(m.team2_seed||'?')+'</span>'+
+      '<span class="bm-name'+(t2w?' win':'')+(m.team2_name?'':' tbd')+'">'+(m.team2_name||'TBD')+'</span>'+
+      (m.status==='done'?'<span class="bm-score'+(t2w?' win':'')+'">'+m.score2+'</span>':'')+
+    '</div>'+
+  '</div>';
+}
+
+function renderSection(matches) {
+  var rounds = grpRounds(matches);
+  var rNums = Object.keys(rounds).map(Number).sort(function(a,b){return a-b;});
+  var maxR = Math.max.apply(null, rNums);
+  var html = '<div style="display:flex;align-items:flex-start;overflow-x:auto;gap:0;padding-bottom:8px;">';
+  rNums.forEach(function(r,ri) {
+    var ms = rounds[r];
+    var topPad = ri===0 ? 0 : (Math.pow(2,ri)-1)*(58+8)/2;
+    var matchGap = Math.pow(2,ri)*(58+8)-58;
+    html += '<div style="flex-shrink:0;margin-right:'+(ri<rNums.length-1?'60px':'0')+';"><div class="b-round-label">'+getRL(r,maxR)+'</div><div style="position:relative;">';
+    ms.forEach(function(m,mi) {
+      html += '<div style="margin-bottom:8px;margin-top:'+(mi===0?topPad:matchGap)+'px;position:relative;">';
+      html += matchCard(m,'');
+      if (ri<rNums.length-1) {
+        var isTop = mi%2===0;
+        var vLen = Math.pow(2,ri)*(58+8)/2;
+        var svgH = vLen+2;
+        html += '<svg style="position:absolute;top:28px;right:-61px;width:61px;height:'+svgH+'px;overflow:visible;" viewBox="0 0 61 '+svgH+'">'+
+          '<path d="M0 1 L30 1 L30 '+(isTop?svgH:1)+' L61 '+(isTop?svgH:1)+'" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="1"/>'+
+        '</svg>';
+      }
+      html += '</div>';
+    });
+    html += '</div></div>';
+  });
+  return html + '</div>';
+}
+
+function renderBracket(data) {
+  var wrap = document.getElementById('bracket-wrap');
+  if (!wrap) return;
+  if (!data.generated) {
+    wrap.innerHTML = '<div class="empty-state"><div class="empty-icon">⚙️</div><div class="empty-title">Сетка не сгенерирована</div><div class="empty-sub">Организатор создаст сетку после закрытия регистрации</div></div>';
+    return;
+  }
+  if (!data.published) {
+    wrap.innerHTML = '<div class="empty-state"><div class="empty-icon">🔒</div><div class="empty-title">Сетка не опубликована</div><div class="empty-sub">Организатор скоро откроет сетку для просмотра</div></div>';
+    return;
+  }
+  var matches = data.matches||[];
+  var upper = matches.filter(function(m){ return m.bracket_type==='upper'; });
+  var lower = matches.filter(function(m){ return m.bracket_type==='lower'; });
+  var grand = matches.filter(function(m){ return m.bracket_type==='grand_final'; });
+  var tp    = matches.filter(function(m){ return m.bracket_type==='third_place'; });
+  var robin = matches.filter(function(m){ return m.bracket_type==='robin'; });
+  var html = '<div class="bracket-wrap">';
+  if (robin.length) {
+    html += '<div class="b-section"><div class="b-section-title">🔄 Круговой этап</div>'+renderSection(robin)+'</div>';
+  } else {
+    if (upper.length) html += '<div class="b-section"><div class="b-section-title upper">▲ Верхняя сетка</div>'+renderSection(upper)+'</div>';
+    if (lower.length) html += '<div class="b-section"><div class="b-section-title lower">▼ Нижняя сетка</div>'+renderSection(lower)+'</div>';
+    if (tp.length) {
+      html += '<div class="b-section"><div class="b-section-title" style="color:var(--gold);">🥉 Матч за 3-е место</div><div style="display:flex;gap:14px;flex-wrap:wrap;">';
+      tp.forEach(function(m){ html += matchCard(m,'third'); });
+      html += '</div></div>';
+    }
+    if (grand.length) {
+      html += '<div class="b-section"><div class="b-section-title" style="color:var(--red);">🏆 Гранд-Финал</div><div style="display:flex;gap:14px;flex-wrap:wrap;">';
+      grand.forEach(function(m){ html += matchCard(m,'grand'); });
+      html += '</div></div>';
+    }
+  }
+  wrap.innerHTML = html + '</div>';
+}
+
+// ── RATINGS ──
+function renderRatings(matches, teams) {
+  var wrap = document.getElementById('ratings-content');
+  var mvpBlock = document.getElementById('mvp-block');
+  if (!wrap) return;
+  if (!matches.length) {
+    wrap.innerHTML = '<div class="empty-state"><div class="empty-icon">📊</div><div class="empty-title">Рейтинг формируется</div><div class="empty-sub">Появится после завершения матчей</div></div>';
+    return;
+  }
+
+  // Build teamMap
+  var teamMap = {};
+  teams.forEach(function(t){ teamMap[t.id]={id:t.id,name:t.name,players:(t.players||[]).filter(function(p){return p&&p.nickname;}),wins:0,losses:0}; });
+  matches.forEach(function(m){
+    if(m.status!=='done'||!m.winner_team_id) return;
+    var w=m.winner_team_id, l=(w===m.team1_id)?m.team2_id:m.team1_id;
+    if(teamMap[w]) teamMap[w].wins++;
+    if(l&&teamMap[l]) teamMap[l].losses++;
+  });
+
+  // Standings
+  var standings={};
+  var gf=matches.find(function(m){return m.bracket_type==='grand_final'&&m.status==='done';});
+  var uf=matches.filter(function(m){return m.bracket_type==='upper'&&m.status==='done';}).sort(function(a,b){return b.round-a.round;})[0];
+  var topF=gf||uf;
+  if(topF&&topF.winner_team_id){var w1=topF.winner_team_id,l1=(w1===topF.team1_id)?topF.team2_id:topF.team1_id;standings[w1]=1;if(l1)standings[l1]=2;}
+  var tp2=matches.find(function(m){return m.bracket_type==='third_place'&&m.status==='done';});
+  if(tp2&&tp2.winner_team_id){var w3=tp2.winner_team_id,l3=(w3===tp2.team1_id)?tp2.team2_id:tp2.team1_id;if(!standings[w3])standings[w3]=3;if(l3&&!standings[l3])standings[l3]=4;}
+  var unranked=Object.values(teamMap).filter(function(t){return !standings[t.id]&&(t.wins>0||t.losses>0);}).sort(function(a,b){return b.wins-a.wins||a.losses-b.losses;});
+  var np=5;
+  unranked.forEach(function(t,i){ standings[t.id]=np+i; });
+  Object.values(teamMap).forEach(function(t){if(!standings[t.id])standings[t.id]='—';});
+
+  var sorted=Object.values(teamMap).filter(function(t){return t.wins>0||t.losses>0;});
+  sorted.sort(function(a,b){ var pa=standings[a.id],pb=standings[b.id]; if(pa==='—'&&pb==='—')return 0; if(pa==='—')return 1; if(pb==='—')return -1; return parseInt(String(pa))-parseInt(String(pb)); });
+
+  // MVP
+  fetch('/api/tournaments/'+TID+'/stats').then(function(r){return r.json();}).then(function(allStats){
+    var nickStats={};
+    allStats.forEach(function(s){
+      if(!nickStats[s.nickname])nickStats[s.nickname]={nickname:s.nickname,kills:0,deaths:0,hs_sum:0,adr_sum:0,n:0};
+      var ns=nickStats[s.nickname]; ns.kills+=s.kills||0; ns.deaths+=s.deaths||0; ns.hs_sum+=(s.hs_pct||0); ns.adr_sum+=(s.adr||0); ns.n++;
+    });
+    var mvpArr=Object.values(nickStats).sort(function(a,b){ var ka=a.deaths>0?a.kills/a.deaths:a.kills,kb=b.deaths>0?b.kills/b.deaths:b.kills; return kb-ka; });
+    if(mvpArr.length&&mvpBlock){
+      var mvp=mvpArr[0];
+      var kd=mvp.deaths>0?(mvp.kills/mvp.deaths).toFixed(2):mvp.kills+'.00';
+      mvpBlock.innerHTML='<div class="mvp-card">'+
+        '<div class="mvp-icon">⚡</div>'+
+        '<div><div class="mvp-label">MVP турнира</div><div class="mvp-name">'+mvp.nickname+'</div>'+
+        '<div class="mvp-stats">'+
+          '<div class="mvp-stat">K/D <strong class="good">'+kd+'</strong></div>'+
+          '<div class="mvp-stat">Убийства <strong>'+mvp.kills+'</strong></div>'+
+          '<div class="mvp-stat">HS% <strong>'+Math.round(mvp.hs_sum/mvp.n)+'%</strong></div>'+
+          '<div class="mvp-stat">ADR <strong>'+Math.round(mvp.adr_sum/mvp.n)+'</strong></div>'+
+        '</div></div></div>';
+    }
+  }).catch(function(){});
+
+  // Standings list
+  var placeIcon={1:'🥇',2:'🥈',3:'🥉'};
+  var html='';
+  sorted.forEach(function(team){
+    var p=standings[team.id], pn=parseInt(String(p));
+    html+='<div class="standings-item'+(pn<=3?' place-'+pn:'')+'" onclick="toggleTeamStats(this,\''+team.id+'\')">'+
+      '<div class="standings-row">'+
+        '<div class="standings-place">'+(placeIcon[pn]?'<div class="standings-place-icon">'+placeIcon[pn]+'</div>':'<div class="standings-place-num">'+p+'</div>')+'</div>'+
+        '<div style="flex:1;"><div class="standings-name">'+team.name+'</div><div class="standings-sub">'+team.wins+' побед · '+team.losses+' поражений · нажмите для статистики ▾</div></div>'+
+        '<div class="standings-wl"><div class="standings-w">'+team.wins+'W</div><div class="standings-l">'+team.losses+'L</div></div>'+
+      '</div>'+
+      '<div class="standings-stats" id="ts-'+team.id+'" data-tid="'+team.id+'"><div style="color:var(--text-muted);font-size:12px;">Загрузка...</div></div>'+
+    '</div>';
+  });
+  wrap.innerHTML = html;
+}
+
+function toggleTeamStats(el, teamId) {
+  var stats = document.getElementById('ts-'+teamId);
+  if (!stats) return;
+  if (stats.style.display !== 'none' && stats.style.display !== '') { stats.style.display = 'none'; return; }
+  stats.style.display = 'block';
+  if (stats.dataset.loaded) return;
+  stats.dataset.loaded = '1';
+  fetch('/api/tournaments/'+TID+'/stats?team_id='+teamId).then(function(r){return r.json();}).then(function(data){
+    if (!data.length) { stats.innerHTML='<div style="color:var(--text-muted);font-size:12px;padding:4px;">Статистика не введена</div>'; return; }
+    var agg={};
+    data.forEach(function(s){
+      if(!agg[s.nickname])agg[s.nickname]={n:s.nickname,k:0,d:0,a:0,hs:0,adr:0,cnt:0};
+      agg[s.nickname].k+=s.kills||0; agg[s.nickname].d+=s.deaths||0; agg[s.nickname].a+=s.assists||0;
+      agg[s.nickname].hs+=(s.hs_pct||0); agg[s.nickname].adr+=(s.adr||0); agg[s.nickname].cnt++;
+    });
+    var rows=Object.values(agg).sort(function(a,b){ var ka=a.d>0?a.k/a.d:a.k,kb=b.d>0?b.k/b.d:b.k; return kb-ka; });
+    var html='<div class="stats-grid stats-hdr"><div>Игрок</div><div>K</div><div>D</div><div>A</div><div>HS%</div><div>ADR</div></div>';
+    rows.forEach(function(s){
+      var kd=s.d>0?(s.k/s.d).toFixed(2):s.k+'.00';
+      var c=parseFloat(kd)>=1.5?'var(--success)':parseFloat(kd)<0.8?'var(--err)':'var(--text)';
+      html+='<div class="stats-grid stats-row">'+
+        '<div>'+s.n+'</div>'+
+        '<div style="color:'+c+';font-weight:700;">'+s.k+'</div>'+
+        '<div>'+s.d+'</div>'+
+        '<div>'+s.a+'</div>'+
+        '<div>'+Math.round(s.hs/s.cnt)+'%</div>'+
+        '<div>'+Math.round(s.adr/s.cnt)+'</div>'+
+      '</div>';
+    });
+    stats.innerHTML = html;
+  }).catch(function(){ stats.innerHTML='<div style="color:var(--text-muted);font-size:12px;">Нет данных</div>'; });
+}
+
+loadTournament();
+</script>
+</body>
+</html>

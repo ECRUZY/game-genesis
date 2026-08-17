@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Создать турнир — Game Genesis</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Chakra+Petch:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --red:       #E11D48;
+      --red-dim:   rgba(225,29,72,0.12);
+      --red-glow:  rgba(225,29,72,0.08);
+      --bg:        #090d18;
+      --bg2:       #0d1225;
+      --card:      #111827;
+      --card2:     #151f30;
+      --input:     #0a1020;
+      --border:    #1e2d47;
+      --border-hi: #2a3f5f;
+      --text:      #e2e8f0;
+      --text-dim:  #64748b;
+      --text-muted:#1a2a40;
+      --success:   #10b981;
+      --err:       #f87171;
+      --blue:      #60a5fa;
+    }
+    html { scroll-behavior: smooth; }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 2px; }
+    body { background: var(--bg); color: var(--text); font-family: 'Chakra Petch', sans-serif; overflow-x: hidden; min-height: 100vh; }
+
+    .grid-bg {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background-image: linear-gradient(rgba(225,29,72,0.025) 1px,transparent 1px), linear-gradient(90deg,rgba(225,29,72,0.025) 1px,transparent 1px);
+      background-size: 60px 60px;
+    }
+
+    /* ── PAGE ── */
+    /* FIX: sidebar=56px not 220px */
+    .page { margin-left: 56px; padding-top: 60px; min-height: 100vh; position: relative; z-index: 1; }
+
+    /* ── WIZARD ── */
+    .wizard-wrap { display: grid; grid-template-columns: 260px 1fr 300px; min-height: calc(100vh - 60px); }
+
+    /* ── LEFT STEPS PANEL ── */
+    .steps-panel {
+      border-right: 1px solid var(--border);
+      padding: 36px 24px;
+      position: sticky; top: 60px; height: calc(100vh - 60px);
+      overflow-y: auto;
+    }
+    .steps-title {
+      font-size: 10px; font-weight: 700; color: var(--text-dim);
+      letter-spacing: 2px; text-transform: uppercase; margin-bottom: 24px;
+    }
+    .step-item {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 11px 0; cursor: pointer; transition: .2s;
+      border-bottom: 1px solid rgba(30,45,71,.4);
+    }
+    .step-item:last-child { border-bottom: none; }
+    .step-dot {
+      width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Russo One', sans-serif; font-size: 11px;
+      background: var(--card2); border: 1px solid var(--border);
+      color: var(--text-dim); transition: .3s; margin-top: 1px;
+    }
+    .step-item.active .step-dot { background: var(--red); border-color: var(--red); color: #fff; }
+    .step-item.done .step-dot { background: rgba(16,185,129,.1); border-color: rgba(16,185,129,.3); color: var(--success); }
+    .step-label { font-size: 13px; color: var(--text-dim); transition: color .2s; line-height: 1.3; }
+    .step-item.active .step-label { color: #fff; font-weight: 600; }
+    .step-item.done .step-label { color: var(--success); }
+    .step-desc { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+    .step-connector { width: 1px; height: 12px; background: var(--border); margin-left: 12px; }
+
+    /* ── CENTER FORM ── */
+    .form-area { padding: 36px 44px 80px; }
+    .form-section { display: none; }
+    .form-section.active { display: block; }
+
+    .fs-header { margin-bottom: 28px; }
+    .fs-step-tag { font-size: 10px; font-weight: 700; color: var(--red); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+    .fs-step-tag::before { content:''; display:block; width:3px; height:14px; background:var(--red); border-radius:2px; }
+    .fs-title { font-family: 'Russo One', sans-serif; font-size: 28px; color: #fff; line-height: 1.05; margin-bottom: 8px; }
+    .fs-desc { font-size: 13px; color: var(--text-dim); line-height: 1.6; font-weight: 400; }
+
+    /* Progress */
+    .progress-bar-wrap { margin-bottom: 28px; }
+    .progress-bar { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
+    .progress-fill { height: 100%; background: var(--red); border-radius: 2px; transition: width .4s ease; }
+    .progress-text { font-size: 10px; color: var(--text-dim); margin-top: 5px; }
+
+    /* Fields */
+    .field { margin-bottom: 20px; }
+    .field label { display: block; font-size: 10px; font-weight: 700; color: var(--text-dim); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 7px; }
+    .req { color: var(--red); margin-left: 2px; }
+    .hint { font-size: 10px; color: var(--text-muted); margin-top: 4px; }
+    .ferr { font-size: 10px; color: var(--err); margin-top: 4px; display: none; }
+    .ferr.show { display: block; }
+
+    input[type=text], input[type=number], input[type=date], input[type=time], input[type=url], textarea, select {
+      width: 100%; background: var(--input); border: 1px solid var(--border);
+      border-radius: 7px; padding: 11px 14px; font-size: 13px; color: var(--text);
+      font-family: 'Chakra Petch', sans-serif; outline: none; transition: border-color .2s;
+      -webkit-appearance: none;
+    }
+    input::placeholder, textarea::placeholder { color: var(--text-muted); font-size: 12px; }
+    input:focus, select:focus, textarea:focus { border-color: var(--red); }
+    input.err, select.err { border-color: var(--err); }
+    textarea { resize: vertical; min-height: 90px; }
+    select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 38px; }
+    select option { background: #111827; }
+
+    .input-prefix { position: relative; }
+    .input-prefix span { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--red); font-family: 'Russo One', sans-serif; font-size: 14px; pointer-events: none; }
+    .input-prefix input { padding-left: 28px; }
+
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .field-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+
+    /* Cover upload */
+    .cover-upload {
+      width: 100%; height: 160px;
+      border: 2px dashed var(--border-hi); border-radius: 10px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 10px; cursor: pointer; transition: border-color .2s, background .2s;
+      position: relative; overflow: hidden; background: var(--input);
+    }
+    .cover-upload:hover { border-color: var(--red); background: var(--card); }
+    .cover-upload input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .cover-upload-icon { color: var(--text-dim); }
+    .cover-upload-icon svg { width: 32px; height: 32px; stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+    .cover-upload-text { font-size: 13px; color: var(--text-dim); font-weight: 600; }
+    .cover-upload-sub { font-size: 11px; color: var(--text-muted); }
+    .cover-upload img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 8px; }
+    .cover-upload .cover-overlay {
+      position: absolute; inset: 0; background: rgba(9,13,24,.75);
+      display: none; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700; color: #fff; gap: 8px;
+      flex-direction: column;
+    }
+    .cover-upload:hover .cover-overlay { display: flex; }
+    .cover-clear {
+      position: absolute; top: 8px; right: 8px; z-index: 3;
+      background: rgba(225,29,72,.85); border: none; border-radius: 5px;
+      width: 26px; height: 26px; cursor: pointer; display: none;
+      align-items: center; justify-content: center; color: #fff;
+      font-size: 14px; font-weight: 700;
+    }
+
+    /* Type cards */
+    .type-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .type-card {
+      background: var(--card); border: 2px solid var(--border);
+      border-radius: 10px; padding: 16px 12px; text-align: center;
+      cursor: pointer; transition: .2s; user-select: none;
+    }
+    .type-card:hover { border-color: var(--border-hi); }
+    .type-card.selected { border-color: var(--red); background: var(--red-dim); }
+    .type-icon { font-size: 26px; margin-bottom: 8px; }
+    .type-name { font-family: 'Russo One', sans-serif; font-size: 13px; color: #fff; margin-bottom: 4px; }
+    .type-desc { font-size: 10px; color: var(--text-dim); line-height: 1.4; }
+
+    /* Tournament type toggle */
+    .ttype-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .ttype-opt {
+      background: var(--card2); border: 2px solid var(--border);
+      border-radius: 10px; padding: 14px; cursor: pointer; transition: .2s; text-align: center;
+    }
+    .ttype-opt:hover { border-color: var(--border-hi); }
+    .ttype-opt.selected-open { border-color: var(--red); background: var(--red-dim); }
+    .ttype-opt.selected-student { border-color: var(--blue); background: rgba(96,165,250,.1); }
+    .ttype-icon { font-size: 24px; margin-bottom: 6px; }
+    .ttype-name { font-family: 'Russo One', sans-serif; font-size: 14px; color: #fff; margin-bottom: 2px; }
+    .ttype-sub { font-size: 10px; color: var(--text-dim); }
+
+    /* Pay toggle */
+    .pay-toggle { display: flex; gap: 10px; }
+    .pay-opt {
+      flex: 1; background: var(--card); border: 2px solid var(--border);
+      border-radius: 10px; padding: 14px; cursor: pointer; transition: .2s; text-align: center;
+    }
+    .pay-opt:hover { border-color: var(--border-hi); }
+    .pay-opt.selected { border-color: var(--red); background: var(--red-dim); }
+    .pay-opt-icon { font-size: 22px; margin-bottom: 5px; }
+    .pay-opt-title { font-family: 'Russo One', sans-serif; font-size: 15px; color: #fff; }
+    .pay-opt-sub { font-size: 10px; color: var(--text-dim); margin-top: 2px; }
+
+    #paid-section { display: none; }
+    #paid-section.show { display: block; }
+
+    /* Slider */
+    .slider-wrap { margin: 8px 0 5px; }
+    input[type=range] { width: 100%; background: transparent; border: none; padding: 0; -webkit-appearance: none; cursor: pointer; }
+    input[type=range]::-webkit-slider-track { height: 4px; background: var(--border); border-radius: 2px; }
+    input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--red); border: 2px solid var(--bg); margin-top: -7px; box-shadow: 0 0 10px rgba(225,29,72,.4); }
+    input[type=range]:focus { outline: none; border: none; }
+    .slider-labels { display: flex; justify-content: space-between; font-size: 10px; color: var(--text-muted); margin-top: 4px; }
+
+    /* Nav buttons */
+    .form-nav { display: flex; align-items: center; justify-content: space-between; margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--border); }
+    .btn-prev { font-family: 'Chakra Petch', sans-serif; font-size: 12px; font-weight: 600; padding: 10px 20px; border-radius: 7px; border: 1px solid var(--border-hi); background: transparent; color: var(--text-dim); cursor: pointer; transition: .2s; display: flex; align-items: center; gap: 6px; }
+    .btn-prev svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .btn-prev:hover { border-color: var(--red); color: var(--red); }
+    .btn-next { font-family: 'Russo One', sans-serif; font-size: 14px; letter-spacing: 1.5px; padding: 11px 30px; border-radius: 7px; border: none; background: var(--red); color: #fff; cursor: pointer; transition: .2s; display: flex; align-items: center; gap: 8px; }
+    .btn-next svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+    .btn-next:hover { background: #F43F5E; box-shadow: 0 0 20px rgba(225,29,72,.4); }
+    .btn-next:disabled { background: var(--border); color: var(--text-dim); box-shadow: none; cursor: not-allowed; }
+
+    /* ── RIGHT PREVIEW ── */
+    .preview-panel {
+      border-left: 1px solid var(--border);
+      padding: 36px 20px;
+      position: sticky; top: 60px; height: calc(100vh - 60px);
+      overflow-y: auto;
+    }
+    .preview-title { font-size: 10px; font-weight: 700; color: var(--text-dim); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 18px; }
+
+    .preview-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 14px; }
+    .preview-card-top { height: 80px; background: linear-gradient(135deg, #0f1e35, #1a0a2e); position: relative; display: flex; align-items: flex-end; padding: 8px 12px; overflow: hidden; }
+    .preview-card-top img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .5; display: none; }
+    .preview-card-top::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 40%, rgba(13,20,32,.9)); }
+    .preview-game-badge { position: relative; z-index: 1; font-size: 9px; font-weight: 700; color: var(--text); background: rgba(9,13,24,.8); border: 1px solid var(--border-hi); border-radius: 4px; padding: 2px 8px; }
+    .preview-body { padding: 12px 14px; }
+    .preview-t-name { font-family: 'Russo One', sans-serif; font-size: 14px; color: #fff; margin-bottom: 10px; min-height: 18px; }
+    .preview-row { display: flex; align-items: center; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid rgba(30,45,71,.4); font-size: 11px; }
+    .preview-row:last-child { border-bottom: none; }
+    .pr-key { color: var(--text-dim); }
+    .pr-val { color: var(--text); font-weight: 600; }
+    .pr-val.red { color: var(--red); font-family: 'Russo One', sans-serif; font-size: 13px; }
+    .pr-val.green { color: var(--success); }
+    .pr-placeholder { color: var(--text-muted); font-style: italic; font-weight: 400; }
+
+    /* Calculator */
+    .calc-box { background: rgba(225,29,72,.05); border: 1px solid rgba(225,29,72,.2); border-radius: 10px; padding: 16px; display: none; }
+    .calc-box.show { display: block; }
+    .calc-title { font-family: 'Russo One', sans-serif; font-size: 12px; color: var(--red); margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+    .calc-title svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .calc-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid rgba(225,29,72,.08); font-size: 11px; }
+    .calc-row:last-child { border-bottom: none; }
+    .cr-key { color: rgba(226,232,240,.4); }
+    .cr-val { font-family: 'Russo One', sans-serif; font-size: 13px; color: var(--red); }
+    .cr-val.dim { color: var(--text-dim); font-size: 11px; font-family: 'Chakra Petch', sans-serif; }
+    .cr-val.green { color: var(--success); }
+    .cr-val.err { color: var(--err); }
+    .calc-divider { border: none; border-top: 1px solid rgba(225,29,72,.12); margin: 3px 0; }
+
+    /* Review block */
+    .review-block { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 20px; }
+    .review-block-title { font-family: 'Russo One', sans-serif; font-size: 14px; color: #fff; margin-bottom: 14px; }
+    .sc-row { display: flex; justify-content: space-between; font-size: 12px; padding: 6px 0; border-bottom: 1px solid rgba(30,45,71,.5); }
+    .sc-row:last-child { border-bottom: none; }
+    .sc-row span:first-child { color: var(--text-dim); }
+    .sc-row span:last-child { color: var(--text); font-weight: 600; }
+
+    /* Success */
+    #success-screen { display: none; }
+    .success-wrap { max-width: 500px; margin: 70px auto; text-align: center; padding: 0 24px; }
+    .success-circle { width: 80px; height: 80px; border-radius: 50%; background: rgba(16,185,129,.1); border: 1px solid rgba(16,185,129,.25); display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; }
+    .success-circle svg { width: 36px; height: 36px; stroke: var(--success); fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+    .success-title { font-family: 'Russo One', sans-serif; font-size: 30px; color: #fff; margin-bottom: 10px; }
+    .success-sub { font-size: 13px; color: var(--text-dim); line-height: 1.7; margin-bottom: 24px; }
+    .success-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 18px; text-align: left; margin-bottom: 24px; }
+    .success-btns { display: flex; gap: 12px; justify-content: center; }
+
+    /* Placement info */
+    .placement-info {
+      background: rgba(16,185,129,.05); border: 1px solid rgba(16,185,129,.2);
+      border-radius: 8px; padding: 14px; margin-bottom: 20px;
+      font-size: 12px; color: var(--text-dim); line-height: 1.7;
+    }
+    .placement-info b { color: var(--success); }
+
+    footer { border-top: 1px solid var(--border); padding: 20px 44px; display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--text-muted); flex-wrap: wrap; gap: 10px; }
+    footer a { color: var(--text-dim); text-decoration: none; transition: color .2s; }
+    footer a:hover { color: var(--red); }
+
+    @media(max-width:1100px) { .wizard-wrap { grid-template-columns: 220px 1fr; } .preview-panel { display: none; } }
+    @media(max-width:768px) {
+      .page { margin-left: 0; }
+      .wizard-wrap { grid-template-columns: 1fr; }
+      .steps-panel { display: none; }
+      .form-area { padding: 24px 18px 60px; }
+      .type-cards { grid-template-columns: 1fr; }
+      .field-row, .field-row-3 { grid-template-columns: 1fr; }
+      footer { padding: 18px; }
+    }
+  </style>
+</head>
+<body>
+<div class="grid-bg"></div>
+
+<!-- nav.js: defer to not block render — FIX #2 -->
+<script defer src="nav.js"></script>
+<div id="nav-root"></div>
+
+<div class="page">
+  <div class="wizard-wrap" id="wizard-wrap">
+
+    <!-- LEFT STEPS -->
+    <div class="steps-panel">
+      <div class="steps-title">Шаги создания</div>
+
+      <div class="step-item active" id="si-1" onclick="goToStep(1)">
+        <div class="step-dot">1</div>
+        <div><div class="step-label">Название и игра</div><div class="step-desc">Основная информация</div></div>
+      </div>
+      <div class="step-connector"></div>
+      <div class="step-item" id="si-2" onclick="goToStep(2)">
+        <div class="step-dot">2</div>
+        <div><div class="step-label">Обложка</div><div class="step-desc">Фото турнира</div></div>
+      </div>
+      <div class="step-connector"></div>
+      <div class="step-item" id="si-3" onclick="goToStep(3)">
+        <div class="step-dot">3</div>
+        <div><div class="step-label">Формат и тип</div><div class="step-desc">Структура сетки</div></div>
+      </div>
+      <div class="step-connector"></div>
+      <div class="step-item" id="si-4" onclick="goToStep(4)">
+        <div class="step-dot">4</div>
+        <div><div class="step-label">Участники и даты</div><div class="step-desc">Лимиты и расписание</div></div>
+      </div>
+      <div class="step-connector"></div>
+      <div class="step-item" id="si-5" onclick="goToStep(5)">
+        <div class="step-dot">5</div>
+        <div><div class="step-label">Взнос и призы</div><div class="step-desc">Финансовые условия</div></div>
+      </div>
+      <div class="step-connector"></div>
+      <div class="step-item" id="si-6" onclick="goToStep(6)">
+        <div class="step-dot">6</div>
+        <div><div class="step-label">Публикация</div><div class="step-desc">Проверка и запуск</div></div>
+      </div>
+    </div>
+
+    <!-- CENTER FORM -->
+    <div class="form-area">
+
+      <!-- STEP 1: Название и игра -->
+      <div class="form-section active" id="fs-1">
+        <div class="fs-header">
+          <div class="fs-step-tag">Шаг 1 из 6</div>
+          <h1 class="fs-title">Название<br>и дисциплина</h1>
+          <p class="fs-desc">Дайте турниру запоминающееся имя и выберите игру.</p>
+        </div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar"><div class="progress-fill" style="width:17%"></div></div>
+          <div class="progress-text">Шаг 1 из 6</div>
+        </div>
+
+        <div class="field">
+          <label for="t-name">Название турнира <span class="req">*</span></label>
+          <input type="text" id="t-name" placeholder="Открытый Чемпионат Чеченской Республики" oninput="updatePreview()">
+          <div class="ferr" id="err-name">Введите название турнира</div>
+        </div>
+
+        <div class="field">
+          <label for="t-desc">Описание</label>
+          <textarea id="t-desc" placeholder="Расскажите участникам о турнире, правилах и особенностях..."></textarea>
+        </div>
+
+        <div class="field">
+          <label for="t-game">Игра <span class="req">*</span></label>
+          <select id="t-game" onchange="updatePreview()">
+            <option value="">— Выберите дисциплину —</option>
+            <option value="CS2">CS2</option>
+            <option value="Dota 2">Dota 2</option>
+            <option value="Valorant">Valorant</option>
+            <option value="FIFA 25">FIFA 25 / EA FC</option>
+            <option value="Mobile Legends">Mobile Legends</option>
+            <option value="PUBG Mobile">PUBG Mobile</option>
+            <option value="Другое">Другое</option>
+          </select>
+          <div class="ferr" id="err-game">Выберите игру</div>
+        </div>
+
+        <div class="field">
+          <label>Регион проведения</label>
+          <select id="t-region">
+            <option value="Чеченская Республика">Чеченская Республика</option>
+            <option value="Грозный">Грозный</option>
+            <option value="Онлайн">Онлайн</option>
+            <option value="Другой">Другой регион</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Тип турнира</label>
+          <div class="ttype-toggle">
+            <div id="tc-open" class="ttype-opt selected-open" onclick="setTournamentType('open')">
+              <div class="ttype-icon">🏆</div>
+              <div class="ttype-name">Открытый</div>
+              <div class="ttype-sub">Для всех желающих</div>
+            </div>
+            <div id="tc-student" class="ttype-opt" onclick="setTournamentType('student')">
+              <div class="ttype-icon">🎓</div>
+              <div class="ttype-name">Студенческий</div>
+              <div class="ttype-sub">Только для студентов</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-nav">
+          <div></div>
+          <button class="btn-next" onclick="nextStep(1)">Далее <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></button>
+        </div>
+      </div>
+
+      <!-- STEP 2: Обложка — НОВЫЙ РАЗДЕЛ FIX #3 -->
+      <div class="form-section" id="fs-2">
+        <div class="fs-header">
+          <div class="fs-step-tag">Шаг 2 из 6</div>
+          <h1 class="fs-title">Обложка<br>турнира</h1>
+          <p class="fs-desc">Загрузите фото или баннер — оно будет отображаться на карточке турнира.</p>
+        </div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar"><div class="progress-fill" style="width:33%"></div></div>
+          <div class="progress-text">Шаг 2 из 6</div>
+        </div>
+
+        <div class="field">
+          <label>Фото обложки</label>
+          <div class="cover-upload" id="cover-upload-zone" onclick="triggerCoverInput()">
+            <input type="file" id="cover-input" accept="image/*" onchange="handleCover(this)" onclick="event.stopPropagation()">
+            <div class="cover-upload-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>
+            <div class="cover-upload-text">Нажми чтобы загрузить</div>
+            <div class="cover-upload-sub">JPG, PNG, WebP — до 5MB · Рекомендуем 1280×720</div>
+            <img id="cover-preview-img" alt="обложка">
+            <div class="cover-overlay">
+              <svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Заменить фото
+            </div>
+            <button class="cover-clear" id="cover-clear-btn" onclick="clearCover(event)">✕</button>
+          </div>
+          <div class="hint">Необязательно. Без фото будет стандартный градиентный фон.</div>
+        </div>
+
+        <div class="form-nav">
+          <button class="btn-prev" onclick="prevStep(2)"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg> Назад</button>
+          <button class="btn-next" onclick="nextStep(2)">Далее <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></button>
+        </div>
+      </div>
+
+      <!-- STEP 3: Формат -->
+      <div class="form-section" id="fs-3">
+        <div class="fs-header">
+          <div class="fs-step-tag">Шаг 3 из 6</div>
+          <h1 class="fs-title">Формат<br>и тип сетки</h1>
+          <p class="fs-desc">Выберите структуру соревнований.</p>
+        </div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar"><div class="progress-fill" style="width:50%"></div></div>
+          <div class="progress-text">Шаг 3 из 6</div>
+        </div>
+
+        <div class="field">
+          <label>Тип сетки <span class="req">*</span></label>
+          <div class="type-cards">
+            <div class="type-card selected" id="tc-se" onclick="selectType('se')">
+              <div class="type-icon">⚡</div>
+              <div class="type-name">Single Elimination</div>
+              <div class="type-desc">Одно поражение — выбывание. Быстро и напряжённо.</div>
+            </div>
+            <div class="type-card" id="tc-de" onclick="selectType('de')">
+              <div class="type-icon">🔁</div>
+              <div class="type-name">Double Elimination</div>
+              <div class="type-desc">Два шанса. Нижняя сетка для проигравших.</div>
+            </div>
+            <div class="type-card" id="tc-rr" onclick="selectType('rr')">
+              <div class="type-icon">🔄</div>
+              <div class="type-name">Round Robin</div>
+              <div class="type-desc">Все играют со всеми. Честный результат.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="t-team-size">Формат команды <span class="req">*</span></label>
+          <select id="t-team-size" onchange="updatePreview()">
+            <option value="1x1">1 на 1 (соло)</option>
+            <option value="2x2">2 на 2</option>
+            <option value="5x5" selected>5 на 5</option>
+            <option value="Другое">Другое</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="t-rules">Ссылка на правила</label>
+          <input type="url" id="t-rules" placeholder="https://...">
+          <div class="hint">Необязательно. Можно добавить позже.</div>
+        </div>
+
+        <div class="form-nav">
+          <button class="btn-prev" onclick="prevStep(3)"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg> Назад</button>
+          <button class="btn-next" onclick="nextStep(3)">Далее <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></button>
+        </div>
+      </div>
+
+      <!-- STEP 4: Участники и даты -->
+      <div class="form-section" id="fs-4">
+        <div class="fs-header">
+          <div class="fs-step-tag">Шаг 4 из 6</div>
+          <h1 class="fs-title">Участники<br>и расписание</h1>
+          <p class="fs-desc">Установите лимиты и даты проведения.</p>
+        </div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar"><div class="progress-fill" style="width:67%"></div></div>
+          <div class="progress-text">Шаг 4 из 6</div>
+        </div>
+
+        <div class="field">
+          <label for="t-slots">Максимум участников <span class="req">*</span></label>
+          <select id="t-slots" onchange="updatePreview(); calcPrize()">
+            <option value="8">8</option>
+            <option value="16" selected>16</option>
+            <option value="32">32</option>
+            <option value="64">64</option>
+            <option value="128">128</option>
+            <option value="256">256</option>
+          </select>
+          <div class="hint">Рекомендуется степень двойки для ровных сеток.</div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="t-reg-start">Регистрация открывается <span class="req">*</span></label>
+            <input type="date" id="t-reg-start" onchange="updatePreview()">
+            <div class="ferr" id="err-reg">Укажите дату</div>
+          </div>
+          <div class="field">
+            <label for="t-reg-end">Регистрация закрывается <span class="req">*</span></label>
+            <input type="date" id="t-reg-end" onchange="updatePreview()">
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="t-start">Дата начала турнира <span class="req">*</span></label>
+            <input type="date" id="t-start" onchange="updatePreview()">
+            <div class="ferr" id="err-start">Укажите дату</div>
+          </div>
+          <div class="field">
+            <label for="t-start-time">Время начала</label>
+            <input type="time" id="t-start-time" value="18:00">
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="t-min-age">Минимальный возраст</label>
+          <select id="t-min-age">
+            <option value="Без ограничений">Без ограничений</option>
+            <option value="14+" selected>14+</option>
+            <option value="16+">16+</option>
+            <option value="18+">18+</option>
+          </select>
+        </div>
+
+        <div class="form-nav">
+          <button class="btn-prev" onclick="prevStep(4)"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg> Назад</button>
+          <button class="btn-next" onclick="nextStep(4)">Далее <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></button>
+        </div>
+      </div>
+
+      <!-- STEP 5: Взнос и призы -->
+      <div class="form-section" id="fs-5">
+        <div class="fs-header">
+          <div class="fs-step-tag">Шаг 5 из 6</div>
+          <h1 class="fs-title">Взнос<br>и призовой фонд</h1>
+          <p class="fs-desc">Выберите модель оплаты и настройте распределение призов.</p>
+        </div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar"><div class="progress-fill" style="width:83%"></div></div>
+          <div class="progress-text">Шаг 5 из 6</div>
+        </div>
+
+        <div class="field">
+          <label>Тип турнира по оплате <span class="req">*</span></label>
+          <div class="pay-toggle">
+            <div class="pay-opt selected" id="po-free" onclick="selectPay('free')">
+              <div class="pay-opt-icon">🆓</div>
+              <div class="pay-opt-title">Бесплатный</div>
+              <div class="pay-opt-sub">Без взноса от участников</div>
+            </div>
+            <div class="pay-opt" id="po-paid" onclick="selectPay('paid')">
+              <div class="pay-opt-icon">💰</div>
+              <div class="pay-opt-title">Платный</div>
+              <div class="pay-opt-sub">Участники платят взнос</div>
+            </div>
+          </div>
+        </div>
+
+        <div id="paid-section">
+          <div class="field">
+            <label for="t-entry-fee">Взнос с участника (₽) <span class="req">*</span></label>
+            <div class="input-prefix">
+              <span>₽</span>
+              <input type="number" id="t-entry-fee" placeholder="500" min="100" max="50000" oninput="calcPrize(); updatePreview()">
+            </div>
+            <div class="hint">Рекомендуемый взнос: 300–1000 ₽</div>
+            <div class="ferr" id="err-fee">Укажите взнос (мин. 100 ₽)</div>
+          </div>
+          <div class="field">
+            <label>Доля призового фонда: <span id="prize-pct-label" style="color:var(--red);font-weight:700;">50%</span></label>
+            <div class="slider-wrap">
+              <input type="range" id="prize-slider" min="50" max="80" value="50" step="1" oninput="onSliderChange()">
+            </div>
+            <div class="slider-labels"><span>50% (минимум)</span><span>80% (максимум)</span></div>
+            <div class="hint">20% идёт платформе. Остальное организатор распределяет самостоятельно.</div>
+          </div>
+        </div>
+
+        <div id="free-section">
+          <div class="field">
+            <label for="t-free-prize">Призовой фонд от организатора (₽)</label>
+            <div class="input-prefix">
+              <span>₽</span>
+              <input type="number" id="t-free-prize" placeholder="10000" min="0" oninput="calcPrize(); updatePreview()">
+            </div>
+            <div class="hint">Необязательно. Можете провести турнир без денежных призов.</div>
+          </div>
+        </div>
+
+        <div class="form-nav">
+          <button class="btn-prev" onclick="prevStep(5)"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg> Назад</button>
+          <button class="btn-next" onclick="nextStep(5)">Далее <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></button>
+        </div>
+      </div>
+
+      <!-- STEP 6: Публикация -->
+      <div class="form-section" id="fs-6">
+        <div class="fs-header">
+          <div class="fs-step-tag">Шаг 6 из 6</div>
+          <h1 class="fs-title">Проверка<br>и публикация</h1>
+          <p class="fs-desc">Убедитесь что всё верно, затем опубликуйте турнир.</p>
+        </div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+          <div class="progress-text">Последний шаг!</div>
+        </div>
+
+        <div class="review-block">
+          <div class="review-block-title">Сводка турнира</div>
+          <div class="sc-row"><span>Название</span><span id="rv-name">—</span></div>
+          <div class="sc-row"><span>Игра</span><span id="rv-game">—</span></div>
+          <div class="sc-row"><span>Формат</span><span id="rv-format">—</span></div>
+          <div class="sc-row"><span>Команда</span><span id="rv-team">—</span></div>
+          <div class="sc-row"><span>Участников</span><span id="rv-slots">—</span></div>
+          <div class="sc-row"><span>Дата начала</span><span id="rv-date">—</span></div>
+          <div class="sc-row"><span>Обложка</span><span id="rv-cover">Без фото</span></div>
+          <div class="sc-row"><span>Взнос</span><span id="rv-fee">—</span></div>
+          <div class="sc-row"><span>Призовой фонд</span><span id="rv-prize" style="color:var(--red);font-family:'Russo One',sans-serif;">—</span></div>
+        </div>
+
+        <div class="placement-info" id="placement-cost-block">
+          <b id="placement-cost-label">Стоимость размещения: 3 000 ₽</b><br>
+          После публикации турнир станет виден на главной странице платформы.
+        </div>
+
+        <div class="field">
+          <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:12px;font-weight:400;color:var(--text-dim);">
+            <input type="checkbox" id="agree-rules" style="width:17px;height:17px;min-width:17px;accent-color:var(--red);padding:0;border-radius:4px;margin-top:1px;">
+            Я согласен с <a href="#" style="color:var(--red);">правилами платформы</a> и подтверждаю что предоставленная информация корректна.
+          </label>
+        </div>
+
+        <div class="form-nav">
+          <button class="btn-prev" onclick="prevStep(6)"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg> Назад</button>
+          <button class="btn-next" onclick="publish()" id="publish-btn">
+            Опубликовать
+            <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
+        </div>
+      </div>
+
+    </div><!-- /form-area -->
+
+    <!-- RIGHT PREVIEW -->
+    <div class="preview-panel">
+      <div class="preview-title">Предпросмотр</div>
+
+      <div class="preview-card">
+        <div class="preview-card-top" id="preview-card-top">
+          <img id="prev-cover-img" alt="обложка">
+          <div class="preview-game-badge" id="prev-game-badge">Игра не выбрана</div>
+        </div>
+        <div class="preview-body">
+          <div class="preview-t-name" id="prev-name"><span class="pr-placeholder">Название турнира...</span></div>
+          <div class="preview-row"><span class="pr-key">Формат</span><span class="pr-val" id="prev-format">—</span></div>
+          <div class="preview-row"><span class="pr-key">Участников</span><span class="pr-val" id="prev-slots">—</span></div>
+          <div class="preview-row"><span class="pr-key">Дата</span><span class="pr-val" id="prev-date">—</span></div>
+          <div class="preview-row"><span class="pr-key">Взнос</span><span class="pr-val green" id="prev-fee">Бесплатно</span></div>
+          <div class="preview-row"><span class="pr-key">Призовой фонд</span><span class="pr-val red" id="prev-prize">—</span></div>
+        </div>
+      </div>
+
+      <div class="calc-box" id="calc-box">
+        <div class="calc-title">
+          <svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="16" y1="12" x2="8" y2="12"/><line x1="8" y1="18" x2="12" y2="18"/></svg>
+          Калькулятор призового фонда
+        </div>
+        <div class="calc-row"><span class="cr-key">Участников max</span><span class="cr-val dim" id="calc-slots">—</span></div>
+        <div class="calc-row"><span class="cr-key">Взнос</span><span class="cr-val dim" id="calc-fee">—</span></div>
+        <div class="calc-row"><span class="cr-key">Валовой сбор</span><span class="cr-val dim" id="calc-gross">—</span></div>
+        <hr class="calc-divider">
+        <div class="calc-row"><span class="cr-key">Доля призового (<span id="calc-pct">50</span>%)</span><span class="cr-val green" id="calc-prize">—</span></div>
+        <div class="calc-row"><span class="cr-key">Комиссия платформы (20%)</span><span class="cr-val err" id="calc-platform">—</span></div>
+        <div class="calc-row"><span class="cr-key">Организатору</span><span class="cr-val" id="calc-organizer" style="color:var(--blue);">—</span></div>
+        <hr class="calc-divider">
+        <div class="calc-row"><span class="cr-key" style="color:var(--red);">🏆 Призовой фонд</span><span class="cr-val" id="calc-prize-total" style="font-size:16px;">—</span></div>
+      </div>
+
+      <div style="margin-top:14px;font-size:10px;color:var(--text-muted);line-height:1.7;">
+        Расчёт приблизительный и основан на полном заполнении турнира.
+      </div>
+    </div>
+
+  </div><!-- /wizard-wrap -->
+
+  <!-- Subscription screen -->
+  <div id="subscription-screen" style="display:none;max-width:620px;margin:0 auto;padding:40px 20px;text-align:center;">
+    <div style="font-size:52px;margin-bottom:20px;">🔒</div>
+    <div style="font-family:'Russo One',sans-serif;font-size:26px;color:#fff;margin-bottom:8px;">Требуется подписка</div>
+    <div style="font-size:13px;color:var(--text-dim);margin-bottom:32px;line-height:1.6;">Для публикации турниров необходима подписка организатора или разовый взнос.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:28px;text-align:left;">
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:22px;">
+        <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Разовый турнир</div>
+        <div style="font-family:'Russo One',sans-serif;font-size:32px;color:#fff;">3 000 ₽</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:14px;">за один турнир</div>
+        <div style="font-size:12px;color:var(--text-dim);line-height:1.8;">✓ 1 турнир<br>✓ До 128 участников<br>✓ Полная поддержка</div>
+      </div>
+      <div style="background:var(--red-dim);border:1px solid rgba(225,29,72,.3);border-radius:12px;padding:22px;position:relative;">
+        <div style="position:absolute;top:-10px;right:14px;background:var(--red);color:#fff;font-family:'Russo One',sans-serif;font-size:10px;padding:3px 10px;border-radius:20px;">ВЫГОДНЕЕ</div>
+        <div style="font-size:10px;color:var(--red);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Подписка</div>
+        <div style="font-family:'Russo One',sans-serif;font-size:32px;color:#fff;">15 000 ₽</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:14px;">в месяц</div>
+        <div style="font-size:12px;color:var(--text-dim);line-height:1.8;">✓ Неограниченные турниры<br>✓ Брендирование<br>✓ Приоритетная поддержка</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:12px;justify-content:center;">
+      <a href="/tournaments.html" style="display:inline-flex;align-items:center;gap:8px;padding:12px 22px;background:var(--card);border:1px solid var(--border);border-radius:7px;color:var(--text);text-decoration:none;font-size:13px;">← К турнирам</a>
+      <a href="mailto:smagomadov494@gmail.com?subject=Подписка Game Genesis" style="display:inline-flex;align-items:center;gap:8px;padding:12px 22px;background:var(--red);border-radius:7px;color:#fff;text-decoration:none;font-family:'Russo One',sans-serif;font-size:13px;">Связаться</a>
+    </div>
+  </div>
+
+  <!-- Success screen -->
+  <div id="success-screen">
+    <div class="success-wrap">
+      <div class="success-circle"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+      <h2 class="success-title">Турнир опубликован!</h2>
+      <p class="success-sub">Ваш турнир теперь виден всем пользователям платформы.</p>
+      <div class="success-card">
+        <div class="sc-row"><span>Название</span><span id="s-name">—</span></div>
+        <div class="sc-row"><span>Игра</span><span id="s-game">—</span></div>
+        <div class="sc-row"><span>Участников</span><span id="s-slots">—</span></div>
+        <div class="sc-row"><span>Дата</span><span id="s-date">—</span></div>
+        <div class="sc-row"><span>Призовой фонд</span><span id="s-prize" style="color:var(--red);">—</span></div>
+      </div>
+      <div class="success-btns">
+        <button class="btn-next" onclick="location.href='tournament.html'">Открыть страницу</button>
+        <button class="btn-prev" onclick="location.href='index.html'"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg> На главную</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span style="font-family:'Russo One',sans-serif;font-size:13px;color:#fff;letter-spacing:1.5px;">GAME <span style="color:var(--red);">GENESIS</span></span>
+      <span>© 2025</span>
+    </div>
+    <div style="display:flex;gap:20px;"><a href="#">Правила</a><a href="#">Поддержка</a></div>
+  </footer>
+</div>
+
+<script>
+  // ── ROLE CHECK ──
+  (function() {
+    var user = null;
+    try { user = JSON.parse(localStorage.getItem('gg_user')); } catch(e) {}
+    var block = document.getElementById('placement-cost-block');
+    var label = document.getElementById('placement-cost-label');
+    if (user && (user.role === 'admin' || user.role === 'organizer')) {
+      if (block) { block.style.background = 'rgba(16,185,129,0.05)'; block.style.borderColor = 'rgba(16,185,129,0.2)'; }
+      if (label) { label.style.color = 'var(--success)'; label.textContent = '✓ Бесплатно для вас (роль: ' + user.role + ')'; }
+    }
+  })();
+
+  var currentStep = 1;
+  var totalSteps = 6;
+  var selectedType = 'se';
+  var payType = 'free';
+  var tournamentType = 'open';
+  var coverBase64 = null; // FIX #3 — хранить base64 обложки
+
+  // ── COVER UPLOAD ── FIX #3
+  function triggerCoverInput() {
+    document.getElementById('cover-input').click();
+  }
+  function handleCover(input) {
+    var file = input.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { alert('Файл слишком большой. Максимум 5MB.'); return; }
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      coverBase64 = e.target.result;
+      var img = document.getElementById('cover-preview-img');
+      img.src = coverBase64; img.style.display = 'block';
+      document.getElementById('cover-clear-btn').style.display = 'flex';
+      // Обновляем предпросмотр
+      var prevImg = document.getElementById('prev-cover-img');
+      prevImg.src = coverBase64; prevImg.style.display = 'block';
+      document.getElementById('rv-cover').textContent = '✓ Загружено';
+    };
+    reader.readAsDataURL(file);
+  }
+  function clearCover(e) {
+    e.stopPropagation();
+    coverBase64 = null;
+    var img = document.getElementById('cover-preview-img');
+    img.src = ''; img.style.display = 'none';
+    document.getElementById('cover-clear-btn').style.display = 'none';
+    document.getElementById('cover-input').value = '';
+    var prevImg = document.getElementById('prev-cover-img');
+    prevImg.src = ''; prevImg.style.display = 'none';
+    document.getElementById('rv-cover').textContent = 'Без фото';
+  }
+
+  // ── NAVIGATION ──
+  function nextStep(from) { if (!validateStep(from)) return; goToStep(from + 1); }
+  function prevStep(from) { goToStep(from - 1); }
+
+  function goToStep(n) {
+    if (n < 1 || n > totalSteps) return;
+    for (var i = 1; i < n; i++) document.getElementById('si-'+i).className = 'step-item done';
+    document.getElementById('si-'+n).className = 'step-item active';
+    for (var i = n+1; i <= totalSteps; i++) { var el = document.getElementById('si-'+i); if (el) el.className = 'step-item'; }
+    document.querySelectorAll('.form-section').forEach(function(s){ s.classList.remove('active'); });
+    document.getElementById('fs-'+n).classList.add('active');
+    currentStep = n;
+    if (n === 6) fillReview();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ── VALIDATION ──
+  function validateStep(step) {
+    var ok = true;
+    if (step === 1) {
+      var name = document.getElementById('t-name').value.trim();
+      var game = document.getElementById('t-game').value;
+      showErr('err-name', !name); if (!name) ok = false;
+      showErr('err-game', !game); if (!game) ok = false;
+    }
+    if (step === 4) {
+      var rs = document.getElementById('t-reg-start').value;
+      var ts = document.getElementById('t-start').value;
+      showErr('err-reg', !rs); if (!rs) ok = false;
+      showErr('err-start', !ts); if (!ts) ok = false;
+    }
+    if (step === 5 && payType === 'paid') {
+      var fee = document.getElementById('t-entry-fee').value;
+      showErr('err-fee', !fee || fee < 100); if (!fee || fee < 100) ok = false;
+    }
+    return ok;
+  }
+  function showErr(id, show) { var el = document.getElementById(id); if (el) el.classList.toggle('show', show); }
+
+  // ── TOURNAMENT TYPE ──
+  function setTournamentType(type) {
+    tournamentType = type;
+    document.getElementById('tc-open').className = 'ttype-opt' + (type === 'open' ? ' selected-open' : '');
+    document.getElementById('tc-student').className = 'ttype-opt' + (type === 'student' ? ' selected-student' : '');
+  }
+
+  // ── FORMAT SELECT ──
+  function selectType(t) {
+    selectedType = t;
+    ['se','de','rr'].forEach(function(x){ document.getElementById('tc-'+x).classList.toggle('selected', x === t); });
+    updatePreview();
+  }
+  var typeNames = { se: 'Single Elimination', de: 'Double Elimination', rr: 'Round Robin' };
+
+  // ── PAY SELECT ──
+  function selectPay(p) {
+    if (p === 'paid') {
+      var token = localStorage.getItem('gg_token');
+      var isAdmin = false;
+      try { var payload = JSON.parse(atob(token.split('.')[1])); isAdmin = payload.role === 'admin'; } catch(e) {}
+      if (!isAdmin) {
+        alert('⚠️ Платные турниры временно недоступны.\n\nСоздайте бесплатный турнир.');
+        return;
+      }
+    }
+    payType = p;
+    document.getElementById('po-free').classList.toggle('selected', p === 'free');
+    document.getElementById('po-paid').classList.toggle('selected', p === 'paid');
+    document.getElementById('paid-section').classList.toggle('show', p === 'paid');
+    document.getElementById('free-section').style.display = p === 'free' ? 'block' : 'none';
+    document.getElementById('calc-box').classList.toggle('show', p === 'paid');
+    calcPrize(); updatePreview();
+  }
+
+  function onSliderChange() {
+    var val = document.getElementById('prize-slider').value;
+    document.getElementById('prize-pct-label').textContent = val + '%';
+    document.getElementById('calc-pct').textContent = val;
+    calcPrize(); updatePreview();
+  }
+
+  function set(id, val) { var el = document.getElementById(id); if (el) el.textContent = val; }
+
+  // ── CALCULATOR ──
+  function calcPrize() {
+    if (payType !== 'paid') {
+      var fp = parseInt(document.getElementById('t-free-prize').value) || 0;
+      document.getElementById('prev-prize').textContent = fp > 0 ? fp.toLocaleString('ru-RU') + ' ₽' : '—';
+      return;
+    }
+    var slots = parseInt(document.getElementById('t-slots').value) || 0;
+    var fee   = parseInt(document.getElementById('t-entry-fee').value) || 0;
+    var pct   = parseInt(document.getElementById('prize-slider').value) || 50;
+    var gross    = slots * fee;
+    var platform = Math.round(gross * 0.20);
+    var prize    = Math.round(gross * (pct / 100));
+    var organizer = gross - platform - prize;
+    set('calc-slots', slots || '—');
+    set('calc-fee', fee ? fee.toLocaleString('ru-RU') + ' ₽' : '—');
+    set('calc-gross', gross ? gross.toLocaleString('ru-RU') + ' ₽' : '—');
+    set('calc-prize', prize ? prize.toLocaleString('ru-RU') + ' ₽' : '—');
+    set('calc-platform', platform ? '−' + platform.toLocaleString('ru-RU') + ' ₽' : '—');
+    set('calc-organizer', organizer >= 0 ? organizer.toLocaleString('ru-RU') + ' ₽' : '—');
+    set('calc-prize-total', prize ? prize.toLocaleString('ru-RU') + ' ₽' : '—');
+    document.getElementById('prev-prize').textContent = prize ? prize.toLocaleString('ru-RU') + ' ₽' : '—';
+  }
+
+  // ── PREVIEW ──
+  function updatePreview() {
+    var name  = document.getElementById('t-name').value.trim();
+    var game  = document.getElementById('t-game').value;
+    var slots = document.getElementById('t-slots').value;
+    var start = document.getElementById('t-start').value;
+    var time  = document.getElementById('t-start-time').value;
+    document.getElementById('prev-name').innerHTML = name || '<span class="pr-placeholder">Название турнира...</span>';
+    document.getElementById('prev-game-badge').textContent = game || 'Игра не выбрана';
+    document.getElementById('prev-format').textContent = typeNames[selectedType];
+    document.getElementById('prev-slots').textContent = slots ? '0 / ' + slots : '—';
+    document.getElementById('prev-date').textContent = start ? formatDate(start) + (time ? ' · ' + time : '') : '—';
+    if (payType === 'free') {
+      document.getElementById('prev-fee').textContent = 'Бесплатно';
+      document.getElementById('prev-fee').style.color = 'var(--success)';
+    } else {
+      var fee = document.getElementById('t-entry-fee').value;
+      document.getElementById('prev-fee').textContent = fee ? fee + ' ₽' : '—';
+      document.getElementById('prev-fee').style.color = 'var(--red)';
+    }
+  }
+
+  function formatDate(d) {
+    if (!d) return '—';
+    var parts = d.split('-');
+    var months = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+    return parts[2] + ' ' + months[parseInt(parts[1])-1] + ' ' + parts[0];
+  }
+
+  // ── REVIEW FILL ──
+  function fillReview() {
+    var name  = document.getElementById('t-name').value.trim();
+    var game  = document.getElementById('t-game').value;
+    var slots = document.getElementById('t-slots').value;
+    var start = document.getElementById('t-start').value;
+    var team  = document.getElementById('t-team-size').value;
+    set('rv-name', name || '—'); set('rv-game', game || '—');
+    set('rv-format', typeNames[selectedType] || '—'); set('rv-team', team || '—');
+    set('rv-slots', slots || '—'); set('rv-date', start ? formatDate(start) : '—');
+    if (payType === 'free') {
+      var fp = parseInt(document.getElementById('t-free-prize').value) || 0;
+      set('rv-fee', 'Бесплатно');
+      set('rv-prize', fp > 0 ? fp.toLocaleString('ru-RU') + ' ₽' : 'Без призов');
+    } else {
+      var fee  = document.getElementById('t-entry-fee').value;
+      var pct  = parseInt(document.getElementById('prize-slider').value) || 50;
+      var gross = parseInt(slots) * (parseInt(fee)||0);
+      var prize = Math.round(gross * pct / 100);
+      set('rv-fee', fee ? fee + ' ₽ / участник' : '—');
+      set('rv-prize', prize ? prize.toLocaleString('ru-RU') + ' ₽' : '—');
+    }
+  }
+
+  // ── PUBLISH ── FIX #4 (prize_pool) FIX #5 (is_student)
+  async function publish() {
+    if (!document.getElementById('agree-rules').checked) { alert('Пожалуйста, примите правила платформы'); return; }
+    var name  = document.getElementById('t-name').value.trim();
+    var game  = document.getElementById('t-game').value;
+    var slots = document.getElementById('t-slots').value;
+    var start = document.getElementById('t-start').value;
+    var btn   = document.getElementById('publish-btn');
+    btn.disabled = true; btn.innerHTML = '<div style="width:15px;height:15px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;"></div> Публикуем...';
+
+    // FIX #4: правильно считаем prize_pool
+    var prize_pool = 0;
+    if (payType === 'free') {
+      prize_pool = parseInt(document.getElementById('t-free-prize').value) || 0;
+    } else {
+      var fee = parseInt(document.getElementById('t-entry-fee').value) || 0;
+      var pct = parseInt(document.getElementById('prize-slider').value) || 50;
+      prize_pool = Math.round(parseInt(slots) * fee * pct / 100);
+    }
+
+    var data = {
+      name, game,
+      description: document.getElementById('t-desc').value.trim(),
+      format: selectedType,
+      team_size: document.getElementById('t-team-size').value,
+      max_slots: parseInt(slots) || 16,
+      entry_fee: payType === 'paid' ? (parseInt(document.getElementById('t-entry-fee').value)||0) : 0,
+      prize_pool: prize_pool,                          // FIX #4
+      prize_pct: parseInt(document.getElementById('prize-slider').value) || 50,
+      region: document.getElementById('t-region').value,
+      start_date: start,
+      reg_start: document.getElementById('t-reg-start').value,
+      reg_end:   document.getElementById('t-reg-end').value,
+      start_time: document.getElementById('t-start-time').value,
+      is_student: tournamentType === 'student',         // FIX #5
+      cover_image: coverBase64,                         // FIX #3
+    };
+
+    try {
+      var token = localStorage.getItem('gg_token');
+      var res = await fetch('/api/tournaments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (token||'') },
+        body: JSON.stringify(data)
+      });
+      var resp = await res.json();
+      if (!res.ok) {
+        if (resp.code === 'NO_SUBSCRIPTION') {
+          document.getElementById('wizard-wrap').style.display = 'none';
+          document.getElementById('subscription-screen').style.display = 'block';
+          return;
+        }
+        throw new Error(resp.error || 'Ошибка');
+      }
+      document.getElementById('wizard-wrap').style.display = 'none';
+      document.getElementById('success-screen').style.display = 'block';
+      set('s-name', name); set('s-game', game);
+      set('s-slots', '0 / ' + slots);
+      set('s-date', start ? formatDate(start) : '—');
+      set('s-prize', document.getElementById('prev-prize').textContent);
+    } catch(e) {
+      btn.disabled = false;
+      btn.innerHTML = 'Опубликовать <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>';
+      alert('Ошибка: ' + e.message);
+    }
+  }
+
+  // spin animation
+  var style = document.createElement('style');
+  style.textContent = '@keyframes spin { to { transform: rotate(360deg); } }';
+  document.head.appendChild(style);
+
+  // Init
+  document.getElementById('free-section').style.display = 'block';
+  var today = new Date();
+  var fmt = function(d){ return d.toISOString().split('T')[0]; };
+  var in7 = new Date(today); in7.setDate(today.getDate()+7);
+  var in14 = new Date(today); in14.setDate(today.getDate()+14);
+  var in21 = new Date(today); in21.setDate(today.getDate()+21);
+  document.getElementById('t-reg-start').value = fmt(today);
+  document.getElementById('t-reg-end').value   = fmt(in14);
+  document.getElementById('t-start').value     = fmt(in21);
+  updatePreview();
+</script>
+</body>
+</html>
